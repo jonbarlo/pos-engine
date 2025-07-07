@@ -1,0 +1,38 @@
+# Development files
+.env
+.env.local
+.env.development
+.env.test
+.env.prod
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Deployment scripts (Mochahost specific)
+src/scripts/deploy-ftp.ts
+
+# Test files
+src/scripts/test-*.ts
+src/scripts/*.spec.ts
+src/controllers/*.spec.ts
+
+# Mochahost specific files
+web.config*
+scripts/win/
+scripts/sql/
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/ 
