@@ -10,6 +10,8 @@ import express from 'express';
 import cors from 'cors';
 import { Sequelize } from 'sequelize';
 import { logger } from './utils/logger';
+import swaggerUi from 'swagger-ui-express';
+import { specs } from './config/swagger';
 import userRouter from './routes/users';
 import itemRouter from './routes/items';
 import authRouter from './routes/auth';
@@ -29,7 +31,39 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Add a health check endpoint for IIS
+// Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'POS Engine API Documentation'
+}));
+
+/**
+ * @swagger
+ * /health:
+ *   get:
+ *     summary: Health check endpoint
+ *     tags: [Health]
+ *     responses:
+ *       200:
+ *         description: API is running
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "OK"
+ *                 message:
+ *                   type: string
+ *                   example: "API is running"
+ *                 environment:
+ *                   type: string
+ *                   example: "development"
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ */
 app.get('/health', (req, res) => {
     logger('Health check endpoint called');
     res.status(200).json({ 
@@ -40,7 +74,30 @@ app.get('/health', (req, res) => {
     });
 });
 
-// Add a root endpoint
+/**
+ * @swagger
+ * /:
+ *   get:
+ *     summary: Root endpoint
+ *     tags: [Health]
+ *     responses:
+ *       200:
+ *         description: API information
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Node.js API is running"
+ *                 environment:
+ *                   type: string
+ *                   example: "development"
+ *                 version:
+ *                   type: string
+ *                   example: "1.0.0"
+ */
 app.get('/', (req, res) => {
     logger('Root endpoint called');
     res.status(200).json({ 

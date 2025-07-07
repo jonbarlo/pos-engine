@@ -30,6 +30,8 @@
   "homepage": "https://github.com/jonbarlo/node-js-api#readme",
   "dependencies": {
     "@types/mssql": "^9.1.7",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
     "bcryptjs": "^3.0.2",
     "body-parser": "^2.2.0",
     "cors": "^2.8.5",
@@ -42,6 +44,8 @@
     "pg-hstore": "^2.3.4",
     "sequelize": "^6.37.7",
     "sequelize-typescript": "^2.1.6",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "tedious": "^18.6.1",
     "umzug": "^3.8.2"
   },
