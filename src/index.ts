@@ -10,12 +10,15 @@ dotenv.config({ path: envPath });
 
 import express from 'express';
 import cors from 'cors';
+import { Sequelize } from 'sequelize';
 import { logger } from './utils/logger';
-import { sequelize } from './config/database';
 import userRouter from './routes/users';
 import itemRouter from './routes/items';
 import authRouter from './routes/auth';
 //import { UserController } from './controllers/userController';
+
+// Import models initialization function
+import { initializeModels } from './models';
 
 logger(`Environment variables loaded from ${envPath}`);
 logger(`Environment Loaded: ${config.NODE_ENV}`);
@@ -97,6 +100,40 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 // Database connection and server startup
 const startServer = async () => {
     try {
+        // Create Sequelize instance directly
+        console.log('🔍 [Index] Creating Sequelize instance directly...');
+        const sequelize = new Sequelize(
+          process.env.DB_NAME || 'pos_engine_dev',
+          process.env.DB_USERNAME || 'sa',
+          process.env.DB_PASSWORD || 'password',
+          {
+            host: process.env.DB_HOST || 'localhost',
+            port: parseInt(process.env.DB_PORT || '1433'),
+            dialect: 'mssql',
+            dialectOptions: {
+              options: {
+                encrypt: false,
+                trustServerCertificate: true,
+                enableArithAbort: true,
+                requestTimeout: 30000,
+                connectionTimeout: 30000,
+                useUTC: false,
+                dateStrings: true,
+              },
+            },
+            logging: config.NODE_ENV === 'development' ? console.log : false,
+            pool: {
+              max: 5,
+              min: 0,
+              acquire: 30000,
+              idle: 10000
+            }
+          }
+        );
+        console.log('🔍 [Index] Sequelize instance created:', sequelize);
+        console.log('🔍 [Index] Sequelize type:', typeof sequelize);
+        console.log('🔍 [Index] Sequelize has authenticate method:', typeof sequelize?.authenticate);
+        
         // Log startup conditions
         logger(`=== SERVER STARTUP ===`);
         logger(`NODE_ENV: ${config.NODE_ENV}`);
@@ -105,8 +142,13 @@ const startServer = async () => {
         logger(`VERSION: ${process.env.VERSION}`);
         
         // Test database connection
+        console.log('🔍 [Index] About to call sequelize.authenticate()...');
         await sequelize.authenticate();
         logger('Database connection has been established successfully.');
+
+        // Initialize models
+        initializeModels(sequelize);
+        logger('Models initialized successfully.');
 
         // Sync database (in development)
         if (config.NODE_ENV === 'development') {

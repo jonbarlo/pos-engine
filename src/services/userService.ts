@@ -1,4 +1,4 @@
-import UserModel, { UserAttributes, UserCreationAttributes } from '../models/UserModel';
+import { UserModel, UserAttributes, UserCreationAttributes } from '../models';
 import bcrypt from 'bcryptjs';
 
 export type UserWithoutPassword = Omit<UserAttributes, 'password'>;
