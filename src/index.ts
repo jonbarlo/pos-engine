@@ -15,6 +15,7 @@ import { logger } from './utils/logger';
 import userRouter from './routes/users';
 import itemRouter from './routes/items';
 import authRouter from './routes/auth';
+import salesRouter from './routes/sales';
 //import { UserController } from './controllers/userController';
 
 // Import models initialization function
@@ -82,9 +83,10 @@ app.get('/test', (req, res) => {
     });
 });
 
-app.use('/auth', authRouter);
-app.use(userRouter);
-app.use(itemRouter);
+app.use('/api/auth', authRouter);
+app.use('/api/users', userRouter);
+app.use('/api/items', itemRouter);
+app.use('/api/sales', salesRouter);
 
 // Global error handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

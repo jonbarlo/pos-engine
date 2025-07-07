@@ -4,15 +4,15 @@ import { ItemController } from "../controllers/itemController";
 import { authenticateToken } from '../middleware/auth';
 
 // Protected routes - require authentication
-itemRouter.get('/items', authenticateToken, ItemController.getAll);
-itemRouter.get('/items/:id', authenticateToken, ItemController.getItemById);
-itemRouter.post('/items', authenticateToken, ItemController.createItem);
-itemRouter.put('/items/:id', authenticateToken, ItemController.updateItem);
-itemRouter.delete('/items/:id', authenticateToken, ItemController.deleteItem);
+itemRouter.get('/', authenticateToken, ItemController.getAll);
+itemRouter.get('/:id', authenticateToken, ItemController.getItemById);
+itemRouter.post('/', authenticateToken, ItemController.createItem);
+itemRouter.put('/:id', authenticateToken, ItemController.updateItem);
+itemRouter.delete('/:id', authenticateToken, ItemController.deleteItem);
 
 // Additional item management routes
-itemRouter.get('/items/category/:category', authenticateToken, ItemController.getItemsByCategory);
-itemRouter.get('/items/search', authenticateToken, ItemController.searchItems);
-itemRouter.put('/items/:id/stock', authenticateToken, ItemController.updateStock);
+itemRouter.get('/category/:category', authenticateToken, ItemController.getItemsByCategory);
+itemRouter.get('/search', authenticateToken, ItemController.searchItems);
+itemRouter.put('/:id/stock', authenticateToken, ItemController.updateStock);
 
 export default itemRouter;

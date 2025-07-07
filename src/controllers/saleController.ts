@@ -1,0 +1,326 @@
+import { Request, Response, NextFunction } from 'express';
+import { SaleService } from '../services/saleService';
+import { logger } from '../utils/logger';
+
+export class SaleController {
+  /**
+   * Create a new sale
+   */
+  public static createSale = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const saleData = req.body;
+      logger('API endpoint POST /sales was called...');
+
+      const sale = await SaleService.createSale(saleData);
+      
+      res.status(201).json({
+        message: 'Sale created successfully',
+        sale
+      });
+    } catch (error) {
+      logger(`Error creating sale: ${error}`);
+      
+      if (error instanceof Error) {
+        if (error.message.includes('Missing required fields')) {
+          res.status(400).json({
+            error: 'Bad Request',
+            message: error.message
+          });
+        } else {
+          res.status(500).json({
+            error: 'Internal Server Error',
+            message: error.message
+          });
+        }
+      } else {
+        res.status(500).json({
+          error: 'Internal Server Error',
+          message: 'Unknown error occurred'
+        });
+      }
+    }
+  };
+
+  /**
+   * Get sale by ID
+   */
+  public static getSaleById = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      
+      if (!id) {
+        res.status(400).json({ error: 'Sale ID is required' });
+        return;
+      }
+      
+      const saleId = parseInt(id);
+      
+      if (isNaN(saleId)) {
+        res.status(400).json({ error: 'Invalid sale ID' });
+        return;
+      }
+
+      logger(`API endpoint GET /sales/${id} was called...`);
+      const sale = await SaleService.getSaleById(saleId);
+      
+      if (!sale) {
+        res.status(404).json({ error: 'Sale not found' });
+        return;
+      }
+
+      res.json(sale);
+    } catch (error) {
+      logger(`Error getting sale by ID: ${error}`);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  };
+
+  /**
+   * Get all sales with optional filtering
+   */
+  public static getAllSales = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { page, limit, status, userId, startDate, endDate } = req.query;
+      
+      const filters: any = {};
+      
+      if (page) filters.page = parseInt(page as string);
+      if (limit) filters.limit = parseInt(limit as string);
+      if (status) filters.status = status as string;
+      if (userId) filters.userId = parseInt(userId as string);
+      if (startDate) filters.startDate = new Date(startDate as string);
+      if (endDate) filters.endDate = new Date(endDate as string);
+
+      logger('API endpoint GET /sales was called...');
+      const sales = await SaleService.getAllSales(filters);
+      
+      res.json(sales);
+    } catch (error) {
+      logger(`Error getting sales: ${error}`);
+      res.status(500).json({ 
+        error: 'Internal Server Error',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  };
+
+  /**
+   * Update sale by ID
+   */
+  public static updateSale = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const updateData = req.body;
+      
+      if (!id) {
+        res.status(400).json({ error: 'Sale ID is required' });
+        return;
+      }
+      
+      const saleId = parseInt(id);
+      
+      if (isNaN(saleId)) {
+        res.status(400).json({ error: 'Invalid sale ID' });
+        return;
+      }
+
+      if (Object.keys(updateData).length === 0) {
+        res.status(400).json({ error: 'No fields to update' });
+        return;
+      }
+
+      logger(`API endpoint PUT /sales/${id} was called...`);
+      const updatedSale = await SaleService.updateSale(saleId, updateData);
+      
+      if (!updatedSale) {
+        res.status(404).json({ error: 'Sale not found' });
+        return;
+      }
+
+      res.json({
+        message: 'Sale updated successfully',
+        sale: updatedSale
+      });
+    } catch (error) {
+      logger(`Error updating sale: ${error}`);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  };
+
+  /**
+   * Delete sale by ID
+   */
+  public static deleteSale = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      
+      if (!id) {
+        res.status(400).json({ error: 'Sale ID is required' });
+        return;
+      }
+      
+      const saleId = parseInt(id);
+      
+      if (isNaN(saleId)) {
+        res.status(400).json({ error: 'Invalid sale ID' });
+        return;
+      }
+
+      logger(`API endpoint DELETE /sales/${id} was called...`);
+      const deleted = await SaleService.deleteSale(saleId);
+      
+      if (!deleted) {
+        res.status(404).json({ error: 'Sale not found' });
+        return;
+      }
+
+      res.json({ message: 'Sale deleted successfully' });
+    } catch (error) {
+      logger(`Error deleting sale: ${error}`);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  };
+
+  /**
+   * Get sales by user ID
+   */
+  public static getSalesByUser = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userId } = req.params;
+      
+      if (!userId) {
+        res.status(400).json({ error: 'User ID is required' });
+        return;
+      }
+      
+      const userIdNum = parseInt(userId);
+      
+      if (isNaN(userIdNum)) {
+        res.status(400).json({ error: 'Invalid user ID' });
+        return;
+      }
+
+      logger(`API endpoint GET /sales/user/${userId} was called...`);
+      const sales = await SaleService.getSalesByUser(userIdNum);
+      
+      res.json(sales);
+    } catch (error) {
+      logger(`Error getting sales by user: ${error}`);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  };
+
+  /**
+   * Get sales statistics
+   */
+  public static getSalesStats = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      logger('API endpoint GET /sales/stats was called...');
+      const stats = await SaleService.getSalesStats();
+      
+      res.json(stats);
+    } catch (error) {
+      logger(`Error getting sales stats: ${error}`);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  };
+
+  /**
+   * Create sale with order items
+   */
+  public static createSaleWithItems = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { orderItems, ...saleData } = req.body;
+      
+      if (!orderItems || !Array.isArray(orderItems) || orderItems.length === 0) {
+        res.status(400).json({ error: 'Order items are required and must be an array' });
+        return;
+      }
+
+      // Validate order items
+      for (const item of orderItems) {
+        if (!item.itemId || !item.quantity || !item.unitPrice) {
+          res.status(400).json({ 
+            error: 'Each order item must have itemId, quantity, and unitPrice' 
+          });
+          return;
+        }
+      }
+
+      logger('API endpoint POST /sales/with-items was called...');
+      const sale = await SaleService.createSaleWithItems(saleData, orderItems);
+      
+      res.status(201).json({
+        message: 'Sale with items created successfully',
+        sale
+      });
+    } catch (error) {
+      logger(`Error creating sale with items: ${error}`);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  };
+
+  /**
+   * Get sale with order items
+   */
+  public static getSaleWithItems = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      
+      if (!id) {
+        res.status(400).json({ error: 'Sale ID is required' });
+        return;
+      }
+      
+      const saleId = parseInt(id);
+      
+      if (isNaN(saleId)) {
+        res.status(400).json({ error: 'Invalid sale ID' });
+        return;
+      }
+
+      logger(`API endpoint GET /sales/${id}/with-items was called...`);
+      const sale = await SaleService.getSaleWithItems(saleId);
+      
+      if (!sale) {
+        res.status(404).json({ error: 'Sale not found' });
+        return;
+      }
+
+      res.json(sale);
+    } catch (error) {
+      logger(`Error getting sale with items: ${error}`);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  };
+
+  /**
+   * Get sales by date range
+   */
+  public static getSalesByDateRange = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { startDate, endDate } = req.query;
+      
+      if (!startDate || !endDate) {
+        res.status(400).json({ error: 'Start date and end date are required' });
+        return;
+      }
+
+      const start = new Date(startDate as string);
+      const end = new Date(endDate as string);
+      
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        res.status(400).json({ error: 'Invalid date format' });
+        return;
+      }
+
+      logger(`API endpoint GET /sales/date-range was called...`);
+      const sales = await SaleService.getSalesByDateRange(start, end);
+      
+      res.json(sales);
+    } catch (error) {
+      logger(`Error getting sales by date range: ${error}`);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  };
+} 
