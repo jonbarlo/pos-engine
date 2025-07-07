@@ -2,13 +2,28 @@ import { Request, Response, RequestHandler } from 'express';
 import { logger } from '../utils/logger';
 import { UserService } from '../services/userService';
 
+interface AuthRequest extends Request {
+    user?: {
+        userId: number;
+        businessId: number;
+        email: string;
+        role: string;
+    };
+}
+
 export class UserController {
 
-    // Get all users
-    public static getAll: RequestHandler = async (req: Request, res: Response) => {
+    // Get all users for the current business
+    public static getAll: RequestHandler = async (req: AuthRequest, res: Response) => {
         try {
             logger('API endpoint /users was called...');
-            const users = await UserService.getAllUsers();
+            
+            if (!req.user?.businessId) {
+                res.status(401).json({ error: 'Authentication required' });
+                return;
+            }
+
+            const users = await UserService.getAllUsers(req.user.businessId);
             res.json(users);
         } catch (error) {
             logger(`Error getting users: ${error}`);
@@ -16,13 +31,18 @@ export class UserController {
         }
     };
 
-    // Get user by ID
-    public static getUserById: RequestHandler = async (req: Request, res: Response) => {
+    // Get user by ID within the current business
+    public static getUserById: RequestHandler = async (req: AuthRequest, res: Response) => {
         try {
             const { id } = req.params;
             
             if (!id) {
                 res.status(400).json({ error: 'User ID is required' });
+                return;
+            }
+            
+            if (!req.user?.businessId) {
+                res.status(401).json({ error: 'Authentication required' });
                 return;
             }
             
@@ -34,7 +54,7 @@ export class UserController {
             }
 
             logger(`API endpoint /users/${id} was called...`);
-            const user = await UserService.getUserById(userId);
+            const user = await UserService.getUserById(userId, req.user.businessId);
             
             if (!user) {
                 res.status(404).json({ error: 'User not found' });
@@ -48,10 +68,15 @@ export class UserController {
         }
     };
 
-    // Create new user
-    public static createUser: RequestHandler = async (req: Request, res: Response) => {
+    // Create new user in the current business
+    public static createUser: RequestHandler = async (req: AuthRequest, res: Response) => {
         try {
-            const { name, email, password } = req.body;
+            if (!req.user?.businessId) {
+                res.status(401).json({ error: 'Authentication required' });
+                return;
+            }
+
+            const { name, email, password, role } = req.body;
 
             // Validate input
             if (!name || !email || !password) {
@@ -61,17 +86,23 @@ export class UserController {
                 return;
             }
 
-            // Check if user already exists
-            const existingUser = await UserService.userExists(email);
+            // Check if user already exists in this business
+            const existingUser = await UserService.userExists(email, req.user.businessId);
             if (existingUser) {
                 res.status(409).json({ 
-                    error: 'User with this email already exists' 
+                    error: 'User with this email already exists in this business' 
                 });
                 return;
             }
 
             logger('API endpoint POST /users was called...');
-            const newUser = await UserService.createUser({ name, email, password });
+            const newUser = await UserService.createUser({ 
+                name, 
+                email, 
+                password, 
+                businessId: req.user.businessId,
+                role: role || 'cashier'
+            });
             res.status(201).json(newUser);
         } catch (error) {
             logger(`Error creating user: ${error}`);
@@ -79,13 +110,18 @@ export class UserController {
         }
     };
 
-    // Update user
-    public static updateUser: RequestHandler = async (req: Request, res: Response) => {
+    // Update user within the current business
+    public static updateUser: RequestHandler = async (req: AuthRequest, res: Response) => {
         try {
             const { id } = req.params;
             
             if (!id) {
                 res.status(400).json({ error: 'User ID is required' });
+                return;
+            }
+            
+            if (!req.user?.businessId) {
+                res.status(401).json({ error: 'Authentication required' });
                 return;
             }
             
@@ -96,12 +132,14 @@ export class UserController {
                 return;
             }
 
-            const { name, email, password } = req.body;
+            const { name, email, password, role, isActive } = req.body;
             const updateData: any = {};
             
             if (name) updateData.name = name;
             if (email) updateData.email = email;
             if (password) updateData.password = password;
+            if (role) updateData.role = role;
+            if (isActive !== undefined) updateData.isActive = isActive;
 
             if (Object.keys(updateData).length === 0) {
                 res.status(400).json({ error: 'No fields to update' });
@@ -109,7 +147,7 @@ export class UserController {
             }
 
             logger(`API endpoint PUT /users/${id} was called...`);
-            const updatedUser = await UserService.updateUser(userId, updateData);
+            const updatedUser = await UserService.updateUser(userId, req.user.businessId, updateData);
             
             if (!updatedUser) {
                 res.status(404).json({ error: 'User not found' });
@@ -123,13 +161,18 @@ export class UserController {
         }
     };
 
-    // Delete user
-    public static deleteUser: RequestHandler = async (req: Request, res: Response) => {
+    // Delete user within the current business
+    public static deleteUser: RequestHandler = async (req: AuthRequest, res: Response) => {
         try {
             const { id } = req.params;
             
             if (!id) {
                 res.status(400).json({ error: 'User ID is required' });
+                return;
+            }
+            
+            if (!req.user?.businessId) {
+                res.status(401).json({ error: 'Authentication required' });
                 return;
             }
             
@@ -141,7 +184,7 @@ export class UserController {
             }
 
             logger(`API endpoint DELETE /users/${id} was called...`);
-            const deleted = await UserService.deleteUser(userId);
+            const deleted = await UserService.deleteUser(userId, req.user.businessId);
             
             if (!deleted) {
                 res.status(404).json({ error: 'User not found' });
@@ -151,6 +194,54 @@ export class UserController {
             res.json({ message: 'User deleted successfully' });
         } catch (error) {
             logger(`Error deleting user: ${error}`);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    };
+
+    // Get users by role within the current business
+    public static getUsersByRole: RequestHandler = async (req: AuthRequest, res: Response) => {
+        try {
+            const { role } = req.params;
+            
+            if (!role) {
+                res.status(400).json({ error: 'Role is required' });
+                return;
+            }
+
+            if (!req.user?.businessId) {
+                res.status(401).json({ error: 'Authentication required' });
+                return;
+            }
+
+            logger(`API endpoint /users/role/${role} was called...`);
+            const users = await UserService.getUsersByRole(req.user.businessId, role);
+            res.json(users);
+        } catch (error) {
+            logger(`Error getting users by role: ${error}`);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    };
+
+    // Search users within the current business
+    public static searchUsers: RequestHandler = async (req: AuthRequest, res: Response) => {
+        try {
+            const { q } = req.query;
+            
+            if (!q || typeof q !== 'string') {
+                res.status(400).json({ error: 'Search query is required' });
+                return;
+            }
+
+            if (!req.user?.businessId) {
+                res.status(401).json({ error: 'Authentication required' });
+                return;
+            }
+
+            logger(`API endpoint /users/search?q=${q} was called...`);
+            const users = await UserService.searchUsers(req.user.businessId, q);
+            res.json(users);
+        } catch (error) {
+            logger(`Error searching users: ${error}`);
             res.status(500).json({ error: 'Internal server error' });
         }
     };

@@ -1,20 +1,47 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 
-// User Model Interfaces
-export interface UserAttributes {
+// Business/Tenant Model Interfaces
+export interface BusinessAttributes {
   id: number;
   name: string;
-  email: string;
-  password: string;
+  slug: string;
+  description?: string;
+  logo?: string;
+  primaryColor?: string;
+  secondaryColor?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  website?: string;
+  taxRate: number;
+  currency: string;
+  timezone: string;
+  isActive: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-export type UserCreationAttributes = Optional<UserAttributes, 'id' | 'createdAt' | 'updatedAt'>;
+export type BusinessCreationAttributes = Optional<BusinessAttributes, 'id' | 'isActive' | 'createdAt' | 'updatedAt'>;
+
+// User Model Interfaces
+export interface UserAttributes {
+  id: number;
+  businessId: number;
+  name: string;
+  email: string;
+  password: string;
+  role: 'admin' | 'owner' | 'manager' | 'cashier' | 'viewer';
+  isActive: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export type UserCreationAttributes = Optional<UserAttributes, 'id' | 'isActive' | 'createdAt' | 'updatedAt'>;
 
 // Item Model Interfaces
 export interface ItemAttributes {
   id: number;
+  businessId: number;
   name: string;
   description?: string;
   price: number;
@@ -32,6 +59,7 @@ export interface ItemCreationAttributes extends Optional<ItemAttributes, 'id' | 
 // Sale Model Interfaces
 export interface SaleAttributes {
   id: number;
+  businessId: number;
   userId: number;
   customerName?: string;
   customerEmail?: string;
@@ -52,6 +80,7 @@ export interface SaleCreationAttributes extends Omit<SaleAttributes, 'id' | 'cre
 // OrderItem Model Interfaces
 export interface OrderItemAttributes {
   id: number;
+  businessId: number;
   saleId: number;
   itemId: number;
   quantity: number;
@@ -63,12 +92,36 @@ export interface OrderItemAttributes {
 
 export interface OrderItemCreationAttributes extends Omit<OrderItemAttributes, 'id' | 'createdAt' | 'updatedAt'> {}
 
+// Business Model
+export class BusinessModel extends Model<BusinessAttributes, BusinessCreationAttributes> implements BusinessAttributes {
+  public id!: number;
+  public name!: string;
+  public slug!: string;
+  public description?: string;
+  public logo?: string;
+  public primaryColor?: string;
+  public secondaryColor?: string;
+  public address?: string;
+  public phone?: string;
+  public email?: string;
+  public website?: string;
+  public taxRate!: number;
+  public currency!: string;
+  public timezone!: string;
+  public isActive!: boolean;
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
+}
+
 // User Model
 export class UserModel extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
   public id!: number;
+  public businessId!: number;
   public name!: string;
   public email!: string;
   public password!: string;
+  public role!: 'admin' | 'owner' | 'manager' | 'cashier' | 'viewer';
+  public isActive!: boolean;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }
@@ -76,6 +129,7 @@ export class UserModel extends Model<UserAttributes, UserCreationAttributes> imp
 // Item Model
 export class ItemModel extends Model<ItemAttributes, ItemCreationAttributes> implements ItemAttributes {
   public id!: number;
+  public businessId!: number;
   public name!: string;
   public description?: string;
   public price!: number;
@@ -91,6 +145,7 @@ export class ItemModel extends Model<ItemAttributes, ItemCreationAttributes> imp
 // Sale Model
 export class SaleModel extends Model<SaleAttributes, SaleCreationAttributes> implements SaleAttributes {
   public id!: number;
+  public businessId!: number;
   public userId!: number;
   public customerName?: string;
   public customerEmail?: string;
@@ -109,6 +164,7 @@ export class SaleModel extends Model<SaleAttributes, SaleCreationAttributes> imp
 // OrderItem Model
 export class OrderItemModel extends Model<OrderItemAttributes, OrderItemCreationAttributes> implements OrderItemAttributes {
   public id!: number;
+  public businessId!: number;
   public saleId!: number;
   public itemId!: number;
   public quantity!: number;
@@ -120,8 +176,8 @@ export class OrderItemModel extends Model<OrderItemAttributes, OrderItemCreation
 
 // Function to initialize models
 export function initializeModels(sequelize: any) {
-  // Initialize User Model
-  UserModel.init(
+  // Initialize Business Model
+  BusinessModel.init(
     {
       id: {
         type: DataTypes.INTEGER,
@@ -132,20 +188,143 @@ export function initializeModels(sequelize: any) {
         type: DataTypes.STRING(100),
         allowNull: false,
       },
+      slug: {
+        type: DataTypes.STRING(50),
+        allowNull: false,
+        unique: true,
+        validate: {
+          is: /^[a-z0-9-]+$/,
+          len: [3, 50]
+        }
+      },
+      description: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      logo: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+      },
+      primaryColor: {
+        type: DataTypes.STRING(7),
+        allowNull: true,
+        validate: {
+          is: /^#[0-9A-F]{6}$/i
+        }
+      },
+      secondaryColor: {
+        type: DataTypes.STRING(7),
+        allowNull: true,
+        validate: {
+          is: /^#[0-9A-F]{6}$/i
+        }
+      },
+      address: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      phone: {
+        type: DataTypes.STRING(20),
+        allowNull: true,
+      },
+      email: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+        validate: {
+          isEmail: true
+        }
+      },
+      website: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+        validate: {
+          isUrl: true
+        }
+      },
+      taxRate: {
+        type: DataTypes.DECIMAL(5, 2),
+        allowNull: false,
+        defaultValue: 0,
+        validate: {
+          min: 0,
+          max: 100
+        }
+      },
+      currency: {
+        type: DataTypes.STRING(3),
+        allowNull: false,
+        defaultValue: 'USD',
+        validate: {
+          len: [3, 3]
+        }
+      },
+      timezone: {
+        type: DataTypes.STRING(50),
+        allowNull: false,
+        defaultValue: 'UTC',
+      },
+      isActive: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: true,
+      },
+    },
+    {
+      sequelize,
+      tableName: 'businesses',
+      timestamps: true,
+    }
+  );
+
+  // Initialize User Model
+  UserModel.init(
+    {
+      id: {
+        type: DataTypes.INTEGER,
+        autoIncrement: true,
+        primaryKey: true,
+      },
+      businessId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'businesses',
+          key: 'id',
+        },
+      },
+      name: {
+        type: DataTypes.STRING(100),
+        allowNull: false,
+      },
       email: {
         type: DataTypes.STRING(255),
         allowNull: false,
-        unique: true,
       },
       password: {
         type: DataTypes.STRING(255),
         allowNull: false,
+      },
+      role: {
+        type: DataTypes.ENUM('admin', 'owner', 'manager', 'cashier', 'viewer'),
+        allowNull: false,
+        defaultValue: 'cashier',
+      },
+      isActive: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: true,
       },
     },
     {
       sequelize,
       tableName: 'users',
       timestamps: true,
+      indexes: [
+        {
+          unique: true,
+          fields: ['businessId', 'email']
+        }
+      ]
     }
   );
 
@@ -156,6 +335,14 @@ export function initializeModels(sequelize: any) {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true,
+      },
+      businessId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'businesses',
+          key: 'id',
+        },
       },
       name: {
         type: DataTypes.STRING(100),
@@ -191,33 +378,31 @@ export function initializeModels(sequelize: any) {
       sku: {
         type: DataTypes.STRING(50),
         allowNull: true,
-        unique: true,
       },
       barcode: {
         type: DataTypes.STRING(50),
         allowNull: true,
-        unique: true,
       },
       isActive: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
         defaultValue: true,
       },
-      createdAt: {
-        type: DataTypes.DATE,
-        allowNull: false,
-        defaultValue: DataTypes.NOW,
-      },
-      updatedAt: {
-        type: DataTypes.DATE,
-        allowNull: false,
-        defaultValue: DataTypes.NOW,
-      },
     },
     {
       sequelize,
       tableName: 'items',
       timestamps: true,
+      indexes: [
+        {
+          unique: true,
+          fields: ['businessId', 'sku']
+        },
+        {
+          unique: true,
+          fields: ['businessId', 'barcode']
+        }
+      ]
     }
   );
 
@@ -229,6 +414,15 @@ export function initializeModels(sequelize: any) {
         autoIncrement: true,
         primaryKey: true,
       },
+      businessId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'businesses',
+          key: 'id',
+        },
+        onDelete: 'NO ACTION',
+      },
       userId: {
         type: DataTypes.INTEGER,
         allowNull: false,
@@ -236,6 +430,7 @@ export function initializeModels(sequelize: any) {
           model: 'users',
           key: 'id',
         },
+        onDelete: 'NO ACTION',
       },
       customerName: {
         type: DataTypes.STRING(100),
@@ -293,16 +488,6 @@ export function initializeModels(sequelize: any) {
         type: DataTypes.TEXT,
         allowNull: true,
       },
-      createdAt: {
-        type: DataTypes.DATE,
-        allowNull: false,
-        defaultValue: DataTypes.NOW,
-      },
-      updatedAt: {
-        type: DataTypes.DATE,
-        allowNull: false,
-        defaultValue: DataTypes.NOW,
-      },
     },
     {
       sequelize,
@@ -319,6 +504,15 @@ export function initializeModels(sequelize: any) {
         autoIncrement: true,
         primaryKey: true,
       },
+      businessId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'businesses',
+          key: 'id',
+        },
+        onDelete: 'NO ACTION',
+      },
       saleId: {
         type: DataTypes.INTEGER,
         allowNull: false,
@@ -326,6 +520,7 @@ export function initializeModels(sequelize: any) {
           model: 'sales',
           key: 'id',
         },
+        onDelete: 'NO ACTION',
       },
       itemId: {
         type: DataTypes.INTEGER,
@@ -334,6 +529,7 @@ export function initializeModels(sequelize: any) {
           model: 'items',
           key: 'id',
         },
+        onDelete: 'NO ACTION',
       },
       quantity: {
         type: DataTypes.INTEGER,
@@ -356,16 +552,6 @@ export function initializeModels(sequelize: any) {
           min: 0
         }
       },
-      createdAt: {
-        type: DataTypes.DATE,
-        allowNull: false,
-        defaultValue: DataTypes.NOW,
-      },
-      updatedAt: {
-        type: DataTypes.DATE,
-        allowNull: false,
-        defaultValue: DataTypes.NOW,
-      },
     },
     {
       sequelize,
@@ -374,9 +560,21 @@ export function initializeModels(sequelize: any) {
     }
   );
 
-  // Define associations
+  // Define associations (without CASCADE to avoid SQL Server issues)
+  BusinessModel.hasMany(UserModel, { foreignKey: 'businessId', as: 'users' });
+  UserModel.belongsTo(BusinessModel, { foreignKey: 'businessId', as: 'business' });
+
+  BusinessModel.hasMany(ItemModel, { foreignKey: 'businessId', as: 'items' });
+  ItemModel.belongsTo(BusinessModel, { foreignKey: 'businessId', as: 'business' });
+
+  BusinessModel.hasMany(SaleModel, { foreignKey: 'businessId', as: 'sales' });
+  SaleModel.belongsTo(BusinessModel, { foreignKey: 'businessId', as: 'business', onDelete: 'NO ACTION' });
+
+  BusinessModel.hasMany(OrderItemModel, { foreignKey: 'businessId', as: 'orderItems' });
+  OrderItemModel.belongsTo(BusinessModel, { foreignKey: 'businessId', as: 'business' });
+
   UserModel.hasMany(SaleModel, { foreignKey: 'userId', as: 'sales' });
-  SaleModel.belongsTo(UserModel, { foreignKey: 'userId', as: 'user' });
+  SaleModel.belongsTo(UserModel, { foreignKey: 'userId', as: 'user', onDelete: 'NO ACTION' });
 
   SaleModel.hasMany(OrderItemModel, { foreignKey: 'saleId', as: 'orderItems' });
   OrderItemModel.belongsTo(SaleModel, { foreignKey: 'saleId', as: 'sale' });
@@ -386,6 +584,7 @@ export function initializeModels(sequelize: any) {
 }
 
 export default {
+  BusinessModel,
   UserModel,
   ItemModel,
   SaleModel,

@@ -1,10 +1,8 @@
 import dotenv from 'dotenv';
 import path from 'path';
 import config from './services/configService';
-console.log('INDEX DEBUG:', config);
-console.log('DEBUG: Loaded DB_PASSWORD:', process.env.DB_PASSWORD, 'Length:', process.env.DB_PASSWORD ? process.env.DB_PASSWORD.length : 'undefined');
 
-// Load environment variables from .env file FIRST
+// Load environment variables from .env file
 const envPath = path.resolve(process.cwd(), '.env');
 dotenv.config({ path: envPath });
 
@@ -16,40 +14,20 @@ import userRouter from './routes/users';
 import itemRouter from './routes/items';
 import authRouter from './routes/auth';
 import salesRouter from './routes/sales';
+import businessRouter from './routes/businesses';
 //import { UserController } from './controllers/userController';
 
 // Import models initialization function
 import { initializeModels } from './models';
 
-logger(`Environment variables loaded from ${envPath}`);
-logger(`Environment Loaded: ${config.NODE_ENV}`);
+logger(`Environment loaded: ${config.NODE_ENV}`);
 
-// Debug: Log all environment variables
-logger('=== ALL ENVIRONMENT VARIABLES ===');
-Object.keys(process.env).forEach(key => {
-  if (key.includes('DB_') || key.includes('NODE_') || key.includes('APP_') || key.includes('JWT_')) {
-    logger(`${key}: ${process.env[key]}`);
-  }
-});
-logger('=== END ENVIRONMENT VARIABLES ===');
 
-// logger(`- DB_USERNAME: ${process.env.DB_USERNAME}`);
-// logger(`- DB_NAME: ${process.env.DB_NAME}`);
-// logger(`- DB_HOST: ${process.env.DB_HOST}`);
-// logger(`- DB_PORT: ${process.env.DB_PORT}`);
-// logger(`- DB_URL: ${process.env.DB_URL}`);
-
-// logger(`- APP_NAME: ${process.env.APP_NAME}`);
-// logger(`- VERSION: ${process.env.VERSION}`);
-// logger(`- PORT: ${process.env.PORT}`);
-// logger(`- NODE_ENV: ${process.env.NODE_ENV}`);
 
 const app = express();
 
-//import routes from './routes';
 app.use(cors());
 app.use(express.json());
-//app.use('/api', routes);
 
 // Add a health check endpoint for IIS
 app.get('/health', (req, res) => {
@@ -83,10 +61,25 @@ app.get('/test', (req, res) => {
     });
 });
 
+// Add a test registration endpoint that doesn't require database
+app.post('/test-register', (req, res) => {
+    logger('Test registration endpoint called');
+    res.status(200).json({ 
+        message: 'Test registration endpoint works!',
+        body: req.body,
+        environment: config.NODE_ENV,
+        timestamp: new Date().toISOString(),
+        note: 'This endpoint works without database access'
+    });
+});
+
+// Register routes immediately (they will work with or without database)
 app.use('/api/auth', authRouter);
 app.use('/api/users', userRouter);
 app.use('/api/items', itemRouter);
 app.use('/api/sales', salesRouter);
+app.use('/api/businesses', businessRouter);
+logger('Routes registered successfully.');
 
 // Global error handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -95,6 +88,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
     res.status(500).json({ 
         error: 'Internal Server Error',
         message: err.message,
+        stack: err.stack,
         environment: config.NODE_ENV
     });
 });
@@ -102,8 +96,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 // Database connection and server startup
 const startServer = async () => {
     try {
-        // Create Sequelize instance directly
-        console.log('🔍 [Index] Creating Sequelize instance directly...');
+        // Create Sequelize instance
         const sequelize = new Sequelize(
           process.env.DB_NAME || 'pos_engine_dev',
           process.env.DB_USERNAME || 'sa',
@@ -132,21 +125,10 @@ const startServer = async () => {
             }
           }
         );
-        console.log('🔍 [Index] Sequelize instance created:', sequelize);
-        console.log('🔍 [Index] Sequelize type:', typeof sequelize);
-        console.log('🔍 [Index] Sequelize has authenticate method:', typeof sequelize?.authenticate);
-        
-        // Log startup conditions
-        logger(`=== SERVER STARTUP ===`);
-        logger(`NODE_ENV: ${config.NODE_ENV}`);
-        logger(`PORT: ${process.env.PORT || 'NOT SET'}`);
-        logger(`APP_NAME: ${process.env.APP_NAME}`);
-        logger(`VERSION: ${process.env.VERSION}`);
         
         // Test database connection
-        console.log('🔍 [Index] About to call sequelize.authenticate()...');
         await sequelize.authenticate();
-        logger('Database connection has been established successfully.');
+        logger('Database connection established successfully.');
 
         // Initialize models
         initializeModels(sequelize);
@@ -154,40 +136,29 @@ const startServer = async () => {
 
         // Sync database (in development)
         if (config.NODE_ENV === 'development') {
-            await sequelize.sync({ alter: true });
-            logger('Database synchronized.');
+            // Force sync to recreate tables with correct schema
+            await sequelize.sync({ force: true });
+            logger('Database synchronized with force sync.');
         }
 
-        // Start server if PORT is provided (Railway, Heroku, etc.) or in development
-        if (process.env.PORT || config.NODE_ENV === 'development') {
-            const port = process.env.PORT || 3031;
-            logger(`Starting server on port ${port}...`);
-            app.listen(port, () => {
-                logger(`✅ ${process.env.APP_NAME || 'Node.js API'} is running on port ${port} - Version: ${process.env.VERSION || '1.0.0'} - Environment: ${process.env.NODE_ENV || 'development'}`);
-                logger(`✅ Health check available at: http://localhost:${port}/health`);
-            });
-        } else {
-            // IIS mode - export app for iisnode
-            logger(`📋 ${process.env.APP_NAME || 'Node.js API'} is ready for IIS - Version: ${process.env.VERSION || '1.0.0'} - Environment: ${process.env.NODE_ENV}`);
-            logger(`📋 No PORT set, exporting app for iisnode`);
-        }
+        // Start server
+        const port = process.env.PORT || 3031;
+        logger(`Starting server on port ${port}...`);
+        app.listen(port, () => {
+            logger(`✅ ${process.env.APP_NAME || 'Node.js API'} is running on port ${port} - Version: ${process.env.VERSION || '1.0.0'} - Environment: ${process.env.NODE_ENV || 'development'}`);
+            logger(`✅ Health check available at: http://localhost:${port}/health`);
+        });
     } catch (error) {
         logger(`❌ Database connection failed: ${error}`);
         logger('Starting server without database connection...');
         
-        // Start server even if database fails (for testing)
-        if (process.env.PORT || config.NODE_ENV === 'development') {
-            const port = process.env.PORT || 3031;
-            logger(`Starting server on port ${port} (NO DATABASE)...`);
-            app.listen(port, () => {
-                logger(`✅ ${process.env.APP_NAME || 'Node.js API'} is running on port ${port} (NO DATABASE) - Version: ${process.env.VERSION || '1.0.0'} - Environment: ${process.env.NODE_ENV || 'development'}`);
-                logger(`✅ Health check available at: http://localhost:${port}/health`);
-            });
-        } else {
-            // IIS mode - export app for iisnode
-            logger(`📋 ${process.env.APP_NAME || 'Node.js API'} is ready for IIS (NO DATABASE) - Version: ${process.env.VERSION || '1.0.0'} - Environment: ${process.env.NODE_ENV}`);
-            logger(`📋 No PORT set, exporting app for iisnode`);
-        }
+        // Start server even if database fails
+        const port = process.env.PORT || 3031;
+        logger(`Starting server on port ${port} (NO DATABASE)...`);
+        app.listen(port, () => {
+            logger(`✅ ${process.env.APP_NAME || 'Node.js API'} is running on port ${port} (NO DATABASE) - Version: ${process.env.VERSION || '1.0.0'} - Environment: ${process.env.NODE_ENV || 'development'}`);
+            logger(`✅ Health check available at: http://localhost:${port}/health`);
+        });
     }
 };
 
@@ -226,6 +197,6 @@ export default app;
 // });
 
 // app.use((err: any, req: Request, res: Response, next: Function) => {
-//     console.error(err.stack);
+
 //     res.status(500).send('Something broke!');
 // });

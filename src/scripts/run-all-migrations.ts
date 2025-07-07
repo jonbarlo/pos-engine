@@ -7,10 +7,6 @@ import fs from 'fs';
 dotenv.config();
 
 console.log('🚀 Running all pending migrations...');
-console.log('DEBUG MIGRATION: DB_NAME:', process.env.DB_NAME);
-console.log('DEBUG MIGRATION: DB_HOST:', process.env.DB_HOST);
-console.log('DEBUG MIGRATION: DB_USERNAME:', process.env.DB_USERNAME);
-console.log('DEBUG MIGRATION: NODE_ENV:', process.env.NODE_ENV);
 
 // Inline Sequelize initialization
 const sequelize = new Sequelize(
@@ -42,8 +38,7 @@ const sequelize = new Sequelize(
   }
 );
 
-console.log('DEBUG: sequelize object:', sequelize);
-console.log('DEBUG: sequelize.authenticate:', sequelize?.authenticate);
+
 
 async function runMigrations() {
   try {

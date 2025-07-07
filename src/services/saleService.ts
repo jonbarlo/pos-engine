@@ -175,7 +175,6 @@ export class SaleService {
         topSellingItems: topSellingItems || []
       };
     } catch (error) {
-      console.error('[getSalesStats] Error:', error);
       throw error;
     }
   }
@@ -207,6 +206,7 @@ export class SaleService {
       const orderItemPromises = orderItems.map(item => 
         OrderItemModel.create({
           saleId: sale.id,
+          businessId: saleData.businessId,
           itemId: item.itemId,
           quantity: item.quantity,
           unitPrice: item.unitPrice,

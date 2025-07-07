@@ -5,9 +5,7 @@ import path from 'path';
 const envPath = path.resolve(process.cwd(), '.env');
 dotenv.config({ path: envPath });
 
-console.log('CONFIGSERVICE DEBUG:', { envPath, NODE_ENV: process.env.NODE_ENV, DB_HOST: process.env.DB_HOST, DB_NAME: process.env.DB_NAME, DB_USERNAME: process.env.DB_USERNAME, DB_PASSWORD: process.env.DB_PASSWORD, DB_PORT: process.env.DB_PORT });
 
-console.log('🔧 ConfigService: Loading environment variables from:', envPath);
 
 // Configuration interface
 interface AppConfig {
@@ -45,8 +43,7 @@ function validateConfig(): AppConfig {
   const missing = requiredVars.filter(varName => !process.env[varName]);
   
   if (missing.length > 0) {
-    console.warn('⚠️ ConfigService: Missing environment variables:', missing);
-    console.warn('⚠️ Some features may not work correctly');
+    console.warn('ConfigService: Missing environment variables:', missing);
   }
 
   return {
@@ -74,12 +71,7 @@ function validateConfig(): AppConfig {
 // Create and export the configuration
 const config = validateConfig();
 
-// Log configuration status
-console.log('🔧 ConfigService: Configuration loaded');
-console.log(`   Environment: ${config.NODE_ENV}`);
-console.log(`   App: ${config.APP_NAME} v${config.VERSION}`);
-console.log(`   Database: ${config.DB_HOST}:${config.DB_PORT}/${config.DB_NAME}`);
-console.log(`   Database User: ${config.DB_USERNAME}`);
+
 
 // Export the configuration
 export default config;

@@ -15,8 +15,19 @@ jest.mock('../models', () => ({
       fn: jest.fn(),
       col: jest.fn(),
       query: jest.fn(),
+      transaction: jest.fn().mockResolvedValue({
+        commit: jest.fn(),
+        rollback: jest.fn()
+      }),
       QueryTypes: {
         SELECT: 'SELECT'
+      },
+      Op: {
+        and: 'and',
+        or: 'or',
+        gte: 'gte',
+        lte: 'lte',
+        between: 'between',
       }
     },
   },
@@ -28,6 +39,10 @@ jest.mock('../models', () => ({
       fn: jest.fn(),
       col: jest.fn(),
       query: jest.fn(),
+      transaction: jest.fn().mockResolvedValue({
+        commit: jest.fn(),
+        rollback: jest.fn()
+      }),
       QueryTypes: {
         SELECT: 'SELECT'
       }
@@ -38,7 +53,12 @@ jest.mock('../models', () => ({
   },
   ItemModel: {
     findByPk: jest.fn(),
+    update: jest.fn(),
   },
+}));
+
+jest.mock('../utils/logger', () => ({
+  logger: jest.fn(),
 }));
 
 describe('SaleService', () => {
@@ -51,14 +71,15 @@ describe('SaleService', () => {
       // Arrange (Red - Test will fail)
       const saleData: SaleCreationAttributes = {
         userId: 1,
+        businessId: 1,
         customerName: 'John Doe',
         customerEmail: 'john@example.com',
         subtotal: 100.00,
-        tax: 10.00,
+        tax: 8.50,
         discount: 5.00,
-        total: 105.00,
-        paymentMethod: 'card',
-        status: 'completed',
+        total: 103.50,
+        paymentMethod: 'card' as const,
+        status: 'completed' as const,
         notes: 'Test sale'
       };
 
@@ -77,7 +98,7 @@ describe('SaleService', () => {
 
       // Assert (Green - Test should pass)
       expect(SaleModel.create).toHaveBeenCalledWith(saleData);
-      expect(result).toEqual({ id: 1, ...saleData });
+      expect(result).toEqual(mockSale.toJSON());
     });
 
     it('should throw error when required fields are missing', async () => {
@@ -98,23 +119,15 @@ describe('SaleService', () => {
       const saleId = 1;
       const mockSale = {
         id: saleId,
-        userId: 1,
+        businessId: 1,
         customerName: 'John Doe',
-        subtotal: 100.00,
-        tax: 10.00,
-        discount: 0,
-        total: 110.00,
-        paymentMethod: 'card',
+        total: 103.50,
         status: 'completed',
         toJSON: () => ({
           id: saleId,
-          userId: 1,
+          businessId: 1,
           customerName: 'John Doe',
-          subtotal: 100.00,
-          tax: 10.00,
-          discount: 0,
-          total: 110.00,
-          paymentMethod: 'card',
+          total: 103.50,
           status: 'completed'
         })
       };
@@ -149,33 +162,29 @@ describe('SaleService', () => {
       const mockSales = [
         {
           id: 1,
-          userId: 1,
+          businessId: 1,
           customerName: 'John Doe',
-          subtotal: 100.00,
-          total: 110.00,
+          total: 103.50,
           status: 'completed' as const,
           toJSON: () => ({
             id: 1,
-            userId: 1,
+            businessId: 1,
             customerName: 'John Doe',
-            subtotal: 100.00,
-            total: 110.00,
+            total: 103.50,
             status: 'completed' as const
           })
         },
         {
           id: 2,
-          userId: 1,
+          businessId: 1,
           customerName: 'Jane Smith',
-          subtotal: 50.00,
-          total: 55.00,
+          total: 75.25,
           status: 'completed' as const,
           toJSON: () => ({
             id: 2,
-            userId: 1,
+            businessId: 1,
             customerName: 'Jane Smith',
-            subtotal: 50.00,
-            total: 55.00,
+            total: 75.25,
             status: 'completed' as const
           })
         }
@@ -204,8 +213,9 @@ describe('SaleService', () => {
       const mockSales = [
         {
           id: 1,
+          businessId: 1,
           status: 'completed' as const,
-          toJSON: () => ({ id: 1, status: 'completed' as const })
+          toJSON: () => ({ id: 1, businessId: 1, status: 'completed' as const })
         }
       ];
 
@@ -238,11 +248,15 @@ describe('SaleService', () => {
 
       const mockSale = {
         id: saleId,
+        businessId: 1,
+        customerName: 'John Doe',
         status: 'cancelled',
         notes: 'Cancelled due to customer request',
         update: jest.fn().mockResolvedValue(true),
         toJSON: () => ({
           id: saleId,
+          businessId: 1,
+          customerName: 'John Doe',
           status: 'cancelled',
           notes: 'Cancelled due to customer request'
         })
@@ -281,6 +295,8 @@ describe('SaleService', () => {
       const saleId = 1;
       const mockSale = {
         id: saleId,
+        businessId: 1,
+        customerName: 'John Doe',
         destroy: jest.fn().mockResolvedValue(true)
       };
 
@@ -316,12 +332,16 @@ describe('SaleService', () => {
       const mockSales = [
         {
           id: 1,
-          userId: 1,
+          businessId: 1,
+          userId,
           customerName: 'John Doe',
+          total: 103.50,
           toJSON: () => ({
             id: 1,
-            userId: 1,
-            customerName: 'John Doe'
+            businessId: 1,
+            userId,
+            customerName: 'John Doe',
+            total: 103.50
           })
         }
       ];
@@ -350,10 +370,14 @@ describe('SaleService', () => {
       const mockSales = [
         {
           id: 1,
+          businessId: 1,
           createdAt: new Date('2025-01-15'),
+          total: 103.50,
           toJSON: () => ({
             id: 1,
-            createdAt: new Date('2025-01-15')
+            businessId: 1,
+            createdAt: new Date('2025-01-15'),
+            total: 103.50
           })
         }
       ];
@@ -410,6 +434,158 @@ describe('SaleService', () => {
         averageOrderValue: 100.00,
         topSellingItems: mockTopSellingItems
       });
+    });
+  });
+
+  describe('createSaleWithItems', () => {
+    it('should create sale with items successfully', async () => {
+      // Arrange
+      const saleData = {
+        userId: 1,
+        businessId: 1,
+        customerName: 'John Doe',
+        customerEmail: 'john@example.com',
+        subtotal: 100.00,
+        tax: 8.50,
+        discount: 0,
+        total: 108.50,
+        paymentMethod: 'card' as const,
+        status: 'completed' as const,
+        notes: ''
+      };
+
+      const orderItems = [
+        { itemId: 1, quantity: 2, unitPrice: 50.00 }
+      ];
+
+      const mockSale = {
+        id: 1,
+        ...saleData,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        toJSON: () => ({
+          id: 1,
+          ...saleData,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
+      };
+
+      const mockItem = {
+        id: 1,
+        businessId: 1,
+        name: 'Test Item',
+        stock: 100,
+        update: jest.fn()
+      };
+
+      (SaleModel.create as jest.Mock).mockResolvedValue(mockSale);
+      (ItemModel.findByPk as jest.Mock).mockResolvedValue(mockItem);
+
+      // Act
+      const result = await SaleService.createSaleWithItems(saleData, orderItems);
+
+      // Assert
+      expect(SaleModel.create).toHaveBeenCalledWith(saleData, expect.objectContaining({ transaction: expect.any(Object) }));
+      expect(ItemModel.findByPk).toHaveBeenCalledWith(1);
+      expect(mockItem.update).toHaveBeenCalledWith({ stock: 98 }, expect.objectContaining({ transaction: expect.any(Object) }));
+      expect(result).toEqual(expect.objectContaining({
+        ...mockSale.toJSON(),
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date)
+      }));
+    });
+
+    it('should handle errors when creating sale with items', async () => {
+      // Arrange
+      const saleData = {
+        userId: 1,
+        businessId: 1,
+        customerName: 'John Doe',
+        customerEmail: 'john@example.com',
+        subtotal: 100.00,
+        tax: 8.50,
+        discount: 0,
+        total: 108.50,
+        paymentMethod: 'card' as const,
+        status: 'completed' as const,
+        notes: ''
+      };
+
+      const orderItems = [
+        { itemId: 1, quantity: 2, unitPrice: 50.00 }
+      ];
+
+      const error = new Error('Database error');
+      (SaleModel.create as jest.Mock).mockRejectedValue(error);
+
+      // Act & Assert
+      await expect(SaleService.createSaleWithItems(saleData, orderItems)).rejects.toThrow('Database error');
+    });
+  });
+
+  describe('getSaleWithItems', () => {
+    it('should get sale with items successfully', async () => {
+      // Arrange
+      const saleId = 1;
+      const mockSale = {
+        id: saleId,
+        businessId: 1,
+        customerName: 'John Doe',
+        total: 103.50,
+        status: 'completed',
+        SaleItems: [
+          { itemId: 1, quantity: 2, price: 50.00, subtotal: 100.00 }
+        ],
+        toJSON: () => ({
+          id: saleId,
+          businessId: 1,
+          customerName: 'John Doe',
+          total: 103.50,
+          status: 'completed',
+          SaleItems: [
+            { itemId: 1, quantity: 2, price: 50.00, subtotal: 100.00 }
+          ]
+        })
+      };
+
+      (SaleModel.findByPk as jest.Mock).mockResolvedValue(mockSale);
+
+      // Act
+      const result = await SaleService.getSaleWithItems(saleId);
+
+      // Assert
+      expect(SaleModel.findByPk).toHaveBeenCalledWith(saleId, {
+        include: [
+          {
+            model: OrderItemModel,
+            as: 'orderItems',
+            include: [
+              {
+                model: ItemModel,
+                as: 'item'
+              }
+            ]
+          },
+          {
+            model: UserModel,
+            as: 'user'
+          }
+        ]
+      });
+      expect(result).toEqual(mockSale.toJSON());
+    });
+
+    it('should return null when sale not found with items', async () => {
+      // Arrange
+      const saleId = 999;
+      (SaleModel.findByPk as jest.Mock).mockResolvedValue(null);
+
+      // Act
+      const result = await SaleService.getSaleWithItems(saleId);
+
+      // Assert
+      expect(result).toBeNull();
     });
   });
 }); 

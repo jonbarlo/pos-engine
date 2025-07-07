@@ -2,13 +2,28 @@ import { Request, Response, RequestHandler } from 'express';
 import { logger } from '../utils/logger';
 import { ItemService } from '../services/itemService';
 
+interface AuthRequest extends Request {
+    user?: {
+        userId: number;
+        businessId: number;
+        email: string;
+        role: string;
+    };
+}
+
 export class ItemController {
 
-    // Get all items
-    public static getAll: RequestHandler = async (req: Request, res: Response) => {
+    // Get all items for the current business
+    public static getAll: RequestHandler = async (req: AuthRequest, res: Response) => {
         try {
             logger('API endpoint /items was called...');
-            const items = await ItemService.getAllItems();
+            
+            if (!req.user?.businessId) {
+                res.status(401).json({ error: 'Authentication required' });
+                return;
+            }
+
+            const items = await ItemService.getAllItems(req.user.businessId);
             res.json(items);
         } catch (error) {
             logger(`Error getting items: ${error}`);
@@ -16,13 +31,18 @@ export class ItemController {
         }
     };
 
-    // Get item by ID
-    public static getItemById: RequestHandler = async (req: Request, res: Response) => {
+    // Get item by ID within the current business
+    public static getItemById: RequestHandler = async (req: AuthRequest, res: Response) => {
         try {
             const { id } = req.params;
             
             if (!id) {
                 res.status(400).json({ error: 'Item ID is required' });
+                return;
+            }
+            
+            if (!req.user?.businessId) {
+                res.status(401).json({ error: 'Authentication required' });
                 return;
             }
             
@@ -34,7 +54,7 @@ export class ItemController {
             }
 
             logger(`API endpoint /items/${id} was called...`);
-            const item = await ItemService.getItemById(itemId);
+            const item = await ItemService.getItemById(itemId, req.user.businessId);
             
             if (!item) {
                 res.status(404).json({ error: 'Item not found' });
@@ -48,9 +68,14 @@ export class ItemController {
         }
     };
 
-    // Create new item
-    public static createItem: RequestHandler = async (req: Request, res: Response) => {
+    // Create new item in the current business
+    public static createItem: RequestHandler = async (req: AuthRequest, res: Response) => {
         try {
+            if (!req.user?.businessId) {
+                res.status(401).json({ error: 'Authentication required' });
+                return;
+            }
+
             const { name, description, price, stock, category, sku, barcode } = req.body;
 
             // Validate required fields
@@ -69,23 +94,23 @@ export class ItemController {
                 return;
             }
 
-            // Check if SKU already exists
+            // Check if SKU already exists in this business
             if (sku) {
-                const skuExists = await ItemService.itemExistsBySku(sku);
+                const skuExists = await ItemService.itemExistsBySku(sku, req.user.businessId);
                 if (skuExists) {
                     res.status(409).json({ 
-                        error: 'Item with this SKU already exists' 
+                        error: 'Item with this SKU already exists in this business' 
                     });
                     return;
                 }
             }
 
-            // Check if barcode already exists
+            // Check if barcode already exists in this business
             if (barcode) {
-                const barcodeExists = await ItemService.itemExistsByBarcode(barcode);
+                const barcodeExists = await ItemService.itemExistsByBarcode(barcode, req.user.businessId);
                 if (barcodeExists) {
                     res.status(409).json({ 
-                        error: 'Item with this barcode already exists' 
+                        error: 'Item with this barcode already exists in this business' 
                     });
                     return;
                 }
@@ -99,7 +124,8 @@ export class ItemController {
                 stock: stock || 0, 
                 category, 
                 sku, 
-                barcode 
+                barcode,
+                businessId: req.user.businessId
             });
             res.status(201).json(newItem);
         } catch (error) {
@@ -108,13 +134,18 @@ export class ItemController {
         }
     };
 
-    // Update item
-    public static updateItem: RequestHandler = async (req: Request, res: Response) => {
+    // Update item within the current business
+    public static updateItem: RequestHandler = async (req: AuthRequest, res: Response) => {
         try {
             const { id } = req.params;
             
             if (!id) {
                 res.status(400).json({ error: 'Item ID is required' });
+                return;
+            }
+            
+            if (!req.user?.businessId) {
+                res.status(401).json({ error: 'Authentication required' });
                 return;
             }
             
@@ -149,7 +180,7 @@ export class ItemController {
             }
 
             logger(`API endpoint PUT /items/${id} was called...`);
-            const updatedItem = await ItemService.updateItem(itemId, updateData);
+            const updatedItem = await ItemService.updateItem(itemId, req.user.businessId, updateData);
             
             if (!updatedItem) {
                 res.status(404).json({ error: 'Item not found' });
@@ -163,13 +194,18 @@ export class ItemController {
         }
     };
 
-    // Delete item
-    public static deleteItem: RequestHandler = async (req: Request, res: Response) => {
+    // Delete item within the current business
+    public static deleteItem: RequestHandler = async (req: AuthRequest, res: Response) => {
         try {
             const { id } = req.params;
             
             if (!id) {
                 res.status(400).json({ error: 'Item ID is required' });
+                return;
+            }
+            
+            if (!req.user?.businessId) {
+                res.status(401).json({ error: 'Authentication required' });
                 return;
             }
             
@@ -181,7 +217,7 @@ export class ItemController {
             }
 
             logger(`API endpoint DELETE /items/${id} was called...`);
-            const deleted = await ItemService.deleteItem(itemId);
+            const deleted = await ItemService.deleteItem(itemId, req.user.businessId);
             
             if (!deleted) {
                 res.status(404).json({ error: 'Item not found' });
@@ -195,8 +231,8 @@ export class ItemController {
         }
     };
 
-    // Get items by category
-    public static getItemsByCategory: RequestHandler = async (req: Request, res: Response) => {
+    // Get items by category within the current business
+    public static getItemsByCategory: RequestHandler = async (req: AuthRequest, res: Response) => {
         try {
             const { category } = req.params;
             
@@ -205,8 +241,13 @@ export class ItemController {
                 return;
             }
 
+            if (!req.user?.businessId) {
+                res.status(401).json({ error: 'Authentication required' });
+                return;
+            }
+
             logger(`API endpoint /items/category/${category} was called...`);
-            const items = await ItemService.getItemsByCategory(category);
+            const items = await ItemService.getItemsByCategory(req.user.businessId, category);
             res.json(items);
         } catch (error) {
             logger(`Error getting items by category: ${error}`);
@@ -214,8 +255,8 @@ export class ItemController {
         }
     };
 
-    // Search items
-    public static searchItems: RequestHandler = async (req: Request, res: Response) => {
+    // Search items within the current business
+    public static searchItems: RequestHandler = async (req: AuthRequest, res: Response) => {
         try {
             const { q } = req.query;
             
@@ -224,8 +265,13 @@ export class ItemController {
                 return;
             }
 
+            if (!req.user?.businessId) {
+                res.status(401).json({ error: 'Authentication required' });
+                return;
+            }
+
             logger(`API endpoint /items/search?q=${q} was called...`);
-            const items = await ItemService.searchItems(q);
+            const items = await ItemService.searchItems(req.user.businessId, q);
             res.json(items);
         } catch (error) {
             logger(`Error searching items: ${error}`);
@@ -233,14 +279,19 @@ export class ItemController {
         }
     };
 
-    // Update stock
-    public static updateStock: RequestHandler = async (req: Request, res: Response) => {
+    // Update stock within the current business
+    public static updateStock: RequestHandler = async (req: AuthRequest, res: Response) => {
         try {
             const { id } = req.params;
             const { quantity } = req.body;
             
             if (!id) {
                 res.status(400).json({ error: 'Item ID is required' });
+                return;
+            }
+            
+            if (!req.user?.businessId) {
+                res.status(401).json({ error: 'Authentication required' });
                 return;
             }
             
@@ -257,7 +308,7 @@ export class ItemController {
             }
 
             logger(`API endpoint PUT /items/${id}/stock was called...`);
-            const updatedItem = await ItemService.updateStock(itemId, quantity);
+            const updatedItem = await ItemService.updateStock(itemId, req.user.businessId, quantity);
             
             if (!updatedItem) {
                 res.status(404).json({ error: 'Item not found' });
@@ -267,6 +318,27 @@ export class ItemController {
             res.json(updatedItem);
         } catch (error) {
             logger(`Error updating stock: ${error}`);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    };
+
+    // Get low stock items for the current business
+    public static getLowStockItems: RequestHandler = async (req: AuthRequest, res: Response) => {
+        try {
+            const { threshold } = req.query;
+            
+            if (!req.user?.businessId) {
+                res.status(401).json({ error: 'Authentication required' });
+                return;
+            }
+
+            const thresholdValue = threshold ? parseInt(threshold as string) : 10;
+            
+            logger(`API endpoint /items/low-stock was called...`);
+            const items = await ItemService.getLowStockItems(req.user.businessId, thresholdValue);
+            res.json(items);
+        } catch (error) {
+            logger(`Error getting low stock items: ${error}`);
             res.status(500).json({ error: 'Internal server error' });
         }
     };

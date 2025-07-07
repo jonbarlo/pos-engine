@@ -33,6 +33,11 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
         len: [6, 255]
       }
     },
+    role: {
+      type: DataTypes.ENUM('admin', 'owner', 'manager', 'cashier', 'viewer'),
+      allowNull: false,
+      defaultValue: 'cashier',
+    },
     createdAt: {
       allowNull: false,
       type: DataTypes.DATE,
