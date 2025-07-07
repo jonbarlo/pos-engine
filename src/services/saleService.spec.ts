@@ -14,6 +14,10 @@ jest.mock('../models', () => ({
     sequelize: {
       fn: jest.fn(),
       col: jest.fn(),
+      query: jest.fn(),
+      QueryTypes: {
+        SELECT: 'SELECT'
+      }
     },
   },
   OrderItemModel: {
@@ -23,6 +27,10 @@ jest.mock('../models', () => ({
     sequelize: {
       fn: jest.fn(),
       col: jest.fn(),
+      query: jest.fn(),
+      QueryTypes: {
+        SELECT: 'SELECT'
+      }
     },
   },
   UserModel: {
@@ -373,23 +381,35 @@ describe('SaleService', () => {
   describe('getSalesStats', () => {
     it('should return sales statistics', async () => {
       // Arrange (Red - Test will fail)
-      const mockStats = {
-        totalSales: 1000.00,
-        totalTransactions: 50,
-        averageOrderValue: 20.00,
-        topSellingItems: []
-      };
+      const mockSales = [
+        {
+          total: 100.00,
+          createdAt: new Date(),
+          toJSON: () => ({ total: 100.00, createdAt: new Date() })
+        }
+      ];
 
-      (SaleModel.findAll as jest.Mock).mockResolvedValue([]);
-      (SaleModel.count as jest.Mock).mockResolvedValue(50);
+      const mockTopSellingItems = [
+        { itemId: 1, totalQuantity: 5 }
+      ];
+
+      (SaleModel.findAll as jest.Mock).mockResolvedValue(mockSales);
+      ((SaleModel.sequelize as any).query as jest.Mock).mockResolvedValue(mockTopSellingItems);
 
       // Act
       const result = await SaleService.getSalesStats();
 
       // Assert (Green - Test should pass)
-      expect(SaleModel.findAll).toHaveBeenCalled();
-      expect(SaleModel.count).toHaveBeenCalled();
-      expect(result).toBeDefined();
+      expect(SaleModel.findAll).toHaveBeenCalledWith({
+        attributes: ['total', 'createdAt', 'status']
+      });
+      expect((SaleModel.sequelize as any).query).toHaveBeenCalled();
+      expect(result).toEqual({
+        totalSales: 100.00,
+        totalTransactions: 1,
+        averageOrderValue: 100.00,
+        topSellingItems: mockTopSellingItems
+      });
     });
   });
 }); 
