@@ -33,8 +33,17 @@ export class ApiError extends Error {
  * Validation Error - 400 Bad Request
  */
 export class ValidationError extends ApiError {
-    constructor(message: string, code?: string) {
+    public details?: Array<{
+        field: string;
+        message: string;
+        value?: any;
+    }>;
+
+    constructor(message: string, details?: Array<{field: string; message: string; value?: any}>, code?: string) {
         super(message, 400, true, code || 'VALIDATION_ERROR');
+        if (details) {
+            this.details = details;
+        }
         Object.setPrototypeOf(this, ValidationError.prototype);
     }
 }
@@ -131,6 +140,11 @@ export interface ErrorResponse {
         timestamp: string;
         path?: string;
         method?: string;
+        details?: Array<{
+            field: string;
+            message: string;
+            value?: any;
+        }>;
     };
 }
 
@@ -152,6 +166,11 @@ export function createErrorResponse(
 
     if (error.code) {
         errorResponse.error.code = error.code;
+    }
+
+    // Add validation details if available
+    if (error instanceof ValidationError && error.details) {
+        errorResponse.error.details = error.details;
     }
 
     if (req?.path) {

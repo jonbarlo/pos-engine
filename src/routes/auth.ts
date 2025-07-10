@@ -1,6 +1,7 @@
 import { Router } from 'express';
 const authRouter = Router();
 import { AuthController } from '../controllers/authController';
+import { loginValidation, registerValidation } from '../middleware/validation';
 
 /**
  * @swagger
@@ -34,7 +35,7 @@ import { AuthController } from '../controllers/authController';
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-authRouter.post('/login', AuthController.login);
+authRouter.post('/login', loginValidation, AuthController.login);
 
 /**
  * @swagger
@@ -87,6 +88,6 @@ authRouter.post('/login', AuthController.login);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-authRouter.post('/register', AuthController.register);
+authRouter.post('/register', registerValidation, AuthController.register);
 
 export default authRouter; 

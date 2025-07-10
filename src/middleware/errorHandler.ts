@@ -71,12 +71,22 @@ export const asyncHandler = (fn: Function) => {
 export const handleValidationError = (error: any): ValidationError => {
     if (error.name === 'SequelizeValidationError') {
         const messages = error.errors.map((err: any) => err.message).join(', ');
-        return new ValidationError(`Validation failed: ${messages}`, 'VALIDATION_ERROR');
+        const details = error.errors.map((err: any) => ({
+            field: err.path || 'unknown',
+            message: err.message,
+            value: err.value
+        }));
+        return new ValidationError(`Validation failed: ${messages}`, details, 'VALIDATION_ERROR');
     }
     
     if (error.name === 'SequelizeUniqueConstraintError') {
         const field = error.errors[0]?.path || 'field';
-        return new ValidationError(`${field} already exists`, 'UNIQUE_CONSTRAINT_ERROR');
+        const details = error.errors.map((err: any) => ({
+            field: err.path || 'unknown',
+            message: err.message,
+            value: err.value
+        }));
+        return new ValidationError(`${field} already exists`, details, 'UNIQUE_CONSTRAINT_ERROR');
     }
 
     return new ValidationError(error.message || 'Validation failed');

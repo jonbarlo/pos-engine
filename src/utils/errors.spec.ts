@@ -50,11 +50,23 @@ describe('Error Classes', () => {
         });
 
         it('should create ValidationError with custom code', () => {
-            const error = new ValidationError('Invalid input', 'CUSTOM_VALIDATION');
+            const error = new ValidationError('Invalid input', undefined, 'CUSTOM_VALIDATION');
             
             expect(error.message).toBe('Invalid input');
             expect(error.statusCode).toBe(400);
             expect(error.code).toBe('CUSTOM_VALIDATION');
+        });
+
+        it('should create ValidationError with details', () => {
+            const details = [
+                { field: 'email', message: 'Invalid email format', value: 'invalid-email' }
+            ];
+            const error = new ValidationError('Invalid input', details);
+            
+            expect(error.message).toBe('Invalid input');
+            expect(error.statusCode).toBe(400);
+            expect(error.code).toBe('VALIDATION_ERROR');
+            expect(error.details).toEqual(details);
         });
     });
 
