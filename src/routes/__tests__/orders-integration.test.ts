@@ -4,7 +4,7 @@ process.env.NODE_ENV = 'test';
 import request from 'supertest';
 import express from 'express';
 import app from '../../index';
-import { initializeAllModels, setupAssociationsForTests } from '../../models';
+import { initializeAllModels, setupAssociations } from '../../models';
 import DatabaseService from '../../services/databaseService';
 import { OrderModel, OrderStatus, OrderType } from '../../models/OrderModel';
 import { OrderItemModel, OrderItemStatus } from '../../models/OrderItemModel';
@@ -21,6 +21,9 @@ import { getSequelize } from '../../models/sequelize';
 beforeAll(async () => {
   // Initialize models first
   initializeAllModels();
+  
+  // Setup associations
+  setupAssociations();
   
   // Then sync database with force to recreate all tables
   const sequelize = getSequelize();
@@ -121,9 +124,7 @@ describe('Order Management Integration Tests', () => {
     await UserModel.destroy({ where: {} });
     await BusinessModel.destroy({ where: {} });
     
-    // Close database connection
-    const sequelize = getSequelize();
-    await sequelize.close();
+    // Don't close database connection - it's handled globally
   });
 
   describe('Order Creation and Management', () => {

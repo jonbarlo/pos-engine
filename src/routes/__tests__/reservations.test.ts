@@ -1,7 +1,7 @@
 import request from 'supertest';
 import express from 'express';
 import app from '../../index';
-import { initializeAllModels, setupAssociationsForTests } from '../../models';
+import { initializeAllModels, setupAssociations } from '../../models';
 import DatabaseService from '../../services/databaseService';
 import { ReservationModel } from '../../models/ReservationModel';
 import { TableModel } from '../../models/TableModel';
@@ -15,6 +15,9 @@ import { getSequelize } from '../../models/index';
 beforeAll(async () => {
   // Initialize models first
   initializeAllModels();
+  
+  // Setup associations
+  setupAssociations();
   
   // Then sync database with force to recreate all tables
   await getSequelize().sync({ force: true }); // Force sync to recreate tables
