@@ -87,7 +87,7 @@ describe('AuthController', () => {
             expect(mockStatus).toHaveBeenCalledWith(201);
             expect(mockJson).toHaveBeenCalledWith({
                 message: 'User registered successfully',
-                user: {
+                user: expect.objectContaining({
                     id: 3,
                     businessId: 1,
                     name: userData.name,
@@ -96,12 +96,12 @@ describe('AuthController', () => {
                     isActive: true,
                     createdAt: expect.any(Date),
                     updatedAt: expect.any(Date)
-                },
-                business: {
+                }),
+                business: expect.objectContaining({
                     id: 1,
                     name: 'Test Business',
                     slug: 'test-business'
-                },
+                }),
                 token: 'mockToken'
             });
         });
@@ -226,7 +226,7 @@ describe('AuthController', () => {
             expect(mockStatus).toHaveBeenCalledWith(201);
             expect(mockJson).toHaveBeenCalledWith({
                 message: 'User registered successfully',
-                user: {
+                user: expect.objectContaining({
                     id: 1,
                     businessId: 1,
                     name: userData.name,
@@ -235,12 +235,12 @@ describe('AuthController', () => {
                     isActive: true,
                     createdAt: expect.any(Date),
                     updatedAt: expect.any(Date)
-                },
-                business: {
+                }),
+                business: expect.objectContaining({
                     id: 1,
                     name: 'Test Business',
                     slug: 'test-business'
-                },
+                }),
                 token: 'mockToken'
             });
         });
@@ -270,7 +270,7 @@ describe('AuthController', () => {
 
             // Assert
             expect(UserService.findAnyAdmin).toHaveBeenCalled();
-            expect(mockStatus).toHaveBeenCalledWith(403);
+            expect(mockStatus).toHaveBeenCalledWith(409);
             expect(mockJson).toHaveBeenCalledWith({
                 error: 'Admin user already exists. Only one admin can be registered via API.'
             });

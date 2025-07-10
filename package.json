@@ -22,7 +22,7 @@
     "db:seed:dev": "NODE_ENV=development ts-node src/scripts/seed-dev.ts",
     "db:seed:test": "NODE_ENV=test ts-node src/scripts/seed-test.ts",
     "deploy:mochahost": "ts-node src/scripts/deploy-mochahost.ts",
-    "test": "NODE_ENV=test jest"
+    "test": "cross-env NODE_ENV=test jest"
   },
   "repository": {
     "type": "git",
