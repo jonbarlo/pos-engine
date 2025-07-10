@@ -4,6 +4,13 @@ import { logger } from '../utils/logger';
 import { UserService } from './userService';
 import { BusinessService } from './businessService';
 import { UserRole } from '../models/UserModel';
+import { 
+    ValidationError, 
+    NotFoundError, 
+    ConflictError, 
+    AuthenticationError,
+    ServiceError 
+} from '../utils/errors';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
@@ -39,14 +46,14 @@ export class AuthService {
 
         // Validate input
         if (!name || !email || !password) {
-            throw new Error('Name, email, and password are required');
+            throw new ValidationError('Name, email, and password are required');
         }
 
         // Admin registration: only allow if no admin exists yet
         if (role === 'admin') {
             const existingAdmin = await UserService.findAnyAdmin();
             if (existingAdmin) {
-                throw new Error('Admin user already exists. Only one admin can be registered via API.');
+                throw new ConflictError('Admin user already exists. Only one admin can be registered via API.');
             }
         }
 
@@ -56,13 +63,13 @@ export class AuthService {
         // Verify business exists and is active
         const business = await BusinessService.getBusinessById(targetBusinessId);
         if (!business || !business.isActive) {
-            throw new Error('Business not found or inactive');
+            throw new NotFoundError('Business not found or inactive');
         }
 
         // Check if user already exists in this business
         const existingUser = await UserService.userExists(email, targetBusinessId);
         if (existingUser) {
-            throw new Error('User with this email already exists in this business');
+            throw new ConflictError('User with this email already exists in this business');
         }
 
         // Hash password
@@ -97,7 +104,7 @@ export class AuthService {
 
         // Validate input
         if (!email || !password) {
-            throw new Error('Email and password are required');
+            throw new ValidationError('Email and password are required');
         }
 
         // Determine business context
@@ -106,13 +113,13 @@ export class AuthService {
         // Find user by email within the business
         const user = await UserService.getUserByEmail(email, targetBusinessId);
         if (!user) {
-            throw new Error('Invalid email or password');
+            throw new AuthenticationError('Invalid email or password');
         }
 
         // Verify password
         const isValidPassword = await bcrypt.compare(password, user.get('password') as string);
         if (!isValidPassword) {
-            throw new Error('Invalid email or password');
+            throw new AuthenticationError('Invalid email or password');
         }
 
         // Get business info
@@ -140,7 +147,7 @@ export class AuthService {
     public static async getProfile(userId: number, businessId: number): Promise<{ user: any; business: any }> {
         const user = await UserService.getUserById(userId, businessId);
         if (!user) {
-            throw new Error('User not found');
+            throw new NotFoundError('User not found');
         }
 
         const business = await BusinessService.getBusinessById(businessId);
@@ -158,13 +165,13 @@ export class AuthService {
         if (businessSlug) {
             const business = await BusinessService.getBusinessBySlug(businessSlug);
             if (!business) {
-                throw new Error('Business not found');
+                throw new NotFoundError('Business not found');
             }
             return business.id;
         } else if (businessId) {
             return businessId;
         } else {
-            throw new Error('Business ID or business slug is required');
+            throw new ValidationError('Business ID or business slug is required');
         }
     }
 

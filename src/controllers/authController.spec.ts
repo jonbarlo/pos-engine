@@ -4,12 +4,14 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { UserService } from '../services/userService';
 import { BusinessService } from '../services/businessService';
+import { AuthService } from '../services/authService';
 
 // Mock dependencies
 jest.mock('bcryptjs');
 jest.mock('jsonwebtoken');
 jest.mock('../services/userService');
 jest.mock('../services/businessService');
+jest.mock('../services/authService');
 jest.mock('../utils/logger', () => ({
     logger: jest.fn(),
 }));
@@ -47,63 +49,42 @@ describe('AuthController', () => {
             };
             mockRequest.body = userData;
             
-            const mockBusiness = {
-                id: 1,
-                name: 'Test Business',
-                slug: 'test-business',
-                isActive: true
-            };
-            
-            (BusinessService.getBusinessById as jest.Mock).mockResolvedValue(mockBusiness);
-            (UserService.userExists as jest.Mock).mockResolvedValue(false);
-            (bcrypt.hash as jest.Mock).mockResolvedValue('hashedPassword');
-            (UserService.createUser as jest.Mock).mockResolvedValue({
-                id: 3,
-                businessId: 1,
-                name: userData.name,
-                email: userData.email,
-                role: 'cashier',
-                isActive: true,
-                createdAt: new Date(),
-                updatedAt: new Date()
-            });
-            (jwt.sign as jest.Mock).mockReturnValue('mockToken');
-
-            // Act
-            await AuthController.register(mockRequest as Request, mockResponse as Response, jest.fn());
-
-            // Assert
-            expect(BusinessService.getBusinessById).toHaveBeenCalledWith(1);
-            expect(UserService.userExists).toHaveBeenCalledWith(userData.email, 1);
-            expect(bcrypt.hash).toHaveBeenCalledWith(userData.password, 10);
-            expect(UserService.createUser).toHaveBeenCalledWith({
-                name: userData.name,
-                email: userData.email,
-                password: 'hashedPassword',
-                businessId: 1,
-                role: 'cashier'
-            });
-            expect(jwt.sign).toHaveBeenCalled();
-            expect(mockStatus).toHaveBeenCalledWith(201);
-            expect(mockJson).toHaveBeenCalledWith({
+            const mockResult = {
                 message: 'User registered successfully',
-                user: expect.objectContaining({
+                user: {
                     id: 3,
                     businessId: 1,
                     name: userData.name,
                     email: userData.email,
                     role: 'cashier',
                     isActive: true,
-                    createdAt: expect.any(Date),
-                    updatedAt: expect.any(Date)
-                }),
-                business: expect.objectContaining({
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                },
+                business: {
                     id: 1,
                     name: 'Test Business',
                     slug: 'test-business'
-                }),
+                },
                 token: 'mockToken'
+            };
+
+            (AuthService.register as jest.Mock).mockResolvedValue(mockResult);
+
+            // Act
+            await AuthController.register(mockRequest as Request, mockResponse as Response, jest.fn());
+
+            // Assert
+            expect(AuthService.register).toHaveBeenCalledWith({
+                name: userData.name,
+                email: userData.email,
+                password: userData.password,
+                businessId: userData.businessId,
+                businessSlug: undefined,
+                role: undefined
             });
+            expect(mockStatus).toHaveBeenCalledWith(201);
+            expect(mockJson).toHaveBeenCalledWith(mockResult);
         });
 
         it('should return error if business not found', async () => {
@@ -116,16 +97,23 @@ describe('AuthController', () => {
             };
             mockRequest.body = userData;
             
-            (BusinessService.getBusinessById as jest.Mock).mockResolvedValue(null);
+            const { NotFoundError } = require('../utils/errors');
+            (AuthService.register as jest.Mock).mockRejectedValue(new NotFoundError('Business not found or inactive'));
 
             // Act
             await AuthController.register(mockRequest as Request, mockResponse as Response, jest.fn());
 
             // Assert
-            expect(mockStatus).toHaveBeenCalledWith(404);
-            expect(mockJson).toHaveBeenCalledWith({
-                error: 'Business not found or inactive'
+            expect(AuthService.register).toHaveBeenCalledWith({
+                name: userData.name,
+                email: userData.email,
+                password: userData.password,
+                businessId: userData.businessId,
+                businessSlug: undefined,
+                role: undefined
             });
+            // The error should be caught by asyncHandler and handled by error middleware
+            // We can't test the response here since it's handled by middleware
         });
 
         it('should return error if user already exists in business', async () => {
@@ -138,23 +126,20 @@ describe('AuthController', () => {
             };
             mockRequest.body = userData;
             
-            const mockBusiness = {
-                id: 1,
-                name: 'Test Business',
-                slug: 'test-business',
-                isActive: true
-            };
-            
-            (BusinessService.getBusinessById as jest.Mock).mockResolvedValue(mockBusiness);
-            (UserService.userExists as jest.Mock).mockResolvedValue(true);
+            const { ConflictError } = require('../utils/errors');
+            (AuthService.register as jest.Mock).mockRejectedValue(new ConflictError('User with this email already exists in this business'));
 
             // Act
             await AuthController.register(mockRequest as Request, mockResponse as Response, jest.fn());
 
             // Assert
-            expect(mockStatus).toHaveBeenCalledWith(409);
-            expect(mockJson).toHaveBeenCalledWith({
-                error: 'User with this email already exists in this business'
+            expect(AuthService.register).toHaveBeenCalledWith({
+                name: userData.name,
+                email: userData.email,
+                password: userData.password,
+                businessId: userData.businessId,
+                businessSlug: undefined,
+                role: undefined
             });
         });
 
@@ -166,14 +151,21 @@ describe('AuthController', () => {
                 password: 'password123'
             };
             mockRequest.body = userData;
+            
+            const { ValidationError } = require('../utils/errors');
+            (AuthService.register as jest.Mock).mockRejectedValue(new ValidationError('Business ID or business slug is required'));
 
             // Act
             await AuthController.register(mockRequest as Request, mockResponse as Response, jest.fn());
 
             // Assert
-            expect(mockStatus).toHaveBeenCalledWith(400);
-            expect(mockJson).toHaveBeenCalledWith({
-                error: 'Business ID or business slug is required'
+            expect(AuthService.register).toHaveBeenCalledWith({
+                name: userData.name,
+                email: userData.email,
+                password: userData.password,
+                businessId: undefined,
+                businessSlug: undefined,
+                role: undefined
             });
         });
 
@@ -188,91 +180,69 @@ describe('AuthController', () => {
             };
             mockRequest.body = userData;
             
-            const mockBusiness = {
-                id: 1,
-                name: 'Test Business',
-                slug: 'test-business',
-                isActive: true
-            };
-            
-            (BusinessService.getBusinessById as jest.Mock).mockResolvedValue(mockBusiness);
-            (UserService.userExists as jest.Mock).mockResolvedValue(false);
-            (UserService.findAnyAdmin as jest.Mock).mockResolvedValue(null);
-            (bcrypt.hash as jest.Mock).mockResolvedValue('hashedPassword');
-            (UserService.createUser as jest.Mock).mockResolvedValue({
-                id: 1,
-                businessId: 1,
-                name: userData.name,
-                email: userData.email,
-                role: 'admin',
-                isActive: true,
-                createdAt: new Date(),
-                updatedAt: new Date()
-            });
-            (jwt.sign as jest.Mock).mockReturnValue('mockToken');
-
-            // Act
-            await AuthController.register(mockRequest as Request, mockResponse as Response, jest.fn());
-
-            // Assert
-            expect(UserService.findAnyAdmin).toHaveBeenCalled();
-            expect(UserService.createUser).toHaveBeenCalledWith({
-                name: userData.name,
-                email: userData.email,
-                password: 'hashedPassword',
-                businessId: 1,
-                role: 'admin'
-            });
-            expect(mockStatus).toHaveBeenCalledWith(201);
-            expect(mockJson).toHaveBeenCalledWith({
+            const mockResult = {
                 message: 'User registered successfully',
-                user: expect.objectContaining({
+                user: {
                     id: 1,
                     businessId: 1,
                     name: userData.name,
                     email: userData.email,
                     role: 'admin',
                     isActive: true,
-                    createdAt: expect.any(Date),
-                    updatedAt: expect.any(Date)
-                }),
-                business: expect.objectContaining({
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                },
+                business: {
                     id: 1,
                     name: 'Test Business',
                     slug: 'test-business'
-                }),
+                },
                 token: 'mockToken'
+            };
+
+            (AuthService.register as jest.Mock).mockResolvedValue(mockResult);
+
+            // Act
+            await AuthController.register(mockRequest as Request, mockResponse as Response, jest.fn());
+
+            // Assert
+            expect(AuthService.register).toHaveBeenCalledWith({
+                name: userData.name,
+                email: userData.email,
+                password: userData.password,
+                businessId: userData.businessId,
+                businessSlug: undefined,
+                role: userData.role
             });
+            expect(mockStatus).toHaveBeenCalledWith(201);
+            expect(mockJson).toHaveBeenCalledWith(mockResult);
         });
 
         it('should reject admin registration when admin already exists', async () => {
             // Arrange
             const userData = {
-                name: 'Second Admin',
-                email: 'admin2@example.com',
+                name: 'Admin User',
+                email: 'admin@example.com',
                 password: 'password123',
                 businessId: 1,
                 role: 'admin'
             };
             mockRequest.body = userData;
             
-            const existingAdmin = {
-                id: 1,
-                name: 'First Admin',
-                email: 'admin1@example.com',
-                role: 'admin'
-            };
-            
-            (UserService.findAnyAdmin as jest.Mock).mockResolvedValue(existingAdmin);
+            const { ConflictError } = require('../utils/errors');
+            (AuthService.register as jest.Mock).mockRejectedValue(new ConflictError('Admin user already exists. Only one admin can be registered via API.'));
 
             // Act
             await AuthController.register(mockRequest as Request, mockResponse as Response, jest.fn());
 
             // Assert
-            expect(UserService.findAnyAdmin).toHaveBeenCalled();
-            expect(mockStatus).toHaveBeenCalledWith(409);
-            expect(mockJson).toHaveBeenCalledWith({
-                error: 'Admin user already exists. Only one admin can be registered via API.'
+            expect(AuthService.register).toHaveBeenCalledWith({
+                name: userData.name,
+                email: userData.email,
+                password: userData.password,
+                businessId: userData.businessId,
+                businessSlug: undefined,
+                role: userData.role
             });
         });
 
@@ -283,45 +253,45 @@ describe('AuthController', () => {
                 email: 'user@example.com',
                 password: 'password123',
                 businessId: 1
-                // No role specified - should default to cashier
             };
             mockRequest.body = userData;
             
-            const mockBusiness = {
-                id: 1,
-                name: 'Test Business',
-                slug: 'test-business',
-                isActive: true
+            const mockResult = {
+                message: 'User registered successfully',
+                user: {
+                    id: 2,
+                    businessId: 1,
+                    name: userData.name,
+                    email: userData.email,
+                    role: 'cashier',
+                    isActive: true,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                },
+                business: {
+                    id: 1,
+                    name: 'Test Business',
+                    slug: 'test-business'
+                },
+                token: 'mockToken'
             };
-            
-            (BusinessService.getBusinessById as jest.Mock).mockResolvedValue(mockBusiness);
-            (UserService.userExists as jest.Mock).mockResolvedValue(false);
-            (bcrypt.hash as jest.Mock).mockResolvedValue('hashedPassword');
-            (UserService.createUser as jest.Mock).mockResolvedValue({
-                id: 2,
-                businessId: 1,
-                name: userData.name,
-                email: userData.email,
-                role: 'cashier',
-                isActive: true,
-                createdAt: new Date(),
-                updatedAt: new Date()
-            });
-            (jwt.sign as jest.Mock).mockReturnValue('mockToken');
+
+            (AuthService.register as jest.Mock).mockResolvedValue(mockResult);
 
             // Act
             await AuthController.register(mockRequest as Request, mockResponse as Response, jest.fn());
 
             // Assert
-            expect(UserService.findAnyAdmin).not.toHaveBeenCalled();
-            expect(UserService.createUser).toHaveBeenCalledWith({
+            expect(AuthService.register).toHaveBeenCalledWith({
                 name: userData.name,
                 email: userData.email,
-                password: 'hashedPassword',
-                businessId: 1,
-                role: 'cashier'
+                password: userData.password,
+                businessId: userData.businessId,
+                businessSlug: undefined,
+                role: undefined
             });
             expect(mockStatus).toHaveBeenCalledWith(201);
+            expect(mockJson).toHaveBeenCalledWith(mockResult);
         });
     });
 
@@ -335,102 +305,60 @@ describe('AuthController', () => {
             };
             mockRequest.body = loginData;
             
-            const mockUser = {
-                id: 1,
-                businessId: 1,
-                name: 'Test User',
-                email: loginData.email,
-                password: 'hashedPassword',
-                role: 'cashier',
-                isActive: true,
-                get: jest.fn((field: string) => {
-                    const data: any = {
-                        id: 1,
-                        businessId: 1,
-                        name: 'Test User',
-                        email: loginData.email,
-                        password: 'hashedPassword',
-                        role: 'cashier'
-                    };
-                    return data[field];
-                }),
-                toJSON: () => ({
-                    id: 1,
-                    businessId: 1,
-                    name: 'Test User',
-                    email: loginData.email,
-                    password: 'hashedPassword',
-                    role: 'cashier'
-                })
-            };
-            
-            const mockBusiness = {
-                id: 1,
-                name: 'Test Business',
-                slug: 'test-business',
-                primaryColor: '#007bff',
-                secondaryColor: '#6c757d',
-                logo: 'logo.png',
-                currency: 'USD',
-                taxRate: 8.5,
-                timezone: 'UTC'
-            };
-            
-            (UserService.getUserByEmail as jest.Mock).mockResolvedValue(mockUser);
-            (BusinessService.getBusinessById as jest.Mock).mockResolvedValue(mockBusiness);
-            (bcrypt.compare as jest.Mock).mockResolvedValue(true);
-            (jwt.sign as jest.Mock).mockReturnValue('mockToken');
-
-            // Act
-            await AuthController.login(mockRequest as Request, mockResponse as Response, jest.fn());
-
-            // Assert
-            expect(UserService.getUserByEmail).toHaveBeenCalledWith(loginData.email, 1);
-            expect(BusinessService.getBusinessById).toHaveBeenCalledWith(1);
-            expect(bcrypt.compare).toHaveBeenCalledWith(loginData.password, 'hashedPassword');
-            expect(jwt.sign).toHaveBeenCalled();
-            expect(mockJson).toHaveBeenCalledWith({
+            const mockResult = {
                 message: 'Login successful',
                 user: {
                     id: 1,
                     businessId: 1,
                     name: 'Test User',
-                    email: loginData.email,
-                    role: 'cashier'
+                    email: 'test@example.com',
+                    role: 'cashier',
+                    isActive: true
                 },
                 business: {
                     id: 1,
                     name: 'Test Business',
-                    slug: 'test-business',
-                    primaryColor: '#007bff',
-                    secondaryColor: '#6c757d',
-                    logo: 'logo.png',
-                    currency: 'USD',
-                    taxRate: 8.5,
-                    timezone: 'UTC'
+                    slug: 'test-business'
                 },
                 token: 'mockToken'
-            });
-        });
-
-        it('should return error for invalid credentials', async () => {
-            // Arrange
-            const loginData = {
-                email: 'test@example.com',
-                password: 'wrongpassword',
-                businessId: 1
             };
-            mockRequest.body = loginData;
-            
-            (UserService.getUserByEmail as jest.Mock).mockResolvedValue(null);
+
+            (AuthService.login as jest.Mock).mockResolvedValue(mockResult);
 
             // Act
             await AuthController.login(mockRequest as Request, mockResponse as Response, jest.fn());
 
             // Assert
-            expect(mockStatus).toHaveBeenCalledWith(401);
-            expect(mockJson).toHaveBeenCalledWith({
-                error: 'Invalid email or password'
+            expect(AuthService.login).toHaveBeenCalledWith({
+                email: loginData.email,
+                password: loginData.password,
+                businessId: loginData.businessId,
+                businessSlug: undefined
+            });
+            expect(mockJson).toHaveBeenCalledWith(mockResult);
+        });
+
+        it('should return error for invalid credentials', async () => {
+            // Arrange
+            const loginData = {
+                email: 'wrong@example.com',
+                password: 'wrongpassword',
+                businessId: 1
+            };
+            mockRequest.body = loginData;
+            
+            const { AuthenticationError } = require('../utils/errors');
+            (AuthService.login as jest.Mock).mockRejectedValue(new AuthenticationError('Invalid email or password'));
+
+            // Act
+            await AuthController.login(mockRequest as Request, mockResponse as Response, jest.fn());
+
+            // Assert
+            expect(AuthService.login).toHaveBeenCalledWith({
+                email: loginData.email,
+                password: loginData.password,
+                businessId: loginData.businessId,
+                businessSlug: undefined
             });
         });
 
@@ -441,14 +369,19 @@ describe('AuthController', () => {
                 password: 'password123'
             };
             mockRequest.body = loginData;
+            
+            const { ValidationError } = require('../utils/errors');
+            (AuthService.login as jest.Mock).mockRejectedValue(new ValidationError('Business ID or business slug is required'));
 
             // Act
             await AuthController.login(mockRequest as Request, mockResponse as Response, jest.fn());
 
             // Assert
-            expect(mockStatus).toHaveBeenCalledWith(400);
-            expect(mockJson).toHaveBeenCalledWith({
-                error: 'Business ID or business slug is required'
+            expect(AuthService.login).toHaveBeenCalledWith({
+                email: loginData.email,
+                password: loginData.password,
+                businessId: undefined,
+                businessSlug: undefined
             });
         });
     });
@@ -463,7 +396,6 @@ describe('AuthController', () => {
                 email: 'test@example.com',
                 role: 'cashier'
             };
-            
             const mockBusiness = {
                 id: 1,
                 name: 'Test Business',
@@ -476,50 +408,35 @@ describe('AuthController', () => {
                 timezone: 'UTC'
             };
             
-            (mockRequest as any).user = {
-                userId: 1,
-                businessId: 1,
-                email: 'test@example.com',
-                role: 'cashier'
-            };
+            (mockRequest as any).user = { userId: 1, businessId: 1 };
             
-            (UserService.getUserById as jest.Mock).mockResolvedValue(mockUser);
-            (BusinessService.getBusinessById as jest.Mock).mockResolvedValue(mockBusiness);
+            const mockResult = {
+                user: mockUser,
+                business: mockBusiness
+            };
+
+            (AuthService.getProfile as jest.Mock).mockResolvedValue(mockResult);
 
             // Act
             await AuthController.getProfile(mockRequest as Request, mockResponse as Response, jest.fn());
 
             // Assert
-            expect(UserService.getUserById).toHaveBeenCalledWith(1, 1);
-            expect(BusinessService.getBusinessById).toHaveBeenCalledWith(1);
-            expect(mockJson).toHaveBeenCalledWith({
-                user: mockUser,
-                business: {
-                    id: 1,
-                    name: 'Test Business',
-                    slug: 'test-business',
-                    primaryColor: '#007bff',
-                    secondaryColor: '#6c757d',
-                    logo: 'logo.png',
-                    currency: 'USD',
-                    taxRate: 8.5,
-                    timezone: 'UTC'
-                }
-            });
+            expect(AuthService.getProfile).toHaveBeenCalledWith(1, 1);
+            expect(mockJson).toHaveBeenCalledWith(mockResult);
         });
 
         it('should return error if user not authenticated', async () => {
             // Arrange
-            (mockRequest as any).user = undefined;
+            mockRequest = {};
+            
+            const { AuthenticationError } = require('../utils/errors');
+            (AuthService.getProfile as jest.Mock).mockRejectedValue(new AuthenticationError('Authentication required'));
 
             // Act
             await AuthController.getProfile(mockRequest as Request, mockResponse as Response, jest.fn());
 
             // Assert
-            expect(mockStatus).toHaveBeenCalledWith(401);
-            expect(mockJson).toHaveBeenCalledWith({
-                error: 'Authentication required'
-            });
+            expect(AuthService.getProfile).not.toHaveBeenCalled();
         });
     });
 }); 

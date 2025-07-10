@@ -5,6 +5,7 @@ import swaggerJsdoc from 'swagger-jsdoc';
 import dotenv from 'dotenv';
 import { logger } from './utils/logger';
 import DatabaseService from './services/databaseService';
+import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 
 // Load environment variables FIRST
 dotenv.config();
@@ -140,6 +141,10 @@ async function startServer() {
     app.use('/api/kitchen', kitchenRoutes);
 
     logger('Routes registered successfully.');
+
+    // Error handling middleware (must be last)
+    app.use(notFoundHandler);
+    app.use(errorHandler);
 
     // Start server
     const server = app.listen(PORT, () => {
