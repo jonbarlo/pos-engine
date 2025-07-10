@@ -1,0 +1,746 @@
+openapi: 3.0.3
+info:
+  title: POS Engine API
+  description: Node.js/TypeScript POS system API
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@posengine.com
+
+servers:
+  - url: http://localhost:3000/api
+    description: Development server
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Error message description"
+
+    Sale:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        businessId:
+          type: integer
+          example: 1
+        userId:
+          type: integer
+          example: 1
+        customerId:
+          type: integer
+          example: 1
+        totalAmount:
+          type: number
+          example: 1193.49
+        taxAmount:
+          type: number
+          example: 93.50
+        discountAmount:
+          type: number
+          example: 0
+        finalAmount:
+          type: number
+          example: 1193.49
+        paymentMethod:
+          type: string
+          enum: [cash, card, check]
+          example: "card"
+        status:
+          type: string
+          enum: [pending, completed, cancelled, refunded]
+          example: "completed"
+        notes:
+          type: string
+          example: "Customer requested extra napkins"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-01T00:00:00.000Z"
+
+    OrderItem:
+      type: object
+      required:
+        - itemId
+        - quantity
+        - unitPrice
+      properties:
+        itemId:
+          type: integer
+          example: 1
+        quantity:
+          type: integer
+          example: 2
+        unitPrice:
+          type: number
+          example: 599.99
+
+    Order:
+      type: object
+      required:
+        - orderType
+        - items
+      properties:
+        orderType:
+          type: string
+          enum: [dine_in, takeaway, delivery]
+          example: "dine_in"
+        customerId:
+          type: integer
+          example: 1
+        tableId:
+          type: integer
+          example: 1
+        items:
+          type: array
+          items:
+            type: object
+            required:
+              - itemId
+              - quantity
+            properties:
+              itemId:
+                type: integer
+                example: 1
+              quantity:
+                type: integer
+                example: 2
+              notes:
+                type: string
+                example: "Extra spicy"
+        notes:
+          type: string
+          example: "Window seat"
+
+    Item:
+      type: object
+      required:
+        - name
+        - price
+        - stock
+        - category
+        - sku
+      properties:
+        name:
+          type: string
+          example: "Laptop"
+        description:
+          type: string
+          example: "High-performance laptop"
+        price:
+          type: number
+          example: 999.99
+        stock:
+          type: integer
+          example: 10
+        category:
+          type: string
+          example: "Electronics"
+        sku:
+          type: string
+          example: "LAP001"
+        barcode:
+          type: string
+          example: "1234567890123"
+
+paths:
+  /auth/login:
+    post:
+      summary: Login user
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "maria.esposito@example.com"
+                password:
+                  type: string
+                  example: "password123"
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      email:
+                        type: string
+                        example: "maria.esposito@example.com"
+                      businessId:
+                        type: integer
+                        example: 1
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /sales:
+    get:
+      summary: Get all sales
+      tags: [Sales]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Page number for pagination
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+          description: Number of sales per page
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [pending, completed, cancelled]
+          description: Filter by sale status
+        - in: query
+          name: userId
+          schema:
+            type: integer
+          description: Filter by user ID
+        - in: query
+          name: startDate
+          schema:
+            type: string
+            format: date
+          description: Filter by start date
+        - in: query
+          name: endDate
+          schema:
+            type: string
+            format: date
+          description: Filter by end date
+      responses:
+        '200':
+          description: List of sales
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Sale'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      summary: Create a new sale
+      tags: [Sales]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+                - totalAmount
+              properties:
+                userId:
+                  type: integer
+                  example: 1
+                customerId:
+                  type: integer
+                  example: 1
+                totalAmount:
+                  type: number
+                  example: 1193.49
+                taxAmount:
+                  type: number
+                  example: 93.50
+                discountAmount:
+                  type: number
+                  example: 0
+                finalAmount:
+                  type: number
+                  example: 1193.49
+                paymentMethod:
+                  type: string
+                  enum: [cash, card, check]
+                  example: "card"
+                status:
+                  type: string
+                  enum: [pending, completed, cancelled, refunded]
+                  example: "completed"
+                notes:
+                  type: string
+                  example: "Customer requested extra napkins"
+      responses:
+        '201':
+          description: Sale created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Sale created successfully"
+                  sale:
+                    $ref: '#/components/schemas/Sale'
+        '400':
+          description: Bad request - customerName and total are required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /sales/with-items:
+    post:
+      summary: Create a new sale with order items
+      tags: [Sales]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - orderItems
+              properties:
+                customerName:
+                  type: string
+                  example: "John Doe"
+                customerEmail:
+                  type: string
+                  format: email
+                  example: "john@example.com"
+                subtotal:
+                  type: number
+                  example: 1099.99
+                tax:
+                  type: number
+                  example: 93.50
+                discount:
+                  type: number
+                  example: 0
+                total:
+                  type: number
+                  example: 1193.49
+                paymentMethod:
+                  type: string
+                  enum: [cash, card, check]
+                  example: "card"
+                status:
+                  type: string
+                  enum: [pending, completed, cancelled]
+                  example: "completed"
+                orderItems:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/OrderItem'
+      responses:
+        '201':
+          description: Sale with items created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Sale with items created successfully"
+                  sale:
+                    $ref: '#/components/schemas/Sale'
+        '400':
+          description: Bad request - orderItems array with itemId, quantity, unitPrice required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /sales/stats:
+    get:
+      summary: Get sales statistics
+      tags: [Sales]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Sales statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  totalSales:
+                    type: number
+                    example: 15000.50
+                  totalTransactions:
+                    type: integer
+                    example: 45
+                  averageOrderValue:
+                    type: number
+                    example: 333.34
+                  topSellingItems:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        itemId:
+                          type: integer
+                        totalQuantity:
+                          type: integer
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /sales/user/{userId}:
+    get:
+      summary: Get sales by user ID
+      tags: [Sales]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: integer
+          description: User ID
+      responses:
+        '200':
+          description: Sales by user
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Sale'
+        '400':
+          description: Bad request - User ID is required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /sales/{id}:
+    get:
+      summary: Get sale by ID
+      tags: [Sales]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Sale ID
+      responses:
+        '200':
+          description: Sale details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sale'
+        '400':
+          description: Bad request - Sale ID is required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Sale not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      summary: Update a sale
+      tags: [Sales]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Sale ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                customerName:
+                  type: string
+                customerEmail:
+                  type: string
+                subtotal:
+                  type: number
+                tax:
+                  type: number
+                discount:
+                  type: number
+                total:
+                  type: number
+                paymentMethod:
+                  type: string
+                status:
+                  type: string
+      responses:
+        '200':
+          description: Sale updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Sale updated successfully"
+                  sale:
+                    $ref: '#/components/schemas/Sale'
+        '400':
+          description: Bad request - Sale ID required or no fields to update
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Sale not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: Delete a sale
+      tags: [Sales]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Sale ID
+      responses:
+        '200':
+          description: Sale deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Sale deleted successfully"
+        '400':
+          description: Bad request - Sale ID is required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Sale not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /orders:
+    post:
+      summary: Create a new order
+      tags: [Orders]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Order'
+      responses:
+        '201':
+          description: Order created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Order'
+                  message:
+                    type: string
+                    example: "Order created successfully"
+        '400':
+          description: Bad request - orderType and items array required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "orderType and items are required"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /items:
+    get:
+      summary: Get all items
+      tags: [Items]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Page number for pagination
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+          description: Number of items per page
+      responses:
+        '200':
+          description: List of items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Item'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      summary: Create a new item
+      tags: [Items]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Item'
+      responses:
+        '201':
+          description: Item created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+security:
+  - bearerAuth: [] 

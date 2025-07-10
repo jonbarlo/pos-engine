@@ -109,7 +109,7 @@ salesRouter.get('/', SaleController.getAllSales);
  *         application/json:
  *           schema:
  *             type: object
- *             required: [customerName, subtotal, total]
+ *             required: [customerName, total]
  *             properties:
  *               customerName:
  *                 type: string
@@ -159,6 +159,86 @@ salesRouter.get('/', SaleController.getAllSales);
  *               $ref: '#/components/schemas/Error'
  */
 salesRouter.post('/', SaleController.createSale);
+
+/**
+ * @swagger
+ * /api/sales/with-items:
+ *   post:
+ *     summary: Create a new sale with order items
+ *     tags: [Sales]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [customerName, total, orderItems]
+ *             properties:
+ *               customerName:
+ *                 type: string
+ *                 example: "John Doe"
+ *               customerEmail:
+ *                 type: string
+ *                 format: email
+ *                 example: "john@example.com"
+ *               subtotal:
+ *                 type: number
+ *                 example: 1099.99
+ *               tax:
+ *                 type: number
+ *                 example: 93.50
+ *               discount:
+ *                 type: number
+ *                 example: 0
+ *               total:
+ *                 type: number
+ *                 example: 1193.49
+ *               paymentMethod:
+ *                 type: string
+ *                 enum: [cash, card, check]
+ *                 example: "card"
+ *               status:
+ *                 type: string
+ *                 enum: [pending, completed, cancelled]
+ *                 example: "completed"
+ *               orderItems:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   required: [itemId, quantity, unitPrice]
+ *                   properties:
+ *                     itemId:
+ *                       type: integer
+ *                       example: 1
+ *                     quantity:
+ *                       type: integer
+ *                       example: 2
+ *                     unitPrice:
+ *                       type: number
+ *                       example: 599.99
+ *     responses:
+ *       201:
+ *         description: Sale with items created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Sale'
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+salesRouter.post('/with-items', SaleController.createSaleWithItems);
 
 /**
  * @swagger

@@ -11,8 +11,8 @@ export class SaleController {
     try {
       const saleData = req.body;
       
-      if (!saleData.customerName || saleData.total === undefined) {
-        res.status(400).json({ error: 'Customer name and total are required' });
+      if (!saleData.userId || saleData.totalAmount === undefined) {
+        res.status(400).json({ error: 'User ID and total amount are required' });
         return;
       }
 
