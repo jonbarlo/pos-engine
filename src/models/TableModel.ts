@@ -132,7 +132,7 @@ export const initializeTableModel = (sequelize: Sequelize): void => {
     },
     {
       sequelize,
-      tableName: 'tables',
+      tableName: 'restaurant_tables',
       timestamps: true,
       indexes: [
         {

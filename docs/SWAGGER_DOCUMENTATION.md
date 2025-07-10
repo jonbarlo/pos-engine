@@ -120,9 +120,9 @@ Each route file contains JSDoc comments with Swagger annotations:
    - Enter credentials:
      ```json
      {
-       "email": "admin@demo.com",
-       "password": "admin123",
-       "businessSlug": "demo-business"
+       "email": "maria@bellavista.com",
+       "password": "cashier123",
+       "businessSlug": "bella-vista-italian"
      }
      ```
    - Copy the JWT token from the response

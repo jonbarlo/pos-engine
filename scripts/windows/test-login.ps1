@@ -13,12 +13,12 @@ Write-Host "Testing Login API" -ForegroundColor Green
 Write-Host "==================" -ForegroundColor Green
 Write-Host "Base URL: $BaseUrl" -ForegroundColor Cyan
 
-# Test 1: Admin Login
-Write-Host "`n1. Testing admin login..." -ForegroundColor Yellow
+# Test 1: Maria Esposito Login (Cashier)
+Write-Host "`n1. Testing Maria Esposito login..." -ForegroundColor Yellow
 $adminLoginBody = @{
-    email = "admin@demo.com"
-    password = "admin123"
-    businessSlug = "demo-business"
+    email = "maria@bellavista.com"
+    password = "cashier123"
+    businessSlug = "bella-vista-italian"
 } | ConvertTo-Json
 
 try {
@@ -46,12 +46,12 @@ try {
     }
 }
 
-# Test 2: Regular User Login
-Write-Host "`n2. Testing regular user login..." -ForegroundColor Yellow
+# Test 2: Giuseppe Romano Login (Cashier)
+Write-Host "`n2. Testing Giuseppe Romano login..." -ForegroundColor Yellow
 $userLoginBody = @{
-    email = "user@demo.com"
-    password = "user123"
-    businessSlug = "demo-business"
+    email = "giuseppe@bellavista.com"
+    password = "cashier123"
+    businessSlug = "bella-vista-italian"
 } | ConvertTo-Json
 
 try {
@@ -82,9 +82,9 @@ try {
 # Test 3: Invalid Credentials
 Write-Host "`n3. Testing invalid credentials..." -ForegroundColor Yellow
 $invalidLoginBody = @{
-    email = "admin@demo.com"
+    email = "maria@bellavista.com"
     password = "wrongpassword"
-    businessSlug = "demo-business"
+    businessSlug = "bella-vista-italian"
 } | ConvertTo-Json
 
 try {
@@ -107,8 +107,8 @@ try {
 # Test 4: Missing Business Context
 Write-Host "`n4. Testing missing business context..." -ForegroundColor Yellow
 $noBusinessBody = @{
-    email = "admin@demo.com"
-    password = "admin123"
+    email = "maria@bellavista.com"
+    password = "cashier123"
 } | ConvertTo-Json
 
 try {
@@ -131,8 +131,8 @@ try {
 # Test 5: Invalid Business Slug
 Write-Host "`n5. Testing invalid business slug..." -ForegroundColor Yellow
 $invalidBusinessBody = @{
-    email = "admin@demo.com"
-    password = "admin123"
+    email = "maria@bellavista.com"
+    password = "cashier123"
     businessSlug = "non-existent-business"
 } | ConvertTo-Json
 
@@ -156,8 +156,8 @@ try {
 # Test 6: Test with businessId instead of businessSlug
 Write-Host "`n6. Testing login with businessId..." -ForegroundColor Yellow
 $businessIdBody = @{
-    email = "admin@demo.com"
-    password = "admin123"
+    email = "maria@bellavista.com"
+    password = "cashier123"
     businessId = 1
 } | ConvertTo-Json
 

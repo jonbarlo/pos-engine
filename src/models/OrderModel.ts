@@ -106,9 +106,10 @@ export const initializeOrderModel = (sequelize: Sequelize): void => {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: {
-          model: 'tables',
+          model: 'restaurant_tables',
           key: 'id',
         },
+        onDelete: 'SET NULL',
       },
       serverId: {
         type: DataTypes.INTEGER,

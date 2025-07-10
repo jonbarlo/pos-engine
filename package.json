@@ -19,10 +19,11 @@
     "migrate:create": "ts-node src/scripts/create-migration.ts",
     "seed": "ts-node src/database/seeders/20250101000000-demo-data.ts",
     "seed:test": "NODE_ENV=test ts-node src/database/seeders/20250101000001-test-data.ts",
-    "db:seed:dev": "NODE_ENV=development ts-node src/scripts/seed-dev.ts",
-    "db:seed:test": "NODE_ENV=test ts-node src/scripts/seed-test.ts",
+    "db:seed:dev": "cross-env NODE_ENV=development ts-node src/scripts/seed.ts",
+    "db:seed:test": "cross-env NODE_ENV=test ts-node src/scripts/seed.ts",
     "deploy:mochahost": "ts-node src/scripts/deploy-mochahost.ts",
-    "test": "cross-env NODE_ENV=test jest"
+    "test": "cross-env NODE_ENV=test jest",
+    "db:cleanup": "ts-node src/scripts/cleanup-db.ts"
   },
   "repository": {
     "type": "git",
@@ -36,6 +37,7 @@
   },
   "homepage": "https://github.com/jonbarlo/node-js-api#readme",
   "dependencies": {
+    "@faker-js/faker": "^9.9.0",
     "@types/mssql": "^9.1.7",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",

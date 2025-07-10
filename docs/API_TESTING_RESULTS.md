@@ -15,8 +15,8 @@ This document contains comprehensive testing results for the POS Engine API endp
 ## 🎯 Test Credentials
 
 ### Business Information
-- **Business Name:** Demo Business
-- **Business Slug:** demo-business
+- **Business Name:** Bella Vista Italian Restaurant
+- **Business Slug:** bella-vista-italian
 - **Tax Rate:** 8.5%
 - **Currency:** USD
 - **Timezone:** America/New_York
@@ -24,8 +24,8 @@ This document contains comprehensive testing results for the POS Engine API endp
 ### User Accounts
 | Role | Email | Password | User ID | Business ID |
 |------|-------|----------|---------|-------------|
-| Admin | admin@demo.com | admin123 | 1 | 1 |
-| Cashier | user@demo.com | user123 | 2 | 1 |
+| Cashier | maria@bellavista.com | cashier123 | 4 | 1 |
+| Cashier | giuseppe@bellavista.com | cashier123 | 3 | 1 |
 
 ---
 
@@ -86,9 +86,9 @@ curl -X GET http://localhost:3031/
 curl -X POST http://localhost:3031/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "admin@demo.com",
-    "password": "admin123",
-    "businessSlug": "demo-business"
+    "email": "maria@bellavista.com",
+    "password": "cashier123",
+    "businessSlug": "bella-vista-italian"
   }'
 ```
 
@@ -97,19 +97,19 @@ curl -X POST http://localhost:3031/api/auth/login \
 {
   "message": "Login successful",
   "user": {
-    "id": 1,
+    "id": 4,
     "businessId": 1,
-    "name": "Admin User",
-    "email": "admin@demo.com",
-    "role": "admin",
+    "name": "Maria Esposito",
+    "email": "maria@bellavista.com",
+    "role": "cashier",
     "isActive": true,
     "createdAt": "2025-07-07T22:13:21.767Z",
     "updatedAt": "2025-07-07T22:13:21.767Z"
   },
   "business": {
     "id": 1,
-    "name": "Demo Business",
-    "slug": "demo-business",
+    "name": "Bella Vista Italian Restaurant",
+    "slug": "bella-vista-italian",
     "primaryColor": null,
     "secondaryColor": null,
     "logo": null,
@@ -117,7 +117,7 @@ curl -X POST http://localhost:3031/api/auth/login \
     "taxRate": 8.5,
     "timezone": "America/New_York"
   },
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImJ1c2luZXNzSWQiOjEsImVtYWlsIjoiYWRtaW5AZGVtby5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NTE5MjY0MDksImV4cCI6MTc1MjAxMjgwOX0.b2PfWOqngjngzsyDKH2jVF23b2RUy4T9QFOwaG45vo4"
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQsImJ1c2luZXNzSWQiOjEsImVtYWlsIjoibWFyaWFAYmVsbGF2aXN0YS5jb20iLCJyb2xlIjoiY2FzaGllciIsImlhdCI6MTc1MTkyNjQwOSwiZXhwIjoxNzUyMDEyODA5fQ.example"
 }
 ```
 
@@ -128,9 +128,9 @@ curl -X POST http://localhost:3031/api/auth/login \
 curl -X POST http://localhost:3031/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "wrong@email.com",
+    "email": "maria@bellavista.com",
     "password": "wrongpass",
-    "businessSlug": "demo-business"
+    "businessSlug": "bella-vista-italian"
   }'
 ```
 
@@ -146,8 +146,8 @@ curl -X POST http://localhost:3031/api/auth/login \
 curl -X POST http://localhost:3031/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "admin@demo.com",
-    "password": "admin123",
+    "email": "maria@bellavista.com",
+    "password": "cashier123",
     "businessSlug": "non-existent-business"
   }'
 ```
