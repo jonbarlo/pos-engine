@@ -1,9 +1,24 @@
 import { UserService } from './userService';
-import { UserModel } from '../models/index';
+import { UserModel, UserRole } from '../models/UserModel';
 import bcrypt from 'bcryptjs';
 
+// Mock the UserModel
+jest.mock('../models/UserModel', () => ({
+  UserModel: {
+    create: jest.fn(),
+    findOne: jest.fn(),
+    findAll: jest.fn(),
+    count: jest.fn(),
+    update: jest.fn()
+  },
+  UserRole: {
+    ADMIN: 'admin',
+    MANAGER: 'manager',
+    CASHIER: 'cashier'
+  }
+}));
+
 // Mock dependencies
-jest.mock('../models/index');
 jest.mock('bcryptjs');
 jest.mock('../utils/logger', () => ({
     logger: jest.fn(),
@@ -22,7 +37,7 @@ describe('UserService', () => {
                 email: 'test@example.com',
                 password: 'password123',
                 businessId: 1,
-                role: 'cashier' as const
+                role: UserRole.CASHIER
             };
 
             const hashedPassword = 'hashedPassword123';
@@ -66,7 +81,7 @@ describe('UserService', () => {
                 email: 'admin@example.com',
                 password: 'password123',
                 businessId: 1,
-                role: 'admin' as const
+                role: UserRole.ADMIN
             };
 
             const hashedPassword = 'hashedPassword123';

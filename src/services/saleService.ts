@@ -1,5 +1,8 @@
-import { SaleModel, OrderItemModel, UserModel, ItemModel } from '../models';
-import { SaleAttributes, SaleCreationAttributes } from '../models';
+import { SaleModel } from '../models/SaleModel';
+import { UserModel } from '../models/UserModel';
+import { ItemModel } from '../models/ItemModel';
+import { SaleItemModel } from '../models/SaleItemModel';
+import { SaleAttributes, SaleCreationAttributes } from '../models/SaleModel';
 import { QueryTypes } from 'sequelize';
 
 export interface SaleFilters {
@@ -24,8 +27,8 @@ export class SaleService {
    */
   static async createSale(saleData: SaleCreationAttributes): Promise<SaleAttributes> {
     // Validate required fields
-    if (!saleData.userId || saleData.subtotal === undefined || saleData.total === undefined) {
-      throw new Error('Missing required fields: userId, subtotal, total');
+    if (!saleData.userId || saleData.totalAmount === undefined) {
+      throw new Error('Missing required fields: userId, totalAmount');
     }
 
     const sale = await SaleModel.create(saleData);
@@ -140,15 +143,15 @@ export class SaleService {
     try {
       // Get all sales (not just completed) for now to avoid empty results
       const sales = await SaleModel.findAll({
-        attributes: ['total', 'createdAt', 'status']
+        attributes: ['totalAmount', 'createdAt', 'status']
       });
 
-      const totalSales = sales.reduce((sum, sale) => sum + parseFloat(sale.total.toString()), 0);
+      const totalSales = sales.reduce((sum, sale) => sum + parseFloat(sale.totalAmount.toString()), 0);
       const totalTransactions = sales.length;
       const averageOrderValue = totalTransactions > 0 ? totalSales / totalTransactions : 0;
 
       // Get top selling items with explicit MS SQL Server compatible query
-      const sequelize = SaleModel.sequelize || OrderItemModel.sequelize;
+      const sequelize = SaleModel.sequelize || SaleItemModel.sequelize;
       if (!sequelize) {
         throw new Error('Sequelize instance not available');
       }
@@ -157,12 +160,12 @@ export class SaleService {
       // Modified to work even if no sales exist
       const topSellingItems = await sequelize.query(`
         SELECT 
-          oi.itemId,
-          SUM(oi.quantity) as totalQuantity
-        FROM order_items oi
-        INNER JOIN sales s ON oi.saleId = s.id
-        GROUP BY oi.itemId
-        ORDER BY SUM(oi.quantity) DESC
+          si.itemId,
+          SUM(si.quantity) as totalQuantity
+        FROM sale_items si
+        INNER JOIN sales s ON si.saleId = s.id
+        GROUP BY si.itemId
+        ORDER BY SUM(si.quantity) DESC
         OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY
       `, {
         type: QueryTypes.SELECT
@@ -191,7 +194,7 @@ export class SaleService {
     }>
   ): Promise<SaleAttributes> {
     // Get sequelize instance from any model
-    const sequelize = SaleModel.sequelize || OrderItemModel.sequelize;
+    const sequelize = SaleModel.sequelize || SaleItemModel.sequelize;
     if (!sequelize) {
       throw new Error('Sequelize instance not available');
     }
@@ -202,19 +205,23 @@ export class SaleService {
       // Create the sale
       const sale = await SaleModel.create(saleData, { transaction });
 
-      // Create order items
-      const orderItemPromises = orderItems.map(item => 
-        OrderItemModel.create({
+      // Create sale items
+      const saleItemPromises = orderItems.map(item => {
+        const discountAmount = 0;
+        const totalPrice = item.quantity * item.unitPrice;
+        const finalPrice = totalPrice - discountAmount;
+        return SaleItemModel.create({
           saleId: sale.id,
-          businessId: saleData.businessId,
           itemId: item.itemId,
           quantity: item.quantity,
           unitPrice: item.unitPrice,
-          totalPrice: item.quantity * item.unitPrice
-        }, { transaction })
-      );
+          totalPrice,
+          discountAmount,
+          finalPrice
+        }, { transaction });
+      });
 
-      await Promise.all(orderItemPromises);
+      await Promise.all(saleItemPromises);
 
       // Update item stock
       const stockUpdatePromises = orderItems.map(async item => {
@@ -242,8 +249,8 @@ export class SaleService {
     const sale = await SaleModel.findByPk(id, {
       include: [
         {
-          model: OrderItemModel,
-          as: 'orderItems',
+          model: SaleItemModel,
+          as: 'saleItems',
           include: [
             {
               model: ItemModel,

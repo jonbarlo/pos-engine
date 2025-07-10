@@ -1,593 +1,293 @@
-import { DataTypes, Model, Optional } from 'sequelize';
+import { getSequelize } from './sequelize';
+import { initializeBusinessModel } from './BusinessModel';
+import { initializeUserModel } from './UserModel';
+import { initializeItemModel } from './ItemModel';
+import { initializeSaleModel } from './SaleModel';
+import { initializeSaleItemModel } from './SaleItemModel';
+import { initializeReservationModel } from './ReservationModel';
+import { initializeTableModel } from './TableModel';
+import { initializeOrderModel } from './OrderModel';
+import { initializeOrderItemModel } from './OrderItemModel';
+import { initializeCustomerModel } from './CustomerModel';
+import { initializeMenuItemModel } from './MenuItemModel';
+import { initializeMenuCategoryModel } from './MenuCategoryModel';
+import { initializeDeliveryModel } from './DeliveryModel';
+import { initializeKitchenOrderModel } from './KitchenOrderModel';
 
-// Business/Tenant Model Interfaces
-export interface BusinessAttributes {
-  id: number;
-  name: string;
-  slug: string;
-  description?: string;
-  logo?: string;
-  primaryColor?: string;
-  secondaryColor?: string;
-  address?: string;
-  phone?: string;
-  email?: string;
-  website?: string;
-  taxRate: number;
-  currency: string;
-  timezone: string;
-  isActive: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
+// Import models for associations
+import { BusinessModel } from './BusinessModel';
+import { UserModel } from './UserModel';
+import { ItemModel } from './ItemModel';
+import { SaleModel } from './SaleModel';
+import { SaleItemModel } from './SaleItemModel';
+import { ReservationModel } from './ReservationModel';
+import { TableModel } from './TableModel';
+import { OrderModel } from './OrderModel';
+import { OrderItemModel } from './OrderItemModel';
+import { CustomerModel } from './CustomerModel';
+import { MenuItemModel } from './MenuItemModel';
+import { MenuCategoryModel } from './MenuCategoryModel';
+import { DeliveryModel } from './DeliveryModel';
+import { KitchenOrderModel } from './KitchenOrderModel';
 
-export type BusinessCreationAttributes = Optional<BusinessAttributes, 'id' | 'isActive' | 'createdAt' | 'updatedAt'>;
+export const initializeAllModels = (): void => {
+  const sequelize = getSequelize();
+  initializeBusinessModel(sequelize);
+  initializeUserModel(sequelize);
+  initializeItemModel(sequelize);
+  initializeSaleModel(sequelize);
+  initializeSaleItemModel(sequelize);
+  initializeReservationModel(sequelize);
+  initializeTableModel(sequelize);
+  initializeOrderModel(sequelize);
+  initializeOrderItemModel(sequelize);
+  initializeCustomerModel(sequelize);
+  initializeMenuItemModel(sequelize);
+  initializeMenuCategoryModel(sequelize);
+  initializeDeliveryModel(sequelize);
+  initializeKitchenOrderModel(sequelize);
+  
+  // Associations are set up separately for integration tests
+  // and skipped for unit tests to avoid import issues
+};
 
-// User Model Interfaces
-export interface UserAttributes {
-  id: number;
-  businessId: number;
-  name: string;
-  email: string;
-  password: string;
-  role: 'admin' | 'owner' | 'manager' | 'cashier' | 'viewer';
-  isActive: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
+export const setupAssociations = (): void => {
+  // Business associations
+  BusinessModel.hasMany(UserModel, {
+    foreignKey: 'businessId',
+    as: 'users',
+    onDelete: 'CASCADE'
+  });
+  BusinessModel.hasMany(ItemModel, {
+    foreignKey: 'businessId',
+    as: 'items',
+    onDelete: 'CASCADE'
+  });
+  BusinessModel.hasMany(SaleModel, {
+    foreignKey: 'businessId',
+    as: 'sales',
+    onDelete: 'CASCADE'
+  });
+  BusinessModel.hasMany(ReservationModel, {
+    foreignKey: 'businessId',
+    as: 'reservations',
+    onDelete: 'CASCADE'
+  });
+  BusinessModel.hasMany(TableModel, {
+    foreignKey: 'businessId',
+    as: 'tables',
+    onDelete: 'CASCADE'
+  });
+  BusinessModel.hasMany(OrderModel, {
+    foreignKey: 'businessId',
+    as: 'orders',
+    onDelete: 'CASCADE'
+  });
+  BusinessModel.hasMany(CustomerModel, {
+    foreignKey: 'businessId',
+    as: 'customers',
+    onDelete: 'CASCADE'
+  });
+  BusinessModel.hasMany(MenuItemModel, {
+    foreignKey: 'businessId',
+    as: 'menuItems',
+    onDelete: 'CASCADE'
+  });
+  BusinessModel.hasMany(MenuCategoryModel, {
+    foreignKey: 'businessId',
+    as: 'menuCategories',
+    onDelete: 'CASCADE'
+  });
 
-export type UserCreationAttributes = Optional<UserAttributes, 'id' | 'isActive' | 'createdAt' | 'updatedAt'>;
+  // User associations
+  UserModel.belongsTo(BusinessModel, {
+    foreignKey: 'businessId',
+    as: 'business'
+  });
 
-// Item Model Interfaces
-export interface ItemAttributes {
-  id: number;
-  businessId: number;
-  name: string;
-  description?: string;
-  price: number;
-  stock: number;
-  category?: string;
-  sku?: string;
-  barcode?: string;
-  isActive: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
+  // Item associations
+  ItemModel.belongsTo(BusinessModel, {
+    foreignKey: 'businessId',
+    as: 'business'
+  });
 
-export interface ItemCreationAttributes extends Optional<ItemAttributes, 'id' | 'isActive' | 'createdAt' | 'updatedAt'> {}
+  // Sale associations
+  SaleModel.belongsTo(BusinessModel, {
+    foreignKey: 'businessId',
+    as: 'business'
+  });
+  SaleModel.belongsTo(UserModel, {
+    foreignKey: 'userId',
+    as: 'user'
+  });
 
-// Sale Model Interfaces
-export interface SaleAttributes {
-  id: number;
-  businessId: number;
-  userId: number;
-  customerName?: string;
-  customerEmail?: string;
-  customerPhone?: string;
-  subtotal: number;
-  tax: number;
-  discount: number;
-  total: number;
-  paymentMethod: 'cash' | 'card' | 'mobile' | 'other';
-  status: 'pending' | 'completed' | 'cancelled' | 'refunded';
-  notes?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
+  SaleItemModel.belongsTo(SaleModel, {
+    foreignKey: 'saleId',
+    as: 'sale'
+  });
+  SaleItemModel.belongsTo(ItemModel, {
+    foreignKey: 'itemId',
+    as: 'item'
+  });
 
-export interface SaleCreationAttributes extends Omit<SaleAttributes, 'id' | 'createdAt' | 'updatedAt'> {}
+  SaleModel.hasMany(SaleItemModel, {
+    foreignKey: 'saleId',
+    as: 'saleItems'
+  });
 
-// OrderItem Model Interfaces
-export interface OrderItemAttributes {
-  id: number;
-  businessId: number;
-  saleId: number;
-  itemId: number;
-  quantity: number;
-  unitPrice: number;
-  totalPrice: number;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
+  // Order associations
+  OrderModel.belongsTo(BusinessModel, {
+    foreignKey: 'businessId',
+    as: 'business'
+  });
+  OrderModel.belongsTo(UserModel, {
+    foreignKey: 'serverId',
+    as: 'server'
+  });
+  OrderModel.belongsTo(CustomerModel, {
+    foreignKey: 'customerId',
+    as: 'customer'
+  });
+  OrderModel.belongsTo(TableModel, {
+    foreignKey: 'tableId',
+    as: 'table'
+  });
 
-export interface OrderItemCreationAttributes extends Omit<OrderItemAttributes, 'id' | 'createdAt' | 'updatedAt'> {}
+  OrderItemModel.belongsTo(OrderModel, {
+    foreignKey: 'orderId',
+    as: 'order'
+  });
+  OrderItemModel.belongsTo(ItemModel, {
+    foreignKey: 'itemId',
+    as: 'item'
+  });
+  OrderItemModel.belongsTo(MenuItemModel, {
+    foreignKey: 'itemId',
+    as: 'menuItem'
+  });
 
-// Business Model
-export class BusinessModel extends Model<BusinessAttributes, BusinessCreationAttributes> implements BusinessAttributes {
-  public id!: number;
-  public name!: string;
-  public slug!: string;
-  public description?: string;
-  public logo?: string;
-  public primaryColor?: string;
-  public secondaryColor?: string;
-  public address?: string;
-  public phone?: string;
-  public email?: string;
-  public website?: string;
-  public taxRate!: number;
-  public currency!: string;
-  public timezone!: string;
-  public isActive!: boolean;
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
-}
+  OrderModel.hasMany(OrderItemModel, {
+    foreignKey: 'orderId',
+    as: 'orderItems'
+  });
 
-// User Model
-export class UserModel extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
-  public id!: number;
-  public businessId!: number;
-  public name!: string;
-  public email!: string;
-  public password!: string;
-  public role!: 'admin' | 'owner' | 'manager' | 'cashier' | 'viewer';
-  public isActive!: boolean;
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
-}
+  // Customer associations
+  CustomerModel.belongsTo(BusinessModel, {
+    foreignKey: 'businessId',
+    as: 'business'
+  });
 
-// Item Model
-export class ItemModel extends Model<ItemAttributes, ItemCreationAttributes> implements ItemAttributes {
-  public id!: number;
-  public businessId!: number;
-  public name!: string;
-  public description?: string;
-  public price!: number;
-  public stock!: number;
-  public category?: string;
-  public sku?: string;
-  public barcode?: string;
-  public isActive!: boolean;
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
-}
+  // Menu associations
+  MenuItemModel.belongsTo(BusinessModel, {
+    foreignKey: 'businessId',
+    as: 'business'
+  });
+  MenuItemModel.belongsTo(MenuCategoryModel, {
+    foreignKey: 'categoryId',
+    as: 'category'
+  });
 
-// Sale Model
-export class SaleModel extends Model<SaleAttributes, SaleCreationAttributes> implements SaleAttributes {
-  public id!: number;
-  public businessId!: number;
-  public userId!: number;
-  public customerName?: string;
-  public customerEmail?: string;
-  public customerPhone?: string;
-  public subtotal!: number;
-  public tax!: number;
-  public discount!: number;
-  public total!: number;
-  public paymentMethod!: 'cash' | 'card' | 'mobile' | 'other';
-  public status!: 'pending' | 'completed' | 'cancelled' | 'refunded';
-  public notes?: string;
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
-}
+  MenuCategoryModel.belongsTo(BusinessModel, {
+    foreignKey: 'businessId',
+    as: 'business'
+  });
+  MenuCategoryModel.hasMany(MenuItemModel, {
+    foreignKey: 'categoryId',
+    as: 'menuItems'
+  });
 
-// OrderItem Model
-export class OrderItemModel extends Model<OrderItemAttributes, OrderItemCreationAttributes> implements OrderItemAttributes {
-  public id!: number;
-  public businessId!: number;
-  public saleId!: number;
-  public itemId!: number;
-  public quantity!: number;
-  public unitPrice!: number;
-  public totalPrice!: number;
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
-}
+  // Reservation associations
+  ReservationModel.belongsTo(BusinessModel, {
+    foreignKey: 'businessId',
+    as: 'business'
+  });
+  ReservationModel.belongsTo(TableModel, {
+    foreignKey: 'tableId',
+    as: 'table'
+  });
+  ReservationModel.belongsTo(CustomerModel, {
+    foreignKey: 'customerId',
+    as: 'customer'
+  });
 
-// Function to initialize models
-export function initializeModels(sequelize: any) {
-  // Initialize Business Model
-  BusinessModel.init(
-    {
-      id: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
-      },
-      name: {
-        type: DataTypes.STRING(100),
-        allowNull: false,
-      },
-      slug: {
-        type: DataTypes.STRING(50),
-        allowNull: false,
-        unique: true,
-        validate: {
-          is: /^[a-z0-9-]+$/,
-          len: [3, 50]
-        }
-      },
-      description: {
-        type: DataTypes.TEXT,
-        allowNull: true,
-      },
-      logo: {
-        type: DataTypes.STRING(255),
-        allowNull: true,
-      },
-      primaryColor: {
-        type: DataTypes.STRING(7),
-        allowNull: true,
-        validate: {
-          is: /^#[0-9A-F]{6}$/i
-        }
-      },
-      secondaryColor: {
-        type: DataTypes.STRING(7),
-        allowNull: true,
-        validate: {
-          is: /^#[0-9A-F]{6}$/i
-        }
-      },
-      address: {
-        type: DataTypes.TEXT,
-        allowNull: true,
-      },
-      phone: {
-        type: DataTypes.STRING(20),
-        allowNull: true,
-      },
-      email: {
-        type: DataTypes.STRING(255),
-        allowNull: true,
-        validate: {
-          isEmail: true
-        }
-      },
-      website: {
-        type: DataTypes.STRING(255),
-        allowNull: true,
-        validate: {
-          isUrl: true
-        }
-      },
-      taxRate: {
-        type: DataTypes.DECIMAL(5, 2),
-        allowNull: false,
-        defaultValue: 0,
-        validate: {
-          min: 0,
-          max: 100
-        }
-      },
-      currency: {
-        type: DataTypes.STRING(3),
-        allowNull: false,
-        defaultValue: 'USD',
-        validate: {
-          len: [3, 3]
-        }
-      },
-      timezone: {
-        type: DataTypes.STRING(50),
-        allowNull: false,
-        defaultValue: 'UTC',
-      },
-      isActive: {
-        type: DataTypes.BOOLEAN,
-        allowNull: false,
-        defaultValue: true,
-      },
-    },
-    {
-      sequelize,
-      tableName: 'businesses',
-      timestamps: true,
-    }
-  );
+  // Table associations
+  TableModel.belongsTo(BusinessModel, {
+    foreignKey: 'businessId',
+    as: 'business'
+  });
+  TableModel.hasMany(ReservationModel, {
+    foreignKey: 'tableId',
+    as: 'reservations'
+  });
 
-  // Initialize User Model
-  UserModel.init(
-    {
-      id: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
-      },
-      businessId: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-          model: 'businesses',
-          key: 'id',
-        },
-      },
-      name: {
-        type: DataTypes.STRING(100),
-        allowNull: false,
-      },
-      email: {
-        type: DataTypes.STRING(255),
-        allowNull: false,
-      },
-      password: {
-        type: DataTypes.STRING(255),
-        allowNull: false,
-      },
-      role: {
-        type: DataTypes.ENUM('admin', 'owner', 'manager', 'cashier', 'viewer'),
-        allowNull: false,
-        defaultValue: 'cashier',
-      },
-      isActive: {
-        type: DataTypes.BOOLEAN,
-        allowNull: false,
-        defaultValue: true,
-      },
-    },
-    {
-      sequelize,
-      tableName: 'users',
-      timestamps: true,
-      indexes: [
-        {
-          unique: true,
-          fields: ['businessId', 'email']
-        }
-      ]
-    }
-  );
+  // Delivery associations
+  BusinessModel.hasMany(DeliveryModel, {
+    foreignKey: 'businessId',
+    as: 'deliveries',
+    onDelete: 'CASCADE'
+  });
 
-  // Initialize Item Model
-  ItemModel.init(
-    {
-      id: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
-      },
-      businessId: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-          model: 'businesses',
-          key: 'id',
-        },
-      },
-      name: {
-        type: DataTypes.STRING(100),
-        allowNull: false,
-        validate: {
-          notEmpty: true,
-          len: [1, 100]
-        }
-      },
-      description: {
-        type: DataTypes.TEXT,
-        allowNull: true,
-      },
-      price: {
-        type: DataTypes.DECIMAL(10, 2),
-        allowNull: false,
-        validate: {
-          min: 0
-        }
-      },
-      stock: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        defaultValue: 0,
-        validate: {
-          min: 0
-        }
-      },
-      category: {
-        type: DataTypes.STRING(50),
-        allowNull: true,
-      },
-      sku: {
-        type: DataTypes.STRING(50),
-        allowNull: true,
-      },
-      barcode: {
-        type: DataTypes.STRING(50),
-        allowNull: true,
-      },
-      isActive: {
-        type: DataTypes.BOOLEAN,
-        allowNull: false,
-        defaultValue: true,
-      },
-    },
-    {
-      sequelize,
-      tableName: 'items',
-      timestamps: true,
-      indexes: [
-        {
-          unique: true,
-          fields: ['businessId', 'sku']
-        },
-        {
-          unique: true,
-          fields: ['businessId', 'barcode']
-        }
-      ]
-    }
-  );
+  DeliveryModel.belongsTo(BusinessModel, {
+    foreignKey: 'businessId',
+    as: 'business'
+  });
+  DeliveryModel.belongsTo(OrderModel, {
+    foreignKey: 'orderId',
+    as: 'order'
+  });
+  DeliveryModel.belongsTo(CustomerModel, {
+    foreignKey: 'customerId',
+    as: 'customer'
+  });
+  DeliveryModel.belongsTo(UserModel, {
+    foreignKey: 'driverId',
+    as: 'driver'
+  });
 
-  // Initialize Sale Model
-  SaleModel.init(
-    {
-      id: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
-      },
-      businessId: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-          model: 'businesses',
-          key: 'id',
-        },
-        onDelete: 'NO ACTION',
-      },
-      userId: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-          model: 'users',
-          key: 'id',
-        },
-        onDelete: 'NO ACTION',
-      },
-      customerName: {
-        type: DataTypes.STRING(100),
-        allowNull: true,
-      },
-      customerEmail: {
-        type: DataTypes.STRING(255),
-        allowNull: true,
-      },
-      customerPhone: {
-        type: DataTypes.STRING(20),
-        allowNull: true,
-      },
-      subtotal: {
-        type: DataTypes.DECIMAL(10, 2),
-        allowNull: false,
-        validate: {
-          min: 0
-        }
-      },
-      tax: {
-        type: DataTypes.DECIMAL(10, 2),
-        allowNull: false,
-        defaultValue: 0,
-        validate: {
-          min: 0
-        }
-      },
-      discount: {
-        type: DataTypes.DECIMAL(10, 2),
-        allowNull: false,
-        defaultValue: 0,
-        validate: {
-          min: 0
-        }
-      },
-      total: {
-        type: DataTypes.DECIMAL(10, 2),
-        allowNull: false,
-        validate: {
-          min: 0
-        }
-      },
-      paymentMethod: {
-        type: DataTypes.ENUM('cash', 'card', 'mobile', 'other'),
-        allowNull: false,
-        defaultValue: 'cash',
-      },
-      status: {
-        type: DataTypes.ENUM('pending', 'completed', 'cancelled', 'refunded'),
-        allowNull: false,
-        defaultValue: 'pending',
-      },
-      notes: {
-        type: DataTypes.TEXT,
-        allowNull: true,
-      },
-    },
-    {
-      sequelize,
-      tableName: 'sales',
-      timestamps: true,
-    }
-  );
+  // Kitchen order associations
+  BusinessModel.hasMany(KitchenOrderModel, {
+    foreignKey: 'businessId',
+    as: 'kitchenOrders',
+    onDelete: 'CASCADE'
+  });
 
-  // Initialize OrderItem Model
-  OrderItemModel.init(
-    {
-      id: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
-      },
-      businessId: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-          model: 'businesses',
-          key: 'id',
-        },
-        onDelete: 'NO ACTION',
-      },
-      saleId: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-          model: 'sales',
-          key: 'id',
-        },
-        onDelete: 'NO ACTION',
-      },
-      itemId: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-          model: 'items',
-          key: 'id',
-        },
-        onDelete: 'NO ACTION',
-      },
-      quantity: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        validate: {
-          min: 1
-        }
-      },
-      unitPrice: {
-        type: DataTypes.DECIMAL(10, 2),
-        allowNull: false,
-        validate: {
-          min: 0
-        }
-      },
-      totalPrice: {
-        type: DataTypes.DECIMAL(10, 2),
-        allowNull: false,
-        validate: {
-          min: 0
-        }
-      },
-    },
-    {
-      sequelize,
-      tableName: 'order_items',
-      timestamps: true,
-    }
-  );
+  KitchenOrderModel.belongsTo(BusinessModel, {
+    foreignKey: 'businessId',
+    as: 'business'
+  });
+  KitchenOrderModel.belongsTo(OrderModel, {
+    foreignKey: 'orderId',
+    as: 'order'
+  });
+  KitchenOrderModel.belongsTo(UserModel, {
+    foreignKey: 'assignedTo',
+    as: 'assignedToUser'
+  });
+  KitchenOrderModel.belongsTo(UserModel, {
+    foreignKey: 'chefId',
+    as: 'chef'
+  });
+};
 
-  // Define associations (without CASCADE to avoid SQL Server issues)
-  BusinessModel.hasMany(UserModel, { foreignKey: 'businessId', as: 'users' });
-  UserModel.belongsTo(BusinessModel, { foreignKey: 'businessId', as: 'business' });
+export { getSequelize };
 
-  BusinessModel.hasMany(ItemModel, { foreignKey: 'businessId', as: 'items' });
-  ItemModel.belongsTo(BusinessModel, { foreignKey: 'businessId', as: 'business' });
-
-  BusinessModel.hasMany(SaleModel, { foreignKey: 'businessId', as: 'sales' });
-  SaleModel.belongsTo(BusinessModel, { foreignKey: 'businessId', as: 'business', onDelete: 'NO ACTION' });
-
-  BusinessModel.hasMany(OrderItemModel, { foreignKey: 'businessId', as: 'orderItems' });
-  OrderItemModel.belongsTo(BusinessModel, { foreignKey: 'businessId', as: 'business' });
-
-  UserModel.hasMany(SaleModel, { foreignKey: 'userId', as: 'sales' });
-  SaleModel.belongsTo(UserModel, { foreignKey: 'userId', as: 'user', onDelete: 'NO ACTION' });
-
-  SaleModel.hasMany(OrderItemModel, { foreignKey: 'saleId', as: 'orderItems' });
-  OrderItemModel.belongsTo(SaleModel, { foreignKey: 'saleId', as: 'sale' });
-
-  ItemModel.hasMany(OrderItemModel, { foreignKey: 'itemId', as: 'orderItems' });
-  OrderItemModel.belongsTo(ItemModel, { foreignKey: 'itemId', as: 'item' });
-}
-
-export default {
+// Export all models for use in routes and services
+export {
   BusinessModel,
   UserModel,
   ItemModel,
   SaleModel,
+  SaleItemModel,
+  ReservationModel,
+  TableModel,
+  OrderModel,
   OrderItemModel,
-  initializeModels
-}; 
+  CustomerModel,
+  MenuItemModel,
+  MenuCategoryModel,
+  DeliveryModel,
+  KitchenOrderModel
+};
+
+// Export enums
+export { TableStatus } from './TableModel'; 

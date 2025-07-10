@@ -1,65 +1,43 @@
+import { SaleModel } from '../models/SaleModel';
+import { UserModel } from '../models/UserModel';
+import { ItemModel } from '../models/ItemModel';
+import { SaleItemModel } from '../models/SaleItemModel';
+import { OrderItemModel } from '../models/OrderItemModel';
+import { SaleAttributes, SaleCreationAttributes } from '../models/SaleModel';
 import { SaleService } from './saleService';
-import { SaleModel, OrderItemModel, UserModel, ItemModel } from '../models';
-import { SaleAttributes, SaleCreationAttributes } from '../models';
 
 // Mock the models
-jest.mock('../models', () => ({
+jest.mock('../models/SaleModel', () => ({
   SaleModel: {
     create: jest.fn(),
     findByPk: jest.fn(),
     findAll: jest.fn(),
     update: jest.fn(),
     destroy: jest.fn(),
-    count: jest.fn(),
-    sequelize: {
-      fn: jest.fn(),
-      col: jest.fn(),
+    sequelize: { 
       query: jest.fn(),
-      transaction: jest.fn().mockResolvedValue({
-        commit: jest.fn(),
-        rollback: jest.fn()
-      }),
-      QueryTypes: {
-        SELECT: 'SELECT'
-      },
-      Op: {
-        and: 'and',
-        or: 'or',
-        gte: 'gte',
-        lte: 'lte',
-        between: 'between',
-      }
-    },
-  },
-  OrderItemModel: {
+      transaction: jest.fn().mockResolvedValue({ commit: jest.fn(), rollback: jest.fn() })
+    }
+  }
+}));
+jest.mock('../models/SaleItemModel', () => ({
+  SaleItemModel: {
     create: jest.fn(),
-    findAll: jest.fn(),
-    destroy: jest.fn(),
-    sequelize: {
-      fn: jest.fn(),
-      col: jest.fn(),
-      query: jest.fn(),
-      transaction: jest.fn().mockResolvedValue({
-        commit: jest.fn(),
-        rollback: jest.fn()
-      }),
-      QueryTypes: {
-        SELECT: 'SELECT'
-      }
-    },
-  },
-  UserModel: {
-    findByPk: jest.fn(),
-  },
+    sequelize: { 
+      transaction: jest.fn().mockResolvedValue({ commit: jest.fn(), rollback: jest.fn() })
+    }
+  }
+}));
+jest.mock('../models/ItemModel', () => ({
   ItemModel: {
-    findByPk: jest.fn(),
-    update: jest.fn(),
-  },
+    findByPk: jest.fn()
+  }
 }));
 
 jest.mock('../utils/logger', () => ({
   logger: jest.fn(),
 }));
+
 
 describe('SaleService', () => {
   beforeEach(() => {
@@ -70,16 +48,15 @@ describe('SaleService', () => {
     it('should create a new sale with valid data', async () => {
       // Arrange (Red - Test will fail)
       const saleData: SaleCreationAttributes = {
-        userId: 1,
         businessId: 1,
-        customerName: 'John Doe',
-        customerEmail: 'john@example.com',
-        subtotal: 100.00,
-        tax: 8.50,
-        discount: 5.00,
-        total: 103.50,
-        paymentMethod: 'card' as const,
-        status: 'completed' as const,
+        userId: 1,
+        customerId: 1,
+        totalAmount: 100.00,
+        taxAmount: 8.50,
+        discountAmount: 5.00,
+        finalAmount: 103.50,
+        paymentMethod: 'card',
+        status: 'completed',
         notes: 'Test sale'
       };
 
@@ -121,13 +98,13 @@ describe('SaleService', () => {
         id: saleId,
         businessId: 1,
         customerName: 'John Doe',
-        total: 103.50,
+        totalAmount: 100,
         status: 'completed',
         toJSON: () => ({
           id: saleId,
           businessId: 1,
           customerName: 'John Doe',
-          total: 103.50,
+          totalAmount: 100,
           status: 'completed'
         })
       };
@@ -164,13 +141,13 @@ describe('SaleService', () => {
           id: 1,
           businessId: 1,
           customerName: 'John Doe',
-          total: 103.50,
+          totalAmount: 100,
           status: 'completed' as const,
           toJSON: () => ({
             id: 1,
             businessId: 1,
             customerName: 'John Doe',
-            total: 103.50,
+            totalAmount: 100,
             status: 'completed' as const
           })
         },
@@ -178,13 +155,13 @@ describe('SaleService', () => {
           id: 2,
           businessId: 1,
           customerName: 'Jane Smith',
-          total: 75.25,
+          totalAmount: 75.25,
           status: 'completed' as const,
           toJSON: () => ({
             id: 2,
             businessId: 1,
             customerName: 'Jane Smith',
-            total: 75.25,
+            totalAmount: 75.25,
             status: 'completed' as const
           })
         }
@@ -335,13 +312,13 @@ describe('SaleService', () => {
           businessId: 1,
           userId,
           customerName: 'John Doe',
-          total: 103.50,
+          totalAmount: 100,
           toJSON: () => ({
             id: 1,
             businessId: 1,
             userId,
             customerName: 'John Doe',
-            total: 103.50
+            totalAmount: 100
           })
         }
       ];
@@ -372,12 +349,12 @@ describe('SaleService', () => {
           id: 1,
           businessId: 1,
           createdAt: new Date('2025-01-15'),
-          total: 103.50,
+          totalAmount: 100,
           toJSON: () => ({
             id: 1,
             businessId: 1,
             createdAt: new Date('2025-01-15'),
-            total: 103.50
+            totalAmount: 100
           })
         }
       ];
@@ -407,9 +384,9 @@ describe('SaleService', () => {
       // Arrange (Red - Test will fail)
       const mockSales = [
         {
-          total: 100.00,
+          totalAmount: 100.00,
           createdAt: new Date(),
-          toJSON: () => ({ total: 100.00, createdAt: new Date() })
+          toJSON: () => ({ totalAmount: 100.00, createdAt: new Date() })
         }
       ];
 
@@ -425,7 +402,7 @@ describe('SaleService', () => {
 
       // Assert (Green - Test should pass)
       expect(SaleModel.findAll).toHaveBeenCalledWith({
-        attributes: ['total', 'createdAt', 'status']
+        attributes: ['totalAmount', 'createdAt', 'status']
       });
       expect((SaleModel.sequelize as any).query).toHaveBeenCalled();
       expect(result).toEqual({
@@ -443,15 +420,13 @@ describe('SaleService', () => {
       const saleData = {
         userId: 1,
         businessId: 1,
-        customerName: 'John Doe',
-        customerEmail: 'john@example.com',
-        subtotal: 100.00,
-        tax: 8.50,
-        discount: 0,
-        total: 108.50,
-        paymentMethod: 'card' as const,
+        totalAmount: 200.00,
+        taxAmount: 17.00,
+        discountAmount: 15.00,
+        finalAmount: 202.00,
+        paymentMethod: 'card',
         status: 'completed' as const,
-        notes: ''
+        notes: 'Test sale with items'
       };
 
       const orderItems = [
@@ -501,15 +476,13 @@ describe('SaleService', () => {
       const saleData = {
         userId: 1,
         businessId: 1,
-        customerName: 'John Doe',
-        customerEmail: 'john@example.com',
-        subtotal: 100.00,
-        tax: 8.50,
-        discount: 0,
-        total: 108.50,
-        paymentMethod: 'card' as const,
+        totalAmount: 150.00,
+        taxAmount: 12.75,
+        discountAmount: 10.00,
+        finalAmount: 152.75,
+        paymentMethod: 'card',
         status: 'completed' as const,
-        notes: ''
+        notes: 'Test sale with items'
       };
 
       const orderItems = [
@@ -532,7 +505,7 @@ describe('SaleService', () => {
         id: saleId,
         businessId: 1,
         customerName: 'John Doe',
-        total: 103.50,
+        totalAmount: 100,
         status: 'completed',
         SaleItems: [
           { itemId: 1, quantity: 2, price: 50.00, subtotal: 100.00 }
@@ -541,7 +514,7 @@ describe('SaleService', () => {
           id: saleId,
           businessId: 1,
           customerName: 'John Doe',
-          total: 103.50,
+          totalAmount: 100,
           status: 'completed',
           SaleItems: [
             { itemId: 1, quantity: 2, price: 50.00, subtotal: 100.00 }
@@ -558,8 +531,8 @@ describe('SaleService', () => {
       expect(SaleModel.findByPk).toHaveBeenCalledWith(saleId, {
         include: [
           {
-            model: OrderItemModel,
-            as: 'orderItems',
+            model: SaleItemModel,
+            as: 'saleItems',
             include: [
               {
                 model: ItemModel,

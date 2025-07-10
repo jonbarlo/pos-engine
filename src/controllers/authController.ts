@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { logger } from '../utils/logger';
 import { UserService } from '../services/userService';
 import { BusinessService } from '../services/businessService';
+import { UserRole } from '../models/UserModel';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
@@ -79,7 +80,7 @@ export class AuthController {
                 email,
                 password: hashedPassword,
                 businessId: targetBusinessId,
-                role: role === 'admin' ? 'admin' : 'cashier'
+                role: role === 'admin' ? UserRole.ADMIN : UserRole.CASHIER
             });
 
             // Generate JWT token with business context

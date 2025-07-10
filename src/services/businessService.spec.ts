@@ -1,35 +1,28 @@
 import { BusinessService } from './businessService';
-import { BusinessModel } from '../models';
+import { BusinessModel } from '../models/BusinessModel';
 
-// Mock dependencies
-jest.mock('../models', () => ({
-    BusinessModel: {
-        create: jest.fn(),
-        findByPk: jest.fn(),
-        findOne: jest.fn(),
-        findAll: jest.fn(),
-        count: jest.fn(),
-        sequelize: {
-            models: {
-                UserModel: {
-                    count: jest.fn(),
-                },
-                ItemModel: {
-                    count: jest.fn(),
-                },
-                SaleModel: {
-                    count: jest.fn(),
-                    findOne: jest.fn(),
-                },
-            },
-            fn: jest.fn(),
-            col: jest.fn(),
-        },
-        Op: {
-            or: 'or',
-            iLike: 'iLike',
-        },
-    },
+// Mock the BusinessModel
+jest.mock('../models/BusinessModel', () => ({
+  BusinessModel: {
+    create: jest.fn(),
+    findByPk: jest.fn(),
+    findOne: jest.fn(),
+    findAll: jest.fn(),
+    update: jest.fn(),
+    count: jest.fn(),
+    sequelize: {
+      models: {
+        UserModel: { count: jest.fn() },
+        ItemModel: { count: jest.fn() },
+        SaleModel: { 
+          count: jest.fn(),
+          findOne: jest.fn()
+        }
+      },
+      fn: jest.fn(),
+      col: jest.fn()
+    }
+  }
 }));
 
 jest.mock('../utils/logger', () => ({
@@ -50,7 +43,8 @@ describe('BusinessService', () => {
                 description: 'A test business',
                 taxRate: 8.5,
                 currency: 'USD',
-                timezone: 'UTC'
+                timezone: 'UTC',
+                type: 'generic' as const
             };
 
             const mockBusiness = {
@@ -78,7 +72,8 @@ describe('BusinessService', () => {
                 slug: 'test-business',
                 taxRate: 8.5,
                 currency: 'USD',
-                timezone: 'UTC'
+                timezone: 'UTC',
+                type: 'generic' as const
             };
 
             const error = new Error('Database error');

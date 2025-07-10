@@ -94,37 +94,53 @@ export class ItemController {
                 return;
             }
 
+            // Generate unique SKU if not provided
+            let finalSku = sku;
+            if (!finalSku) {
+                const timestamp = Date.now();
+                const randomSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
+                finalSku = `SKU-${timestamp}-${randomSuffix}`;
+            }
+
+            // Generate unique barcode if not provided
+            let finalBarcode = barcode;
+            if (!finalBarcode) {
+                const timestamp = Date.now();
+                const randomSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
+                finalBarcode = `BC-${timestamp}-${randomSuffix}`;
+            }
+
             // Check if SKU already exists in this business
-            if (sku) {
-                const skuExists = await ItemService.itemExistsBySku(sku, req.user.businessId);
-                if (skuExists) {
-                    res.status(409).json({ 
-                        error: 'Item with this SKU already exists in this business' 
-                    });
-                    return;
-                }
+            const skuExists = await ItemService.itemExistsBySku(finalSku, req.user.businessId);
+            if (skuExists) {
+                res.status(409).json({ 
+                    error: 'Item with this SKU already exists in this business' 
+                });
+                return;
             }
 
             // Check if barcode already exists in this business
-            if (barcode) {
-                const barcodeExists = await ItemService.itemExistsByBarcode(barcode, req.user.businessId);
-                if (barcodeExists) {
-                    res.status(409).json({ 
-                        error: 'Item with this barcode already exists in this business' 
-                    });
-                    return;
-                }
+            const barcodeExists = await ItemService.itemExistsByBarcode(finalBarcode, req.user.businessId);
+            if (barcodeExists) {
+                res.status(409).json({ 
+                    error: 'Item with this barcode already exists in this business' 
+                });
+                return;
             }
 
             logger('API endpoint POST /items was called...');
-            const newItem = await ItemService.createItem({ 
-                name, 
-                description, 
-                price, 
-                stock: stock || 0, 
-                category, 
-                sku, 
-                barcode,
+            const newItem = await ItemService.createItem({
+                name,
+                description,
+                price,
+                cost: 0, // Add default cost
+                stock: stock || 0,
+                category: category || 'General',
+                sku: finalSku,
+                barcode: finalBarcode,
+                unit: 'piece', // Add default unit
+                minStock: 0, // Add default minStock
+                maxStock: 1000, // Add default maxStock
                 businessId: req.user.businessId
             });
             res.status(201).json(newItem);

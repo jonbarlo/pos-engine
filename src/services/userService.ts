@@ -1,4 +1,4 @@
-import { UserModel, UserAttributes, UserCreationAttributes } from '../models';
+import { UserModel, UserAttributes, UserCreationAttributes } from '../models/UserModel';
 import bcrypt from 'bcryptjs';
 import { logger } from '../utils/logger';
 

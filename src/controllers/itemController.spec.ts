@@ -178,6 +178,10 @@ describe('ItemController', () => {
             expect(ItemService.itemExistsByBarcode).toHaveBeenCalledWith(itemData.barcode, 1);
             expect(ItemService.createItem).toHaveBeenCalledWith({
                 ...itemData,
+                cost: 0,
+                unit: 'piece',
+                minStock: 0,
+                maxStock: 1000,
                 businessId: 1
             });
             expect(mockStatus).toHaveBeenCalledWith(201);

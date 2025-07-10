@@ -1,4 +1,4 @@
-import { BusinessModel, BusinessAttributes, BusinessCreationAttributes } from '../models';
+import { BusinessModel, BusinessAttributes, BusinessCreationAttributes } from '../models/BusinessModel';
 import { Op } from 'sequelize';
 import { logger } from '../utils/logger';
 

@@ -4,7 +4,7 @@ import { logger } from '../utils/logger';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
-interface AuthRequest extends Request {
+export interface AuthRequest extends Request {
     user?: {
         userId: number;
         businessId: number;
@@ -59,6 +59,9 @@ export const requireRole = (roles: string[]) => {
         next();
     };
 };
+
+// Alias for requireRole for backward compatibility
+export const authorizeRoles = requireRole;
 
 // Middleware to check if user belongs to the specified business
 export const requireBusinessAccess = (req: AuthRequest, res: Response, next: NextFunction) => {

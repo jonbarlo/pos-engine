@@ -1,4 +1,4 @@
-import { ItemModel, ItemAttributes, ItemCreationAttributes } from '../models';
+import { ItemModel, ItemAttributes, ItemCreationAttributes } from '../models/ItemModel';
 import { logger } from '../utils/logger';
 
 export class ItemService {

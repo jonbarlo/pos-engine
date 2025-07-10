@@ -14,5 +14,10 @@ module.exports = {
         'src/**/*.ts',
         '!src/**/*.spec.ts',
         '!src/**/*.test.ts'
-    ]
+    ],
+    setupFilesAfterEnv: ['<rootDir>/src/test/setup.ts'],
+    testEnvironmentOptions: {
+        NODE_ENV: 'test'
+    },
+    testTimeout: 10000
 };

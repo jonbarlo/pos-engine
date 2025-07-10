@@ -96,7 +96,8 @@ export class BusinessController {
                 website, 
                 taxRate, 
                 currency, 
-                timezone 
+                timezone,
+                type 
             } = req.body;
 
             // Validate required fields
@@ -147,7 +148,8 @@ export class BusinessController {
                 website, 
                 taxRate: taxRate || 0, 
                 currency: currency || 'USD', 
-                timezone: timezone || 'UTC' 
+                timezone: timezone || 'UTC',
+                type: type || 'generic'
             });
             res.status(201).json(newBusiness);
         } catch (error) {

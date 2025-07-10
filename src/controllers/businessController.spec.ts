@@ -40,7 +40,8 @@ describe('BusinessController', () => {
                 description: 'A test business',
                 taxRate: 8.5,
                 currency: 'USD',
-                timezone: 'UTC'
+                timezone: 'UTC',
+                type: 'generic'
             };
             mockRequest.body = businessData;
             
@@ -178,9 +179,10 @@ describe('BusinessController', () => {
                 name: 'Another Business',
                 slug: 'another-business',
                 description: 'Another test business',
-                taxRate: 10.0,
+                taxRate: 10,
                 currency: 'EUR',
-                timezone: 'Europe/London'
+                timezone: 'Europe/London',
+                type: 'generic'
             };
             mockRequest.body = businessData;
             
