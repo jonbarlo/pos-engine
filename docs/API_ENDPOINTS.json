@@ -1,0 +1,620 @@
+{
+  "api_info": {
+    "base_url": "http://localhost:3031",
+    "api_prefix": "/api",
+    "version": "1.0.0",
+    "description": "POS Engine API - Complete endpoint documentation for Flutter app integration"
+  },
+  "authentication": {
+    "type": "Bearer Token",
+    "header": "Authorization: Bearer <token>",
+    "note": "Most endpoints require authentication. Token is obtained from /api/auth/login"
+  },
+  "endpoints": {
+    "health": {
+      "GET /health": {
+        "description": "Server health check",
+        "url": "http://localhost:3031/health",
+        "authentication": false,
+        "response": {
+          "status": "OK",
+          "timestamp": "2025-07-10T01:00:00.000Z",
+          "environment": "development"
+        }
+      },
+      "GET /api/health": {
+        "description": "API health check",
+        "url": "http://localhost:3031/api/health",
+        "authentication": false,
+        "response": {
+          "status": "OK",
+          "timestamp": "2025-07-10T01:00:00.000Z",
+          "environment": "development"
+        }
+      }
+    },
+    "authentication": {
+      "POST /api/auth/login": {
+        "description": "User login",
+        "url": "http://localhost:3031/api/auth/login",
+        "authentication": false,
+        "payload": {
+          "email": "admin@demo.com",
+          "password": "admin123",
+          "businessId": 1,
+          "businessSlug": "demo-restaurant"
+        },
+        "response": {
+          "success": true,
+          "message": "Login successful",
+          "user": {
+            "id": 1,
+            "name": "Admin User",
+            "email": "admin@demo.com",
+            "role": "admin",
+            "businessId": 1
+          },
+          "business": {
+            "id": 1,
+            "name": "Demo Restaurant",
+            "slug": "demo-restaurant",
+            "type": "restaurant",
+            "isActive": true
+          },
+          "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        }
+      },
+      "POST /api/auth/register": {
+        "description": "User registration",
+        "url": "http://localhost:3031/api/auth/register",
+        "authentication": false,
+        "payload": {
+          "name": "New User",
+          "email": "user@example.com",
+          "password": "password123",
+          "businessId": 1,
+          "role": "cashier"
+        },
+        "response": {
+          "success": true,
+          "message": "User registered successfully",
+          "user": {
+            "id": 2,
+            "name": "New User",
+            "email": "user@example.com",
+            "role": "cashier",
+            "businessId": 1
+          },
+          "business": {
+            "id": 1,
+            "name": "Demo Restaurant",
+            "slug": "demo-restaurant"
+          },
+          "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        }
+      },
+      "GET /api/auth/profile": {
+        "description": "Get user profile",
+        "url": "http://localhost:3031/api/auth/profile",
+        "authentication": true,
+        "response": {
+          "success": true,
+          "user": {
+            "id": 1,
+            "name": "Admin User",
+            "email": "admin@demo.com",
+            "role": "admin",
+            "businessId": 1
+          },
+          "business": {
+            "id": 1,
+            "name": "Demo Restaurant",
+            "slug": "demo-restaurant"
+          }
+        }
+      }
+    },
+    "menu": {
+      "GET /api/menu/categories": {
+        "description": "Get all menu categories",
+        "url": "http://localhost:3031/api/menu/categories",
+        "authentication": true,
+        "query_params": {
+          "businessId": 1,
+          "active": true
+        },
+        "response": {
+          "success": true,
+          "data": [
+            {
+              "id": 1,
+              "name": "Appetizers",
+              "description": "Start your meal right",
+              "displayOrder": 1,
+              "isActive": true
+            }
+          ]
+        }
+      },
+      "GET /api/menu/items": {
+        "description": "Get menu items (search)",
+        "url": "http://localhost:3031/api/menu/items",
+        "authentication": true,
+        "query_params": {
+          "businessId": 1,
+          "categoryId": 1,
+          "search": "burger",
+          "available": true
+        },
+        "response": {
+          "success": true,
+          "data": [
+            {
+              "id": 1,
+              "name": "Classic Burger",
+              "description": "Juicy beef burger",
+              "price": 12.99,
+              "categoryId": 1,
+              "isAvailable": true
+            }
+          ]
+        }
+      },
+      "POST /api/menu/items": {
+        "description": "Create menu item",
+        "url": "http://localhost:3031/api/menu/items",
+        "authentication": true,
+        "payload": {
+          "name": "New Item",
+          "description": "Item description",
+          "price": 15.99,
+          "categoryId": 1,
+          "businessId": 1
+        },
+        "response": {
+          "success": true,
+          "message": "Menu item created successfully",
+          "data": {
+            "id": 2,
+            "name": "New Item",
+            "price": 15.99
+          }
+        }
+      }
+    },
+    "sales": {
+      "GET /api/sales": {
+        "description": "Get all sales (recent sales)",
+        "url": "http://localhost:3031/api/sales",
+        "authentication": true,
+        "query_params": {
+          "page": 1,
+          "limit": 10,
+          "status": "completed"
+        },
+        "response": {
+          "success": true,
+          "data": [
+            {
+              "id": 1,
+              "orderNumber": "ORD-1234567890-001",
+              "customerName": "John Doe",
+              "subtotal": 25.99,
+              "tax": 2.60,
+              "total": 28.59,
+              "status": "completed",
+              "createdAt": "2025-07-10T01:00:00.000Z"
+            }
+          ]
+        }
+      },
+      "GET /api/sales/stats": {
+        "description": "Get sales statistics",
+        "url": "http://localhost:3031/api/sales/stats",
+        "authentication": true,
+        "response": {
+          "success": true,
+          "data": {
+            "totalSales": 15000.50,
+            "totalTransactions": 45,
+            "averageOrderValue": 333.34,
+            "topSellingItems": [
+              {
+                "itemId": 1,
+                "totalQuantity": 25
+              }
+            ]
+          }
+        }
+      },
+      "POST /api/sales": {
+        "description": "Create new sale",
+        "url": "http://localhost:3031/api/sales",
+        "authentication": true,
+        "payload": {
+          "customerName": "Jane Smith",
+          "customerEmail": "jane@example.com",
+          "subtotal": 45.99,
+          "tax": 4.60,
+          "total": 50.59,
+          "paymentMethod": "card",
+          "status": "completed"
+        },
+        "response": {
+          "success": true,
+          "message": "Sale created successfully",
+          "data": {
+            "id": 2,
+            "orderNumber": "ORD-1234567890-002",
+            "total": 50.59
+          }
+        }
+      }
+    },
+    "orders": {
+      "GET /api/orders": {
+        "description": "Get all orders",
+        "url": "http://localhost:3031/api/orders",
+        "authentication": true,
+        "query_params": {
+          "businessId": 1,
+          "status": "pending"
+        },
+        "response": {
+          "success": true,
+          "data": [
+            {
+              "id": 1,
+              "orderNumber": "ORD-1234567890-001",
+              "orderType": "dine_in",
+              "status": "pending",
+              "total": 28.59,
+              "createdAt": "2025-07-10T01:00:00.000Z"
+            }
+          ]
+        }
+      },
+      "POST /api/orders": {
+        "description": "Create new order",
+        "url": "http://localhost:3031/api/orders",
+        "authentication": true,
+        "payload": {
+          "businessId": 1,
+          "orderType": "dine_in",
+          "customerName": "John Doe",
+          "items": [
+            {
+              "itemId": 1,
+              "quantity": 2,
+              "price": 12.99
+            }
+          ]
+        },
+        "response": {
+          "success": true,
+          "message": "Order created successfully",
+          "data": {
+            "id": 1,
+            "orderNumber": "ORD-1234567890-001",
+            "total": 25.98
+          }
+        }
+      },
+      "PUT /api/orders/{id}/status": {
+        "description": "Update order status",
+        "url": "http://localhost:3031/api/orders/1/status",
+        "authentication": true,
+        "payload": {
+          "status": "confirmed"
+        },
+        "response": {
+          "success": true,
+          "message": "Order status updated successfully"
+        }
+      }
+    },
+    "items": {
+      "GET /api/items": {
+        "description": "Get all items",
+        "url": "http://localhost:3031/api/items",
+        "authentication": true,
+        "query_params": {
+          "businessId": 1,
+          "active": true
+        },
+        "response": {
+          "success": true,
+          "data": [
+            {
+              "id": 1,
+              "name": "Burger",
+              "description": "Delicious burger",
+              "price": 12.99,
+              "isActive": true
+            }
+          ]
+        }
+      },
+      "POST /api/items": {
+        "description": "Create new item",
+        "url": "http://localhost:3031/api/items",
+        "authentication": true,
+        "payload": {
+          "name": "New Item",
+          "description": "Item description",
+          "price": 15.99,
+          "businessId": 1
+        },
+        "response": {
+          "success": true,
+          "message": "Item created successfully",
+          "data": {
+            "id": 2,
+            "name": "New Item",
+            "price": 15.99
+          }
+        }
+      }
+    },
+    "customers": {
+      "GET /api/customers": {
+        "description": "Get all customers",
+        "url": "http://localhost:3031/api/customers",
+        "authentication": true,
+        "query_params": {
+          "businessId": 1,
+          "search": "john"
+        },
+        "response": {
+          "success": true,
+          "data": [
+            {
+              "id": 1,
+              "name": "John Doe",
+              "email": "john@example.com",
+              "phone": "+1234567890"
+            }
+          ]
+        }
+      },
+      "POST /api/customers": {
+        "description": "Create new customer",
+        "url": "http://localhost:3031/api/customers",
+        "authentication": true,
+        "payload": {
+          "name": "Jane Smith",
+          "email": "jane@example.com",
+          "phone": "+1234567891",
+          "businessId": 1
+        },
+        "response": {
+          "success": true,
+          "message": "Customer created successfully",
+          "data": {
+            "id": 2,
+            "name": "Jane Smith"
+          }
+        }
+      }
+    },
+    "reservations": {
+      "GET /api/reservations": {
+        "description": "Get all reservations",
+        "url": "http://localhost:3031/api/reservations",
+        "authentication": true,
+        "query_params": {
+          "businessId": 1,
+          "date": "2025-07-10"
+        },
+        "response": {
+          "success": true,
+          "data": [
+            {
+              "id": 1,
+              "customerName": "John Doe",
+              "reservationDate": "2025-07-10T19:00:00.000Z",
+              "partySize": 4,
+              "status": "confirmed"
+            }
+          ]
+        }
+      },
+      "POST /api/reservations": {
+        "description": "Create new reservation",
+        "url": "http://localhost:3031/api/reservations",
+        "authentication": true,
+        "payload": {
+          "customerName": "Jane Smith",
+          "customerEmail": "jane@example.com",
+          "customerPhone": "+1234567890",
+          "reservationDate": "2025-07-10T19:00:00.000Z",
+          "partySize": 2,
+          "businessId": 1
+        },
+        "response": {
+          "success": true,
+          "message": "Reservation created successfully",
+          "data": {
+            "id": 2,
+            "reservationDate": "2025-07-10T19:00:00.000Z"
+          }
+        }
+      }
+    },
+    "tables": {
+      "GET /api/tables": {
+        "description": "Get all tables",
+        "url": "http://localhost:3031/api/tables",
+        "authentication": true,
+        "query_params": {
+          "businessId": 1,
+          "available": true
+        },
+        "response": {
+          "success": true,
+          "data": [
+            {
+              "id": 1,
+              "tableNumber": "T1",
+              "capacity": 4,
+              "status": "available",
+              "isActive": true
+            }
+          ]
+        }
+      }
+    },
+    "kitchen": {
+      "GET /api/kitchen/orders": {
+        "description": "Get kitchen orders",
+        "url": "http://localhost:3031/api/kitchen/orders",
+        "authentication": true,
+        "query_params": {
+          "businessId": 1,
+          "status": "pending"
+        },
+        "response": {
+          "success": true,
+          "data": [
+            {
+              "id": 1,
+              "orderNumber": "ORD-1234567890-001",
+              "items": [
+                {
+                  "itemName": "Burger",
+                  "quantity": 2,
+                  "notes": "No onions"
+                }
+              ],
+              "status": "pending"
+            }
+          ]
+        }
+      },
+      "PUT /api/kitchen/orders/{id}/status": {
+        "description": "Update kitchen order status",
+        "url": "http://localhost:3031/api/kitchen/orders/1/status",
+        "authentication": true,
+        "payload": {
+          "status": "preparing"
+        },
+        "response": {
+          "success": true,
+          "message": "Order status updated successfully"
+        }
+      }
+    },
+    "businesses": {
+      "GET /api/businesses": {
+        "description": "Get all businesses",
+        "url": "http://localhost:3031/api/businesses",
+        "authentication": true,
+        "response": {
+          "success": true,
+          "data": [
+            {
+              "id": 1,
+              "name": "Demo Restaurant",
+              "slug": "demo-restaurant",
+              "type": "restaurant",
+              "isActive": true
+            }
+          ]
+        }
+      },
+      "GET /api/businesses/{id}": {
+        "description": "Get business by ID",
+        "url": "http://localhost:3031/api/businesses/1",
+        "authentication": true,
+        "response": {
+          "success": true,
+          "data": {
+            "id": 1,
+            "name": "Demo Restaurant",
+            "slug": "demo-restaurant",
+            "type": "restaurant",
+            "isActive": true
+          }
+        }
+      }
+    },
+    "users": {
+      "GET /api/users": {
+        "description": "Get all users for business",
+        "url": "http://localhost:3031/api/users",
+        "authentication": true,
+        "query_params": {
+          "businessId": 1
+        },
+        "response": {
+          "success": true,
+          "data": [
+            {
+              "id": 1,
+              "name": "Admin User",
+              "email": "admin@demo.com",
+              "role": "admin",
+              "isActive": true
+            }
+          ]
+        }
+      }
+    }
+  },
+  "error_responses": {
+    "400": {
+      "description": "Bad Request",
+      "example": {
+        "success": false,
+        "error": {
+          "code": "VALIDATION_ERROR",
+          "message": "Validation failed",
+          "details": [
+            {
+              "field": "email",
+              "message": "Email is required"
+            }
+          ]
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "example": {
+        "success": false,
+        "error": {
+          "code": "AUTHENTICATION_ERROR",
+          "message": "Invalid email or password"
+        }
+      }
+    },
+    "404": {
+      "description": "Not Found",
+      "example": {
+        "success": false,
+        "error": {
+          "code": "NOT_FOUND_ERROR",
+          "message": "Resource not found"
+        }
+      }
+    },
+    "500": {
+      "description": "Internal Server Error",
+      "example": {
+        "success": false,
+        "error": {
+          "code": "INTERNAL_ERROR",
+          "message": "An unexpected error occurred"
+        }
+      }
+    }
+  },
+  "notes": {
+    "base_url": "All endpoints are prefixed with /api. The correct base URL is http://localhost:3031/api",
+    "authentication": "Most endpoints require a Bearer token in the Authorization header",
+    "business_context": "Most endpoints require a businessId parameter or context",
+    "pagination": "List endpoints support pagination with page and limit query parameters",
+    "search": "Many endpoints support search functionality via query parameters",
+    "status_codes": "All responses include a success boolean and appropriate HTTP status codes"
+  }
+} 

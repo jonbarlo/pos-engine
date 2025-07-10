@@ -1,13 +1,15 @@
 import { BusinessModel, BusinessAttributes, BusinessCreationAttributes } from '../models/BusinessModel';
 import { Op } from 'sequelize';
 import { logger } from '../utils/logger';
+import { getBusinessRepository } from '../repositories/RepositoryFactory';
 
 export class BusinessService {
   // Create a new business
-  static async createBusiness(businessData: BusinessCreationAttributes): Promise<BusinessModel> {
+  static async createBusiness(businessData: BusinessCreationAttributes): Promise<BusinessAttributes> {
     try {
       logger(`Creating new business: ${businessData.name}`);
-      const business = await BusinessModel.create(businessData);
+      const businessRepository = getBusinessRepository();
+      const business = await businessRepository.create(businessData);
       logger(`Business created successfully with ID: ${business.id}`);
       return business;
     } catch (error) {
@@ -17,11 +19,11 @@ export class BusinessService {
   }
 
   // Get business by ID
-  static async getBusinessById(id: number): Promise<BusinessModel | null> {
+  static async getBusinessById(id: number): Promise<BusinessAttributes | null> {
     try {
       logger(`Getting business by ID: ${id}`);
-      const business = await BusinessModel.findByPk(id);
-      return business;
+      const businessRepository = getBusinessRepository();
+      return await businessRepository.findById(id);
     } catch (error) {
       logger(`Error getting business by ID: ${error}`);
       throw error;
@@ -29,13 +31,11 @@ export class BusinessService {
   }
 
   // Get business by slug
-  static async getBusinessBySlug(slug: string): Promise<BusinessModel | null> {
+  static async getBusinessBySlug(slug: string): Promise<BusinessAttributes | null> {
     try {
       logger(`Getting business by slug: ${slug}`);
-      const business = await BusinessModel.findOne({
-        where: { slug, isActive: true }
-      });
-      return business;
+      const businessRepository = getBusinessRepository();
+      return await businessRepository.findBySlug(slug);
     } catch (error) {
       logger(`Error getting business by slug: ${error}`);
       throw error;
@@ -43,14 +43,11 @@ export class BusinessService {
   }
 
   // Get all active businesses
-  static async getAllActiveBusinesses(): Promise<BusinessModel[]> {
+  static async getAllActiveBusinesses(): Promise<BusinessAttributes[]> {
     try {
       logger('Getting all active businesses');
-      const businesses = await BusinessModel.findAll({
-        where: { isActive: true },
-        order: [['name', 'ASC']]
-      });
-      return businesses;
+      const businessRepository = getBusinessRepository();
+      return await businessRepository.findActive();
     } catch (error) {
       logger(`Error getting all businesses: ${error}`);
       throw error;
@@ -58,13 +55,11 @@ export class BusinessService {
   }
 
   // Get all businesses (including inactive)
-  static async getAllBusinesses(): Promise<BusinessModel[]> {
+  static async getAllBusinesses(): Promise<BusinessAttributes[]> {
     try {
       logger('Getting all businesses');
-      const businesses = await BusinessModel.findAll({
-        order: [['name', 'ASC']]
-      });
-      return businesses;
+      const businessRepository = getBusinessRepository();
+      return await businessRepository.findAll();
     } catch (error) {
       logger(`Error getting all businesses: ${error}`);
       throw error;
@@ -72,17 +67,18 @@ export class BusinessService {
   }
 
   // Update business
-  static async updateBusiness(id: number, updateData: Partial<BusinessAttributes>): Promise<BusinessModel | null> {
+  static async updateBusiness(id: number, updateData: Partial<BusinessAttributes>): Promise<BusinessAttributes | null> {
     try {
       logger(`Updating business with ID: ${id}`);
-      const business = await BusinessModel.findByPk(id);
+      const businessRepository = getBusinessRepository();
+      const business = await businessRepository.findById(id);
       if (!business) {
         return null;
       }
       
-      await business.update(updateData);
+      const updated = await businessRepository.update(id, updateData);
       logger(`Business updated successfully: ${id}`);
-      return business;
+      return updated;
     } catch (error) {
       logger(`Error updating business: ${error}`);
       throw error;
@@ -93,12 +89,13 @@ export class BusinessService {
   static async deleteBusiness(id: number): Promise<boolean> {
     try {
       logger(`Deleting business with ID: ${id}`);
-      const business = await BusinessModel.findByPk(id);
+      const businessRepository = getBusinessRepository();
+      const business = await businessRepository.findById(id);
       if (!business) {
         return false;
       }
       
-      await business.update({ isActive: false });
+      await businessRepository.updateStatus(id, false);
       logger(`Business deleted successfully: ${id}`);
       return true;
     } catch (error) {
@@ -110,10 +107,8 @@ export class BusinessService {
   // Check if business exists by slug
   static async businessExistsBySlug(slug: string): Promise<boolean> {
     try {
-      const business = await BusinessModel.findOne({
-        where: { slug }
-      });
-      return !!business;
+      const businessRepository = getBusinessRepository();
+      return await businessRepository.slugExists(slug);
     } catch (error) {
       logger(`Error checking if business exists by slug: ${error}`);
       throw error;
@@ -126,7 +121,8 @@ export class BusinessService {
       logger(`Getting business stats for ID: ${businessId}`);
       
       // Get basic business info
-      const business = await BusinessModel.findByPk(businessId);
+      const businessRepository = getBusinessRepository();
+      const business = await businessRepository.findById(businessId);
       if (!business) {
         return null;
       }
@@ -172,21 +168,11 @@ export class BusinessService {
   }
 
   // Search businesses
-  static async searchBusinesses(query: string): Promise<BusinessModel[]> {
+  static async searchBusinesses(query: string): Promise<BusinessAttributes[]> {
     try {
       logger(`Searching businesses with query: ${query}`);
-      const businesses = await BusinessModel.findAll({
-        where: {
-          [Op.or]: [
-            { name: { [Op.iLike]: `%${query}%` } },
-            { slug: { [Op.iLike]: `%${query}%` } },
-            { description: { [Op.iLike]: `%${query}%` } }
-          ],
-          isActive: true
-        },
-        order: [['name', 'ASC']]
-      });
-      return businesses;
+      const businessRepository = getBusinessRepository();
+      return await businessRepository.search(query);
     } catch (error) {
       logger(`Error searching businesses: ${error}`);
       throw error;
@@ -194,14 +180,14 @@ export class BusinessService {
   }
 
   // Get businesses by timezone
-  static async getBusinessesByTimezone(timezone: string): Promise<BusinessModel[]> {
+  static async getBusinessesByTimezone(timezone: string): Promise<BusinessAttributes[]> {
     try {
       logger(`Getting businesses by timezone: ${timezone}`);
-      const businesses = await BusinessModel.findAll({
+      const businessRepository = getBusinessRepository();
+      return await businessRepository.findAll({
         where: { timezone, isActive: true },
         order: [['name', 'ASC']]
       });
-      return businesses;
     } catch (error) {
       logger(`Error getting businesses by timezone: ${error}`);
       throw error;
@@ -209,16 +195,28 @@ export class BusinessService {
   }
 
   // Get businesses by currency
-  static async getBusinessesByCurrency(currency: string): Promise<BusinessModel[]> {
+  static async getBusinessesByCurrency(currency: string): Promise<BusinessAttributes[]> {
     try {
       logger(`Getting businesses by currency: ${currency}`);
-      const businesses = await BusinessModel.findAll({
+      const businessRepository = getBusinessRepository();
+      return await businessRepository.findAll({
         where: { currency, isActive: true },
         order: [['name', 'ASC']]
       });
-      return businesses;
     } catch (error) {
       logger(`Error getting businesses by currency: ${error}`);
+      throw error;
+    }
+  }
+
+  // Get business statistics for all businesses
+  static async getAllBusinessStats(): Promise<any> {
+    try {
+      logger('Getting statistics for all businesses');
+      const businessRepository = getBusinessRepository();
+      return await businessRepository.getStatistics();
+    } catch (error) {
+      logger(`Error getting all business stats: ${error}`);
       throw error;
     }
   }

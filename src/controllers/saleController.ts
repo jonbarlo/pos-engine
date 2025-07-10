@@ -1,16 +1,22 @@
 import { Request, Response, NextFunction } from 'express';
 import { SaleService } from '../services/saleService';
 import { logger } from '../utils/logger';
+import { AuthRequest } from '../middleware/auth';
 
 export class SaleController {
   /**
    * Create a new sale
    */
-  public static createSale = async (req: Request, res: Response, next: NextFunction) => {
+  public static createSale = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const saleData = req.body;
-      logger('API endpoint POST /sales was called...');
+      
+      if (!saleData.customerName || saleData.total === undefined) {
+        res.status(400).json({ error: 'Customer name and total are required' });
+        return;
+      }
 
+      logger(`API endpoint POST /sales was called...`);
       const sale = await SaleService.createSale(saleData);
       
       res.status(201).json({
@@ -19,32 +25,14 @@ export class SaleController {
       });
     } catch (error) {
       logger(`Error creating sale: ${error}`);
-      
-      if (error instanceof Error) {
-        if (error.message.includes('Missing required fields')) {
-          res.status(400).json({
-            error: 'Bad Request',
-            message: error.message
-          });
-        } else {
-          res.status(500).json({
-            error: 'Internal Server Error',
-            message: error.message
-          });
-        }
-      } else {
-        res.status(500).json({
-          error: 'Internal Server Error',
-          message: 'Unknown error occurred'
-        });
-      }
+      res.status(500).json({ error: 'Internal server error' });
     }
   };
 
   /**
    * Get sale by ID
    */
-  public static getSaleById = async (req: Request, res: Response, next: NextFunction) => {
+  public static getSaleById = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
       
@@ -61,7 +49,8 @@ export class SaleController {
       }
 
       logger(`API endpoint GET /sales/${id} was called...`);
-      const sale = await SaleService.getSaleById(saleId);
+      const businessId = req.user!.businessId;
+      const sale = await SaleService.getSaleById(saleId, businessId);
       
       if (!sale) {
         res.status(404).json({ error: 'Sale not found' });
@@ -70,44 +59,40 @@ export class SaleController {
 
       res.json(sale);
     } catch (error) {
-      logger(`Error getting sale by ID: ${error}`);
+      logger(`Error getting sale: ${error}`);
       res.status(500).json({ error: 'Internal server error' });
     }
   };
 
   /**
-   * Get all sales with optional filtering
+   * Get all sales with optional filtering and pagination
    */
-  public static getAllSales = async (req: Request, res: Response, next: NextFunction) => {
+  public static getAllSales = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { page, limit, status, userId, startDate, endDate } = req.query;
       
       const filters: any = {};
-      
       if (page) filters.page = parseInt(page as string);
       if (limit) filters.limit = parseInt(limit as string);
-      if (status) filters.status = status as string;
+      if (status) filters.status = status;
       if (userId) filters.userId = parseInt(userId as string);
       if (startDate) filters.startDate = new Date(startDate as string);
       if (endDate) filters.endDate = new Date(endDate as string);
 
-      logger('API endpoint GET /sales was called...');
+      logger(`API endpoint GET /sales was called...`);
       const sales = await SaleService.getAllSales(filters);
       
       res.json(sales);
     } catch (error) {
       logger(`Error getting sales: ${error}`);
-      res.status(500).json({ 
-        error: 'Internal Server Error',
-        message: error instanceof Error ? error.message : 'Unknown error'
-      });
+      res.status(500).json({ error: 'Internal server error' });
     }
   };
 
   /**
    * Update sale by ID
    */
-  public static updateSale = async (req: Request, res: Response, next: NextFunction) => {
+  public static updateSale = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
       const updateData = req.body;
@@ -130,7 +115,8 @@ export class SaleController {
       }
 
       logger(`API endpoint PUT /sales/${id} was called...`);
-      const updatedSale = await SaleService.updateSale(saleId, updateData);
+      const businessId = req.user!.businessId;
+      const updatedSale = await SaleService.updateSale(saleId, businessId, updateData);
       
       if (!updatedSale) {
         res.status(404).json({ error: 'Sale not found' });
@@ -150,7 +136,7 @@ export class SaleController {
   /**
    * Delete sale by ID
    */
-  public static deleteSale = async (req: Request, res: Response, next: NextFunction) => {
+  public static deleteSale = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
       
@@ -167,7 +153,8 @@ export class SaleController {
       }
 
       logger(`API endpoint DELETE /sales/${id} was called...`);
-      const deleted = await SaleService.deleteSale(saleId);
+      const businessId = req.user!.businessId;
+      const deleted = await SaleService.deleteSale(saleId, businessId);
       
       if (!deleted) {
         res.status(404).json({ error: 'Sale not found' });
@@ -184,7 +171,7 @@ export class SaleController {
   /**
    * Get sales by user ID
    */
-  public static getSalesByUser = async (req: Request, res: Response, next: NextFunction) => {
+  public static getSalesByUser = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { userId } = req.params;
       
@@ -201,7 +188,8 @@ export class SaleController {
       }
 
       logger(`API endpoint GET /sales/user/${userId} was called...`);
-      const sales = await SaleService.getSalesByUser(userIdNum);
+      const businessId = req.user!.businessId;
+      const sales = await SaleService.getSalesByUser(userIdNum, businessId);
       
       res.json(sales);
     } catch (error) {
@@ -213,7 +201,7 @@ export class SaleController {
   /**
    * Get sales statistics
    */
-  public static getSalesStats = async (req: Request, res: Response, next: NextFunction) => {
+  public static getSalesStats = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       logger('API endpoint GET /sales/stats was called...');
       const stats = await SaleService.getSalesStats();
@@ -228,7 +216,7 @@ export class SaleController {
   /**
    * Create sale with order items
    */
-  public static createSaleWithItems = async (req: Request, res: Response, next: NextFunction) => {
+  public static createSaleWithItems = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { orderItems, ...saleData } = req.body;
       
@@ -263,7 +251,7 @@ export class SaleController {
   /**
    * Get sale with order items
    */
-  public static getSaleWithItems = async (req: Request, res: Response, next: NextFunction) => {
+  public static getSaleWithItems = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
       
@@ -297,7 +285,7 @@ export class SaleController {
   /**
    * Get sales by date range
    */
-  public static getSalesByDateRange = async (req: Request, res: Response, next: NextFunction) => {
+  public static getSalesByDateRange = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { startDate, endDate } = req.query;
       
@@ -315,7 +303,8 @@ export class SaleController {
       }
 
       logger(`API endpoint GET /sales/date-range was called...`);
-      const sales = await SaleService.getSalesByDateRange(start, end);
+      const businessId = req.user!.businessId;
+      const sales = await SaleService.getSalesByDateRange(start, end, businessId);
       
       res.json(sales);
     } catch (error) {

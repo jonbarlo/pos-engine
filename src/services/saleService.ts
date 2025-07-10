@@ -4,6 +4,8 @@ import { ItemModel } from '../models/ItemModel';
 import { SaleItemModel } from '../models/SaleItemModel';
 import { SaleAttributes, SaleCreationAttributes } from '../models/SaleModel';
 import { QueryTypes } from 'sequelize';
+import { logger } from '../utils/logger';
+import { getSaleRepository } from '../repositories/RepositoryFactory';
 
 export interface SaleFilters {
   page?: number;
@@ -22,142 +24,121 @@ export interface SalesStats {
 }
 
 export class SaleService {
-  /**
-   * Create a new sale
-   */
   static async createSale(saleData: SaleCreationAttributes): Promise<SaleAttributes> {
-    // Validate required fields
-    if (!saleData.userId || saleData.totalAmount === undefined) {
-      throw new Error('Missing required fields: userId, totalAmount');
+    try {
+      if (!saleData.userId || saleData.totalAmount === undefined) {
+        throw new Error('Missing required fields: userId, totalAmount');
+      }
+      const saleRepository = getSaleRepository();
+      return await saleRepository.create(saleData);
+    } catch (error) {
+      logger(`Error creating sale: ${error}`);
+      throw error;
     }
-
-    const sale = await SaleModel.create(saleData);
-    return sale.toJSON();
   }
 
-  /**
-   * Get sale by ID
-   */
-  static async getSaleById(id: number): Promise<SaleAttributes | null> {
-    const sale = await SaleModel.findByPk(id);
-    if (!sale) return null;
-    return sale.toJSON();
+  static async getSaleById(id: number, businessId?: number): Promise<SaleAttributes | null> {
+    try {
+      if (businessId) {
+        const saleRepository = getSaleRepository();
+        return await saleRepository.findById(id, businessId);
+      }
+      // fallback for legacy usage
+      const sale = await SaleModel.findByPk(id);
+      if (!sale) return null;
+      return sale.toJSON();
+    } catch (error) {
+      logger(`Error getting sale by ID: ${error}`);
+      throw error;
+    }
   }
 
-  /**
-   * Get all sales with optional filtering and pagination
-   */
   static async getAllSales(filters: SaleFilters = {}): Promise<SaleAttributes[]> {
-    const {
-      page = 1,
-      limit = 50,
-      status,
-      userId,
-      startDate,
-      endDate
-    } = filters;
+    try {
+      const { page = 1, limit = 50, status, userId, startDate, endDate } = filters;
+      const where: any = {};
+      
+      if (status) where.status = status;
+      if (userId) where.userId = userId;
+      
+      if (startDate || endDate) {
+        where.createdAt = {};
+        if (startDate) where.createdAt.$gte = startDate;
+        if (endDate) where.createdAt.$lte = endDate;
+      }
 
-    const where: any = {};
-    
-    if (status) where.status = status;
-    if (userId) where.userId = userId;
-    
-    if (startDate || endDate) {
-      where.createdAt = {};
-      if (startDate) where.createdAt.$gte = startDate;
-      if (endDate) where.createdAt.$lte = endDate;
+      const sales = await SaleModel.findAll({
+        where,
+        order: [['createdAt', 'DESC']],
+        limit,
+        offset: (page - 1) * limit,
+        include: []
+      });
+
+      return sales.map((sale: SaleModel) => sale.toJSON());
+    } catch (error) {
+      logger(`Error getting all sales: ${error}`);
+      throw error;
     }
-
-    const sales = await SaleModel.findAll({
-      where,
-      order: [['createdAt', 'DESC']],
-      limit,
-      offset: (page - 1) * limit,
-      include: []
-    });
-
-    return sales.map((sale: SaleModel) => sale.toJSON());
   }
 
-  /**
-   * Update sale by ID
-   */
-  static async updateSale(id: number, updateData: Partial<SaleAttributes>): Promise<SaleAttributes | null> {
-    const sale = await SaleModel.findByPk(id);
-    if (!sale) {
-      return null;
+  static async updateSale(id: number, businessId: number, updateData: Partial<SaleAttributes>): Promise<SaleAttributes | null> {
+    try {
+      const saleRepository = getSaleRepository();
+      return await saleRepository.update(id, businessId, updateData);
+    } catch (error) {
+      logger(`Error updating sale: ${error}`);
+      throw error;
     }
-
-    await sale.update(updateData);
-    return sale.toJSON();
   }
 
-  /**
-   * Delete sale by ID
-   */
-  static async deleteSale(id: number): Promise<boolean> {
-    const sale = await SaleModel.findByPk(id);
-    if (!sale) {
-      return false;
+  static async deleteSale(id: number, businessId: number): Promise<boolean> {
+    try {
+      const saleRepository = getSaleRepository();
+      return await saleRepository.delete(id, businessId);
+    } catch (error) {
+      logger(`Error deleting sale: ${error}`);
+      throw error;
     }
-
-    await sale.destroy();
-    return true;
   }
 
-  /**
-   * Get sales by user ID
-   */
-  static async getSalesByUser(userId: number): Promise<SaleAttributes[]> {
-    const sales = await SaleModel.findAll({
-      where: { userId },
-      order: [['createdAt', 'DESC']],
-      include: []
-    });
-
-    return sales.map((sale: SaleModel) => sale.toJSON());
+  static async getSalesByUser(userId: number, businessId: number): Promise<SaleAttributes[]> {
+    try {
+      const saleRepository = getSaleRepository();
+      const sales = await saleRepository.findAllByBusiness(businessId);
+      return sales.filter((sale: SaleAttributes) => sale.userId === userId);
+    } catch (error) {
+      logger(`Error getting sales by user: ${error}`);
+      throw error;
+    }
   }
 
-  /**
-   * Get sales within a date range
-   */
-  static async getSalesByDateRange(startDate: Date, endDate: Date): Promise<SaleAttributes[]> {
-    const sales = await SaleModel.findAll({
-      where: {
-        createdAt: {
-          $gte: startDate,
-          $lte: endDate
-        }
-      },
-      order: [['createdAt', 'DESC']],
-      include: []
-    });
-
-    return sales.map((sale: SaleModel) => sale.toJSON());
+  static async getSalesByDateRange(startDate: Date, endDate: Date, businessId: number): Promise<SaleAttributes[]> {
+    try {
+      const saleRepository = getSaleRepository();
+      const sales = await saleRepository.findAllByBusiness(businessId);
+      return sales.filter((sale: SaleAttributes) => {
+        const createdAt = new Date(sale.createdAt);
+        return createdAt >= startDate && createdAt <= endDate;
+      });
+    } catch (error) {
+      logger(`Error getting sales by date range: ${error}`);
+      throw error;
+    }
   }
 
-  /**
-   * Get sales statistics
-   */
   static async getSalesStats(): Promise<SalesStats> {
     try {
-      // Get all sales (not just completed) for now to avoid empty results
       const sales = await SaleModel.findAll({
         attributes: ['totalAmount', 'createdAt', 'status']
       });
-
       const totalSales = sales.reduce((sum, sale) => sum + parseFloat(sale.totalAmount.toString()), 0);
       const totalTransactions = sales.length;
       const averageOrderValue = totalTransactions > 0 ? totalSales / totalTransactions : 0;
-
-      // Get top selling items with explicit MS SQL Server compatible query
       const sequelize = SaleModel.sequelize || SaleItemModel.sequelize;
       if (!sequelize) {
         throw new Error('Sequelize instance not available');
       }
-
-      // Use raw query for better MS SQL Server compatibility
-      // Modified to work even if no sales exist
       const topSellingItems = await sequelize.query(`
         SELECT 
           si.itemId,
@@ -170,7 +151,6 @@ export class SaleService {
       `, {
         type: QueryTypes.SELECT
       });
-
       return {
         totalSales,
         totalTransactions,
@@ -178,13 +158,11 @@ export class SaleService {
         topSellingItems: topSellingItems || []
       };
     } catch (error) {
+      logger(`Error getting sales stats: ${error}`);
       throw error;
     }
   }
 
-  /**
-   * Create a complete sale with order items
-   */
   static async createSaleWithItems(
     saleData: SaleCreationAttributes,
     orderItems: Array<{
@@ -193,85 +171,88 @@ export class SaleService {
       unitPrice: number;
     }>
   ): Promise<SaleAttributes> {
-    // Get sequelize instance from any model
-    const sequelize = SaleModel.sequelize || SaleItemModel.sequelize;
-    if (!sequelize) {
-      throw new Error('Sequelize instance not available');
-    }
-
-    const transaction = await sequelize.transaction();
-
     try {
-      // Create the sale
-      const sale = await SaleModel.create(saleData, { transaction });
+      const sequelize = SaleModel.sequelize || SaleItemModel.sequelize;
+      if (!sequelize) {
+        throw new Error('Sequelize instance not available');
+      }
 
-      // Create sale items
-      const saleItemPromises = orderItems.map(item => {
-        const discountAmount = 0;
-        const totalPrice = item.quantity * item.unitPrice;
-        const finalPrice = totalPrice - discountAmount;
-        return SaleItemModel.create({
-          saleId: sale.id,
-          itemId: item.itemId,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          totalPrice,
-          discountAmount,
-          finalPrice
-        }, { transaction });
-      });
+      const transaction = await sequelize.transaction();
 
-      await Promise.all(saleItemPromises);
+      try {
+        // Create the sale
+        const sale = await SaleModel.create(saleData, { transaction });
 
-      // Update item stock
-      const stockUpdatePromises = orderItems.map(async item => {
-        const itemModel = await ItemModel.findByPk(item.itemId);
-        if (itemModel) {
-          const newStock = Math.max(0, itemModel.stock - item.quantity);
-          await itemModel.update({ stock: newStock }, { transaction });
-        }
-      });
+        // Create sale items
+        const saleItemPromises = orderItems.map(async item => {
+          const discountAmount = 0; // Calculate discount if needed
+          const totalPrice = item.quantity * item.unitPrice;
+          const finalPrice = totalPrice - discountAmount;
+          return SaleItemModel.create({
+            saleId: sale.id,
+            itemId: item.itemId,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            totalPrice: finalPrice,
+            discountAmount: discountAmount,
+            finalPrice: finalPrice
+          }, { transaction });
+        });
 
-      await Promise.all(stockUpdatePromises);
+        await Promise.all(saleItemPromises);
 
-      await transaction.commit();
-      return sale.toJSON();
+        // Update item stock
+        const stockUpdatePromises = orderItems.map(async item => {
+          const itemModel = await ItemModel.findByPk(item.itemId);
+          if (itemModel) {
+            const newStock = Math.max(0, itemModel.stock - item.quantity);
+            await itemModel.update({ stock: newStock }, { transaction });
+          }
+        });
+
+        await Promise.all(stockUpdatePromises);
+
+        await transaction.commit();
+        return sale.toJSON();
+      } catch (error) {
+        await transaction.rollback();
+        throw error;
+      }
     } catch (error) {
-      await transaction.rollback();
+      logger(`Error creating sale with items: ${error}`);
       throw error;
     }
   }
 
-  /**
-   * Get sale with order items
-   */
   static async getSaleWithItems(id: number): Promise<any> {
-    const sale = await SaleModel.findByPk(id, {
-      include: [
-        {
-          model: SaleItemModel,
-          as: 'saleItems',
-          include: [
-            {
-              model: ItemModel,
-              as: 'item'
-            }
-          ]
-        },
-        {
-          model: UserModel,
-          as: 'user'
-        }
-      ]
-    });
+    try {
+      const sale = await SaleModel.findByPk(id, {
+        include: [
+          {
+            model: SaleItemModel,
+            as: 'saleItems',
+            include: [
+              {
+                model: ItemModel,
+                as: 'item'
+              }
+            ]
+          },
+          {
+            model: UserModel,
+            as: 'user'
+          }
+        ]
+      });
 
-    if (!sale) return null;
-    return sale.toJSON();
+      if (!sale) return null;
+      return sale.toJSON();
+    } catch (error) {
+      logger(`Error getting sale with items: ${error}`);
+      throw error;
+    }
   }
 
-  /**
-   * Calculate sale totals
-   */
   static calculateSaleTotals(
     items: Array<{ quantity: number; unitPrice: number }>,
     taxRate: number = 0.10,
@@ -280,11 +261,6 @@ export class SaleService {
     const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
     const tax = subtotal * taxRate;
     const total = subtotal + tax - discount;
-
-    return {
-      subtotal: Math.round(subtotal * 100) / 100,
-      tax: Math.round(tax * 100) / 100,
-      total: Math.round(total * 100) / 100
-    };
+    return { subtotal, tax, total };
   }
 } 

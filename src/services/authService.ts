@@ -117,7 +117,7 @@ export class AuthService {
         }
 
         // Verify password
-        const isValidPassword = await bcrypt.compare(password, user.get('password') as string);
+        const isValidPassword = await bcrypt.compare(password, user.password);
         if (!isValidPassword) {
             throw new AuthenticationError('Invalid email or password');
         }
@@ -129,9 +129,8 @@ export class AuthService {
         const token = this.generateToken(user);
 
         // Return user data without password
-        const userData = user.toJSON();
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { password: _, ...userWithoutPassword } = userData;
+        const { password: _, ...userWithoutPassword } = user;
 
         return {
             message: 'Login successful',
@@ -181,10 +180,10 @@ export class AuthService {
     private static generateToken(user: any): string {
         return jwt.sign(
             {
-                userId: user.get ? user.get('id') : user.id,
-                businessId: user.get ? user.get('businessId') : user.businessId,
-                email: user.get ? user.get('email') : user.email,
-                role: user.get ? user.get('role') : user.role
+                userId: user.id,
+                businessId: user.businessId,
+                email: user.email,
+                role: user.role
             },
             JWT_SECRET,
             { expiresIn: '24h' }
