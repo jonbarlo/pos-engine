@@ -101,7 +101,22 @@ export class AuthController {
                 business: {
                     id: business.id,
                     name: business.name,
-                    slug: business.slug
+                    slug: business.slug,
+                    description: business.description,
+                    logo: business.logo,
+                    primaryColor: business.primaryColor,
+                    secondaryColor: business.secondaryColor,
+                    address: business.address,
+                    phone: business.phone,
+                    email: business.email,
+                    website: business.website,
+                    taxRate: business.taxRate,
+                    currency: business.currency,
+                    timezone: business.timezone,
+                    isActive: business.isActive,
+                    type: business.type,
+                    createdAt: business.createdAt,
+                    updatedAt: business.updatedAt
                 },
                 token
             });
@@ -191,12 +206,21 @@ export class AuthController {
                     id: business.id,
                     name: business.name,
                     slug: business.slug,
+                    description: business.description,
+                    logo: business.logo,
                     primaryColor: business.primaryColor,
                     secondaryColor: business.secondaryColor,
-                    logo: business.logo,
-                    currency: business.currency,
+                    address: business.address,
+                    phone: business.phone,
+                    email: business.email,
+                    website: business.website,
                     taxRate: business.taxRate,
-                    timezone: business.timezone
+                    currency: business.currency,
+                    timezone: business.timezone,
+                    isActive: business.isActive,
+                    type: business.type,
+                    createdAt: business.createdAt,
+                    updatedAt: business.updatedAt
                 } : null,
                 token
             });
@@ -231,12 +255,21 @@ export class AuthController {
                     id: business.id,
                     name: business.name,
                     slug: business.slug,
+                    description: business.description,
+                    logo: business.logo,
                     primaryColor: business.primaryColor,
                     secondaryColor: business.secondaryColor,
-                    logo: business.logo,
-                    currency: business.currency,
+                    address: business.address,
+                    phone: business.phone,
+                    email: business.email,
+                    website: business.website,
                     taxRate: business.taxRate,
-                    timezone: business.timezone
+                    currency: business.currency,
+                    timezone: business.timezone,
+                    isActive: business.isActive,
+                    type: business.type,
+                    createdAt: business.createdAt,
+                    updatedAt: business.updatedAt
                 } : null
             });
 
