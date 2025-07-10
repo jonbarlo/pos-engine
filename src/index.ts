@@ -22,7 +22,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Swagger documentation
-import { specs } from './config/swagger';
+import { specs } from './config/openapi';
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
 /**
