@@ -29,6 +29,7 @@ dotenv.config();
 const businessUsers: Record<number, any[]> = {};
 const businessCategories: Record<number, any[]> = {};
 const businessMenuItems: Record<number, any[]> = {};
+const businessInventoryItems: Record<number, any[]> = {};
 const businessCustomers: Record<number, any[]> = {};
 const businessTables: Record<number, any[]> = {};
 
@@ -217,6 +218,121 @@ const MENU_ITEMS = {
     // Snacks
     { name: 'Mixed Nuts', description: 'Assorted nuts and dried fruits', price: 4.99, categoryName: 'Snacks', stock: 30 },
     { name: 'Granola Bar', description: 'Homemade granola bar', price: 3.49, categoryName: 'Snacks', stock: 40 }
+  ]
+};
+
+// Realistic inventory items for each business
+const INVENTORY_ITEMS = {
+  'bella-vista-italian': [
+    // Pasta & Grains
+    { name: 'Spaghetti', description: 'Premium Italian spaghetti', price: 2.50, cost: 1.20, stock: 50, category: 'Pasta & Grains', unit: 'kg', minStock: 10, maxStock: 100 },
+    { name: 'Penne Rigate', description: 'Rigid penne pasta', price: 2.30, cost: 1.10, stock: 45, category: 'Pasta & Grains', unit: 'kg', minStock: 10, maxStock: 100 },
+    { name: 'Arborio Rice', description: 'Premium risotto rice', price: 4.50, cost: 2.80, stock: 25, category: 'Pasta & Grains', unit: 'kg', minStock: 5, maxStock: 50 },
+    
+    // Meat & Seafood
+    { name: 'Chicken Breast', description: 'Fresh boneless chicken breast', price: 8.50, cost: 5.20, stock: 30, category: 'Meat & Seafood', unit: 'kg', minStock: 5, maxStock: 60 },
+    { name: 'Ground Beef', description: 'Premium ground beef 80/20', price: 7.80, cost: 4.90, stock: 25, category: 'Meat & Seafood', unit: 'kg', minStock: 5, maxStock: 50 },
+    { name: 'Salmon Fillet', description: 'Fresh Atlantic salmon', price: 12.50, cost: 8.30, stock: 15, category: 'Meat & Seafood', unit: 'kg', minStock: 3, maxStock: 30 },
+    { name: 'Shrimp', description: 'Large peeled shrimp', price: 15.00, cost: 10.50, stock: 20, category: 'Meat & Seafood', unit: 'kg', minStock: 5, maxStock: 40 },
+    
+    // Dairy & Cheese
+    { name: 'Parmesan Cheese', description: 'Aged Parmigiano-Reggiano', price: 18.00, cost: 12.00, stock: 12, category: 'Dairy & Cheese', unit: 'kg', minStock: 2, maxStock: 25 },
+    { name: 'Mozzarella', description: 'Fresh mozzarella cheese', price: 6.50, cost: 4.20, stock: 18, category: 'Dairy & Cheese', unit: 'kg', minStock: 3, maxStock: 35 },
+    { name: 'Ricotta Cheese', description: 'Fresh ricotta cheese', price: 5.80, cost: 3.80, stock: 15, category: 'Dairy & Cheese', unit: 'kg', minStock: 3, maxStock: 30 },
+    { name: 'Heavy Cream', description: 'Heavy whipping cream', price: 4.20, cost: 2.80, stock: 20, category: 'Dairy & Cheese', unit: 'L', minStock: 5, maxStock: 40 },
+    
+    // Vegetables
+    { name: 'Tomatoes', description: 'Fresh Roma tomatoes', price: 3.20, cost: 1.80, stock: 40, category: 'Vegetables', unit: 'kg', minStock: 10, maxStock: 80 },
+    { name: 'Basil', description: 'Fresh basil leaves', price: 8.50, cost: 5.50, stock: 8, category: 'Vegetables', unit: 'bunch', minStock: 2, maxStock: 20 },
+    { name: 'Spinach', description: 'Fresh baby spinach', price: 4.80, cost: 2.90, stock: 25, category: 'Vegetables', unit: 'kg', minStock: 5, maxStock: 50 },
+    { name: 'Mushrooms', description: 'Fresh button mushrooms', price: 5.20, cost: 3.10, stock: 20, category: 'Vegetables', unit: 'kg', minStock: 5, maxStock: 40 },
+    { name: 'Onions', description: 'Yellow onions', price: 2.10, cost: 1.20, stock: 35, category: 'Vegetables', unit: 'kg', minStock: 10, maxStock: 70 },
+    { name: 'Garlic', description: 'Fresh garlic bulbs', price: 6.50, cost: 4.20, stock: 15, category: 'Vegetables', unit: 'kg', minStock: 3, maxStock: 30 },
+    
+    // Oils & Condiments
+    { name: 'Olive Oil', description: 'Extra virgin olive oil', price: 12.00, cost: 7.50, stock: 25, category: 'Oils & Condiments', unit: 'L', minStock: 5, maxStock: 50 },
+    { name: 'Balsamic Vinegar', description: 'Aged balsamic vinegar', price: 15.00, cost: 9.80, stock: 12, category: 'Oils & Condiments', unit: 'L', minStock: 2, maxStock: 25 },
+    { name: 'Tomato Sauce', description: 'Marinara sauce base', price: 3.50, cost: 2.10, stock: 30, category: 'Oils & Condiments', unit: 'L', minStock: 5, maxStock: 60 },
+    
+    // Herbs & Spices
+    { name: 'Oregano', description: 'Dried oregano', price: 12.00, cost: 7.80, stock: 8, category: 'Herbs & Spices', unit: 'kg', minStock: 1, maxStock: 15 },
+    { name: 'Thyme', description: 'Dried thyme', price: 14.00, cost: 9.20, stock: 6, category: 'Herbs & Spices', unit: 'kg', minStock: 1, maxStock: 12 },
+    { name: 'Black Pepper', description: 'Whole black peppercorns', price: 18.00, cost: 12.00, stock: 10, category: 'Herbs & Spices', unit: 'kg', minStock: 2, maxStock: 20 },
+    { name: 'Sea Salt', description: 'Fine sea salt', price: 2.50, cost: 1.50, stock: 20, category: 'Herbs & Spices', unit: 'kg', minStock: 5, maxStock: 40 }
+  ],
+  
+  'sakura-sushi': [
+    // Fish & Seafood
+    { name: 'Tuna', description: 'Fresh yellowfin tuna', price: 25.00, cost: 18.00, stock: 15, category: 'Fish & Seafood', unit: 'kg', minStock: 3, maxStock: 30 },
+    { name: 'Salmon', description: 'Fresh Atlantic salmon', price: 22.00, cost: 15.50, stock: 18, category: 'Fish & Seafood', unit: 'kg', minStock: 5, maxStock: 35 },
+    { name: 'Yellowtail', description: 'Fresh hamachi', price: 28.00, cost: 20.00, stock: 12, category: 'Fish & Seafood', unit: 'kg', minStock: 2, maxStock: 25 },
+    { name: 'Eel', description: 'Unagi eel', price: 32.00, cost: 24.00, stock: 8, category: 'Fish & Seafood', unit: 'kg', minStock: 2, maxStock: 20 },
+    { name: 'Shrimp', description: 'Fresh tiger shrimp', price: 18.00, cost: 12.50, stock: 20, category: 'Fish & Seafood', unit: 'kg', minStock: 5, maxStock: 40 },
+    { name: 'Scallops', description: 'Fresh sea scallops', price: 35.00, cost: 26.00, stock: 10, category: 'Fish & Seafood', unit: 'kg', minStock: 2, maxStock: 20 },
+    
+    // Rice & Grains
+    { name: 'Sushi Rice', description: 'Premium short-grain rice', price: 4.50, cost: 2.80, stock: 40, category: 'Rice & Grains', unit: 'kg', minStock: 10, maxStock: 80 },
+    { name: 'Nori Sheets', description: 'Premium nori for sushi', price: 45.00, cost: 30.00, stock: 50, category: 'Rice & Grains', unit: 'pack', minStock: 10, maxStock: 100 },
+    
+    // Vegetables
+    { name: 'Cucumber', description: 'Fresh cucumbers', price: 2.80, cost: 1.60, stock: 30, category: 'Vegetables', unit: 'kg', minStock: 10, maxStock: 60 },
+    { name: 'Avocado', description: 'Fresh Hass avocados', price: 4.50, cost: 2.80, stock: 25, category: 'Vegetables', unit: 'kg', minStock: 5, maxStock: 50 },
+    { name: 'Carrots', description: 'Fresh carrots', price: 2.20, cost: 1.30, stock: 35, category: 'Vegetables', unit: 'kg', minStock: 10, maxStock: 70 },
+    { name: 'Daikon', description: 'Fresh daikon radish', price: 3.50, cost: 2.20, stock: 20, category: 'Vegetables', unit: 'kg', minStock: 5, maxStock: 40 },
+    { name: 'Ginger', description: 'Fresh ginger root', price: 8.00, cost: 5.20, stock: 15, category: 'Vegetables', unit: 'kg', minStock: 3, maxStock: 30 },
+    
+    // Sauces & Condiments
+    { name: 'Soy Sauce', description: 'Premium soy sauce', price: 8.50, cost: 5.50, stock: 25, category: 'Sauces & Condiments', unit: 'L', minStock: 5, maxStock: 50 },
+    { name: 'Wasabi', description: 'Fresh wasabi paste', price: 25.00, cost: 18.00, stock: 12, category: 'Sauces & Condiments', unit: 'kg', minStock: 2, maxStock: 25 },
+    { name: 'Mirin', description: 'Sweet rice wine', price: 12.00, cost: 7.80, stock: 15, category: 'Sauces & Condiments', unit: 'L', minStock: 3, maxStock: 30 },
+    { name: 'Rice Vinegar', description: 'Seasoned rice vinegar', price: 6.50, cost: 4.20, stock: 20, category: 'Sauces & Condiments', unit: 'L', minStock: 5, maxStock: 40 },
+    { name: 'Sesame Oil', description: 'Toasted sesame oil', price: 15.00, cost: 10.00, stock: 18, category: 'Sauces & Condiments', unit: 'L', minStock: 3, maxStock: 35 },
+    
+    // Specialty Items
+    { name: 'Tobiko', description: 'Flying fish roe', price: 45.00, cost: 32.00, stock: 8, category: 'Specialty Items', unit: 'kg', minStock: 1, maxStock: 15 },
+    { name: 'Masago', description: 'Capelin roe', price: 35.00, cost: 25.00, stock: 10, category: 'Specialty Items', unit: 'kg', minStock: 2, maxStock: 20 },
+    { name: 'Tempura Flour', description: 'Tempura batter mix', price: 8.00, cost: 5.20, stock: 15, category: 'Specialty Items', unit: 'kg', minStock: 3, maxStock: 30 }
+  ],
+  
+  'coffee-corner': [
+    // Coffee Beans
+    { name: 'Arabica Beans', description: 'Premium Arabica coffee beans', price: 12.00, cost: 7.50, stock: 50, category: 'Coffee Beans', unit: 'kg', minStock: 10, maxStock: 100 },
+    { name: 'Robusta Beans', description: 'Strong Robusta coffee beans', price: 10.00, cost: 6.20, stock: 40, category: 'Coffee Beans', unit: 'kg', minStock: 10, maxStock: 80 },
+    { name: 'Espresso Blend', description: 'Dark roast espresso blend', price: 14.00, cost: 8.80, stock: 35, category: 'Coffee Beans', unit: 'kg', minStock: 8, maxStock: 70 },
+    { name: 'Decaf Beans', description: 'Decaffeinated coffee beans', price: 16.00, cost: 10.50, stock: 25, category: 'Coffee Beans', unit: 'kg', minStock: 5, maxStock: 50 },
+    
+    // Dairy & Milk
+    { name: 'Whole Milk', description: 'Fresh whole milk', price: 3.50, cost: 2.20, stock: 40, category: 'Dairy & Milk', unit: 'L', minStock: 10, maxStock: 80 },
+    { name: '2% Milk', description: 'Reduced fat milk', price: 3.30, cost: 2.10, stock: 35, category: 'Dairy & Milk', unit: 'L', minStock: 10, maxStock: 70 },
+    { name: 'Almond Milk', description: 'Unsweetened almond milk', price: 4.50, cost: 3.20, stock: 30, category: 'Dairy & Milk', unit: 'L', minStock: 8, maxStock: 60 },
+    { name: 'Oat Milk', description: 'Barista oat milk', price: 5.00, cost: 3.50, stock: 25, category: 'Dairy & Milk', unit: 'L', minStock: 5, maxStock: 50 },
+    { name: 'Heavy Cream', description: 'Heavy whipping cream', price: 4.80, cost: 3.20, stock: 20, category: 'Dairy & Milk', unit: 'L', minStock: 5, maxStock: 40 },
+    
+    // Syrups & Flavorings
+    { name: 'Vanilla Syrup', description: 'Vanilla flavored syrup', price: 8.00, cost: 5.20, stock: 25, category: 'Syrups & Flavorings', unit: 'L', minStock: 5, maxStock: 50 },
+    { name: 'Caramel Syrup', description: 'Caramel flavored syrup', price: 8.50, cost: 5.50, stock: 22, category: 'Syrups & Flavorings', unit: 'L', minStock: 5, maxStock: 45 },
+    { name: 'Hazelnut Syrup', description: 'Hazelnut flavored syrup', price: 9.00, cost: 5.80, stock: 20, category: 'Syrups & Flavorings', unit: 'L', minStock: 5, maxStock: 40 },
+    { name: 'Mocha Syrup', description: 'Chocolate flavored syrup', price: 8.20, cost: 5.30, stock: 18, category: 'Syrups & Flavorings', unit: 'L', minStock: 5, maxStock: 35 },
+    { name: 'Pumpkin Spice Syrup', description: 'Seasonal pumpkin spice syrup', price: 10.00, cost: 6.50, stock: 15, category: 'Syrups & Flavorings', unit: 'L', minStock: 3, maxStock: 30 },
+    
+    // Tea
+    { name: 'Black Tea', description: 'Premium black tea leaves', price: 15.00, cost: 9.80, stock: 20, category: 'Tea', unit: 'kg', minStock: 5, maxStock: 40 },
+    { name: 'Green Tea', description: 'Japanese green tea', price: 18.00, cost: 12.00, stock: 18, category: 'Tea', unit: 'kg', minStock: 5, maxStock: 35 },
+    { name: 'Earl Grey', description: 'Earl Grey tea blend', price: 16.00, cost: 10.50, stock: 15, category: 'Tea', unit: 'kg', minStock: 3, maxStock: 30 },
+    { name: 'Chai Spice', description: 'Chai tea spice blend', price: 20.00, cost: 13.50, stock: 12, category: 'Tea', unit: 'kg', minStock: 2, maxStock: 25 },
+    
+    // Pastry Ingredients
+    { name: 'All-Purpose Flour', description: 'Premium all-purpose flour', price: 3.50, cost: 2.20, stock: 30, category: 'Pastry Ingredients', unit: 'kg', minStock: 10, maxStock: 60 },
+    { name: 'Butter', description: 'Unsalted butter', price: 6.50, cost: 4.20, stock: 25, category: 'Pastry Ingredients', unit: 'kg', minStock: 5, maxStock: 50 },
+    { name: 'Sugar', description: 'Granulated white sugar', price: 2.80, cost: 1.80, stock: 35, category: 'Pastry Ingredients', unit: 'kg', minStock: 10, maxStock: 70 },
+    { name: 'Eggs', description: 'Fresh large eggs', price: 4.50, cost: 2.90, stock: 40, category: 'Pastry Ingredients', unit: 'dozen', minStock: 10, maxStock: 80 },
+    { name: 'Vanilla Extract', description: 'Pure vanilla extract', price: 25.00, cost: 16.00, stock: 8, category: 'Pastry Ingredients', unit: 'L', minStock: 2, maxStock: 15 },
+    
+    // Disposables
+    { name: 'Coffee Cups', description: '12oz disposable coffee cups', price: 0.15, cost: 0.08, stock: 1000, category: 'Disposables', unit: 'piece', minStock: 200, maxStock: 2000 },
+    { name: 'Cup Lids', description: 'Coffee cup lids', price: 0.08, cost: 0.04, stock: 1200, category: 'Disposables', unit: 'piece', minStock: 200, maxStock: 2500 },
+    { name: 'Stirrers', description: 'Wooden coffee stirrers', price: 0.02, cost: 0.01, stock: 2000, category: 'Disposables', unit: 'piece', minStock: 500, maxStock: 5000 },
+    { name: 'Napkins', description: 'Paper napkins', price: 0.05, cost: 0.03, stock: 800, category: 'Disposables', unit: 'piece', minStock: 200, maxStock: 1500 }
   ]
 };
 
@@ -409,6 +525,67 @@ async function seedDatabase() {
         }
       }
       businessMenuItems[business.id] = createdItems;
+    }
+
+    // Create inventory items for each business
+    for (const business of createdBusinesses) {
+      const inventoryItems = (INVENTORY_ITEMS as any)[business.slug];
+      const createdInventoryItems = [];
+      let inventoryCounter = 1;
+      const existingInventorySkus = new Set<string>(); // Track SKUs for inventory
+      const existingInventoryBarcodes = new Set<string>(); // Track barcodes for inventory
+      
+      for (const itemData of inventoryItems) {
+        let prefix = '';
+        if (business && typeof business.slug === 'string') {
+          prefix = business.slug
+            .split('-')
+            .map((s: string) => (typeof s === 'string' && s.length > 0 ? s?.[0]?.toUpperCase() : ''))
+            .join('');
+        }
+        
+        const sku = generateSku(prefix + 'INV', inventoryCounter, existingInventorySkus);
+        existingInventorySkus.add(sku);
+        
+        const barcode = generateBarcode(prefix + 'INV', inventoryCounter, existingInventoryBarcodes);
+        existingInventoryBarcodes.add(barcode);
+        
+        logger(`🔍 Generating Inventory SKU: ${sku} for ${itemData.name} (${business.name})`);
+        logger(`🔍 Generating Inventory Barcode: ${barcode} for ${itemData.name} (${business.name})`);
+        
+        const inventoryItemData = {
+          name: itemData.name,
+          description: itemData.description,
+          price: itemData.price,
+          cost: itemData.cost,
+          stock: itemData.stock,
+          category: itemData.category,
+          businessId: business.id,
+          sku: sku,
+          barcode: barcode,
+          unit: itemData.unit,
+          minStock: itemData.minStock,
+          maxStock: itemData.maxStock,
+          isActive: true
+        };
+        inventoryCounter++;
+        
+        try {
+          const inventoryItem = await ItemModel.create(inventoryItemData as any);
+          createdInventoryItems.push(inventoryItem);
+          logger(`✅ Created inventory item: ${inventoryItem.name} (${inventoryItem.stock} ${inventoryItem.unit}) for ${business.name}`);
+        } catch (error: any) {
+          logger(`❌ Failed to create inventory item: ${itemData.name}`);
+          logger(`❌ Error details: ${error.message}`);
+          if (error.errors) {
+            error.errors.forEach((err: any) => {
+              logger(`❌ Field: ${err.path}, Value: ${err.value}, Message: ${err.message}`);
+            });
+          }
+          throw error;
+        }
+      }
+      businessInventoryItems[business.id] = createdInventoryItems;
     }
 
     // Create customers for each business
