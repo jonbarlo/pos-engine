@@ -22,9 +22,57 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Swagger documentation
-// const specs = swaggerJsdoc(swaggerOptions);
-// app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
+import { specs } from './config/swagger';
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
+/**
+ * @swagger
+ * /health:
+ *   get:
+ *     summary: Health check endpoint
+ *     tags: [Health]
+ *     responses:
+ *       200:
+ *         description: Server is healthy
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: OK
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ *                   example: 2025-07-10T01:00:00.000Z
+ *                 environment:
+ *                   type: string
+ *                   example: development
+ *
+ * /api/health:
+ *   get:
+ *     summary: API health check endpoint
+ *     tags: [Health]
+ *     responses:
+ *       200:
+ *         description: API is healthy
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: OK
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ *                   example: 2025-07-10T01:00:00.000Z
+ *                 environment:
+ *                   type: string
+ *                   example: development
+ */
 // Health check endpoints
 app.get('/health', (req, res) => {
   res.json({ 
@@ -38,7 +86,7 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development' 
   });
 });
 

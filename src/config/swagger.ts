@@ -277,6 +277,20 @@ const options = {
             updatedAt: { type: 'string', format: 'date-time' }
           }
         },
+        SaleItem: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer', example: 1 },
+            saleId: { type: 'integer', example: 1 },
+            itemId: { type: 'integer', example: 1 },
+            itemName: { type: 'string', example: 'Laptop' },
+            quantity: { type: 'integer', example: 2 },
+            unitPrice: { type: 'number', example: 999.99 },
+            totalPrice: { type: 'number', example: 1999.98 },
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' }
+          }
+        },
         Item: {
           type: 'object',
           properties: {
