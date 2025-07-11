@@ -21,6 +21,7 @@ import bcrypt from 'bcryptjs';
 import { logger } from '../utils/logger';
 import { generateSku, generateBarcode } from '../utils/skuGenerator';
 import { faker } from '@faker-js/faker';
+import { SaleStatus } from '../models/SaleModel';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -688,17 +689,13 @@ async function seedDatabase() {
         
         // For all possibly undefined notes fields, use ''
         const saleNotes = Math.random() > 0.7 ? 'Customer requested receipt' : '';
-        const statuses = ['pending', 'completed', 'cancelled', 'refunded'] as const;
-        const randomStatus = statuses[Math.floor(Math.random() * statuses.length)] || 'pending';
+        const statuses = [SaleStatus.PENDING, SaleStatus.COMPLETED, SaleStatus.CANCELLED, SaleStatus.REFUNDED] as const;
+        const randomStatus = statuses[Math.floor(Math.random() * statuses.length)] || SaleStatus.PENDING;
         
         const sale = await SaleModel.create({
           businessId: business.id,
           userId: user.id,
-          customerId: customer.id,
           totalAmount: 0.00,
-          taxAmount: 0.00,
-          discountAmount: Math.random() > 0.8 ? Number((Math.floor(Math.random() * 10) + 5).toFixed(2)) : 0.00,
-          finalAmount: 0.00,
           paymentMethod: ['cash', 'card', 'check'][Math.floor(Math.random() * 3)] || 'cash',
           status: randomStatus,
           notes: saleNotes
@@ -728,12 +725,10 @@ async function seedDatabase() {
         }
         
         const taxAmount = totalAmount * (business.taxRate || 0.08); // Default 8% tax if not set
-        const finalAmount = totalAmount + taxAmount - (sale.discountAmount || 0);
+        const finalAmount = totalAmount + taxAmount;
         
         await sale.update({ 
-          totalAmount: Number(totalAmount.toFixed(2)), 
-          taxAmount: Number(taxAmount.toFixed(2)), 
-          finalAmount: Math.max(Number(finalAmount.toFixed(2)), 0)
+          totalAmount: Number(totalAmount.toFixed(2))
         });
         logger(`✅ Created sale: ${sale.id} for ${business.name}`);
       }

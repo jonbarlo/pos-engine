@@ -22,7 +22,7 @@ describe('SaleService', () => {
   });
 
   it('should create a sale', async () => {
-    const saleData = { userId: 1, totalAmount: 100 } as SaleCreationAttributes;
+    const saleData = { userId: 1, businessId: 1, totalAmount: 100 } as SaleCreationAttributes;
     const created = { id: 1, ...saleData, isActive: true } as any;
     mockSaleRepository.create.mockResolvedValue(created);
     const result = await SaleService.createSale(saleData);

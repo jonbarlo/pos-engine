@@ -13,30 +13,36 @@ async function cleanupDatabase() {
     await sequelize.authenticate();
     console.log('✅ Connected to database');
 
-    // Get all user tables (exclude system tables)
+    // Get all tables in all schemas
     const tables = (await sequelize.query(
-      `SELECT TABLE_NAME as tableName FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_SCHEMA = 'dbo'`,
+      `SELECT TABLE_SCHEMA, TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'`,
       { type: QueryTypes.SELECT }
-    )) as { tableName: string }[];
+    )) as { TABLE_SCHEMA: string; TABLE_NAME: string }[];
 
-    // Drop all tables (MS SQL Server will handle foreign key constraints automatically)
-    for (const { tableName } of tables) {
+    // Drop all tables, handling foreign key constraints
+    for (const { TABLE_SCHEMA, TABLE_NAME } of tables) {
+      const fullName = `[${TABLE_SCHEMA}].[${TABLE_NAME}]`;
       try {
-        // Use CASCADE to automatically handle foreign key dependencies
-        await sequelize.query(`DROP TABLE [${tableName}] CASCADE`);
-        console.log(`🗑️ Dropped table: ${tableName}`);
+        await sequelize.query(`DROP TABLE ${fullName}`);
+        console.log(`🗑️ Dropped table: ${fullName}`);
       } catch (err) {
-        // If CASCADE fails, try without it
-        try {
-          await sequelize.query(`DROP TABLE [${tableName}]`);
-          console.log(`🗑️ Dropped table: ${tableName}`);
-        } catch (err2) {
-          console.error(`❌ Failed to drop table ${tableName}:`, err2);
-        }
+        console.error(`❌ Failed to drop table ${fullName}:`, err);
       }
     }
 
-    console.log('🎉 Database cleanup complete!');
+    // Double-check: print remaining tables
+    const remaining = (await sequelize.query(
+      `SELECT TABLE_SCHEMA, TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'`,
+      { type: QueryTypes.SELECT }
+    )) as { TABLE_SCHEMA: string; TABLE_NAME: string }[];
+    if (remaining.length === 0) {
+      console.log('🎉 Database cleanup complete! No tables remain.');
+    } else {
+      console.log('⚠️ Some tables could not be dropped:');
+      for (const t of remaining) {
+        console.log(`- ${t.TABLE_SCHEMA}.${t.TABLE_NAME}`);
+      }
+    }
   } catch (error) {
     console.error('❌ Error during cleanup:', error);
   } finally {

@@ -23,7 +23,25 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Swagger documentation
-import { specs } from './config/openapi';
+const options = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'POS Engine API',
+      version: '1.0.0',
+      description: 'Node.js/TypeScript POS system API',
+    },
+    servers: [
+      {
+        url: 'http://localhost:3000/api',
+        description: 'Development server',
+      },
+    ],
+  },
+  apis: ['./src/routes/*.ts', './src/index.ts'],
+};
+
+const specs = swaggerJsdoc(options);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
 /**
@@ -125,6 +143,7 @@ async function startServer() {
     const reservationRoutes = (await import('./routes/reservations')).default;
     const deliveryRoutes = (await import('./routes/deliveries')).default;
     const kitchenRoutes = (await import('./routes/kitchen')).default;
+    const splitBillingRoutes = (await import('./routes/splitBilling')).default;
 
     // API routes
     app.use('/api/auth', authRoutes);
@@ -139,6 +158,7 @@ async function startServer() {
     app.use('/api/reservations', reservationRoutes);
     app.use('/api/deliveries', deliveryRoutes);
     app.use('/api/kitchen', kitchenRoutes);
+    app.use('/api/sales', splitBillingRoutes);
 
     logger('Routes registered successfully.');
 

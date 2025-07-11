@@ -24,14 +24,16 @@ Authorization: Bearer <your_jwt_token>
 **POST** `/auth/login`
 
 **Required Fields:**
-- `email` (string)
-- `password` (string)
+- `email` (string) - Valid email address
+- `password` (string) - Minimum 6 characters, must contain at least one letter
+- Either `businessId` (integer) OR `businessSlug` (string) - One is required
 
 **Request Body:**
 ```json
 {
   "email": "maria.esposito@example.com",
-  "password": "password123"
+  "password": "password123",
+  "businessId": 1
 }
 ```
 
@@ -47,6 +49,29 @@ Authorization: Bearer <your_jwt_token>
 }
 ```
 
+### Register
+**POST** `/auth/register`
+
+**Required Fields:**
+- `name` (string) - 2-100 characters, letters, spaces, hyphens, apostrophes only
+- `email` (string) - Valid email address
+- `password` (string) - Minimum 8 characters, must contain lowercase, uppercase, number, and special character
+- Either `businessId` (integer) OR `businessSlug` (string) - One is required
+
+**Optional Fields:**
+- `role` (string) - "admin", "cashier", or "manager"
+
+**Request Body:**
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "SecurePass123!",
+  "businessId": 1,
+  "role": "cashier"
+}
+```
+
 ---
 
 ## Sales Endpoints
@@ -55,8 +80,9 @@ Authorization: Bearer <your_jwt_token>
 **POST** `/sales`
 
 **Required Fields:**
-- `userId` (integer)
-- `totalAmount` (number)
+- `userId` (integer) - User ID who created the sale
+- `totalAmount` (number) - Total sale amount
+- `businessId` (integer) - Business ID (required by database schema)
 
 **Optional Fields:**
 - `customerId` (integer)
@@ -71,6 +97,7 @@ Authorization: Bearer <your_jwt_token>
 ```json
 {
   "userId": 1,
+  "businessId": 1,
   "totalAmount": 1193.49,
   "customerId": 1,
   "taxAmount": 93.50,
@@ -89,6 +116,7 @@ Authorization: Bearer <your_jwt_token>
   "sale": {
     "id": 1,
     "userId": 1,
+    "businessId": 1,
     "totalAmount": 1193.49,
     "status": "completed",
     "createdAt": "2024-01-01T00:00:00.000Z"
@@ -100,7 +128,9 @@ Authorization: Bearer <your_jwt_token>
 **POST** `/sales/with-items`
 
 **Required Fields:**
-- `orderItems` (array of objects with `itemId`, `quantity`, `unitPrice`)
+- `orderItems` (array) - Array of objects with `itemId`, `quantity`, `unitPrice`
+- `businessId` (integer) - Business ID (required by database schema)
+- `userId` (integer) - User ID who created the sale (required by database schema)
 
 **Optional Fields:**
 - `customerName`, `customerEmail`, `subtotal`, `tax`, `discount`, `total`, `paymentMethod`, `status`
@@ -108,6 +138,8 @@ Authorization: Bearer <your_jwt_token>
 **Request Body:**
 ```json
 {
+  "userId": 1,
+  "businessId": 1,
   "customerName": "John Doe",
   "total": 1193.49,
   "orderItems": [
@@ -122,6 +154,21 @@ Authorization: Bearer <your_jwt_token>
       "unitPrice": 299.99
     }
   ]
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Sale with items created successfully",
+  "sale": {
+    "id": 1,
+    "userId": 1,
+    "businessId": 1,
+    "totalAmount": 1193.49,
+    "status": "completed",
+    "createdAt": "2024-01-01T00:00:00.000Z"
+  }
 }
 ```
 
@@ -202,55 +249,220 @@ Authorization: Bearer <your_jwt_token>
 
 ---
 
-## Orders Endpoints (Restaurant/Food Service)
+## Split Billing Endpoints
 
-### Create Order
-**POST** `/orders`
+### Create Sale with Split Payments
+**POST** `/sales/split`
 
 **Required Fields:**
-- `orderType` (string: "dine_in", "takeaway", "delivery")
-- `items` (array of objects with `itemId`, `quantity`)
+- `userId` (integer) - User ID who created the sale
+- `totalAmount` (number) - Total sale amount
+- `payments` (array) - Array of payment objects
 
 **Optional Fields:**
-- `customerId` (number)
-- `tableId` (number)
-- `notes` (string)
+- `customerName` (string) - Customer name
+- `customerPhone` (string) - Customer phone
+- `customerEmail` (string) - Customer email
+- `notes` (string) - Sale notes
+- `items` (array) - Array of sale items
+
+**Payment Object Required Fields:**
+- `amount` (number) - Payment amount
+- `method` (string) - Payment method (cash, credit_card, debit_card, mobile_payment, etc.)
+
+**Payment Object Optional Fields:**
+- `customerName` (string) - Customer name for this payment
+- `customerPhone` (string) - Customer phone for this payment
+- `reference` (string) - Payment reference number
 
 **Request Body:**
 ```json
 {
-  "orderType": "dine_in",
-  "tableId": 1,
+  "userId": 1,
+  "totalAmount": 100.00,
+  "customerName": "Group Order",
+  "customerPhone": "555-1234",
+  "customerEmail": "group@example.com",
+  "notes": "Split between 3 people",
   "items": [
     {
       "itemId": 1,
       "quantity": 2,
-      "notes": "Extra spicy"
+      "unitPrice": 25.00
     },
     {
       "itemId": 2,
-      "quantity": 1
+      "quantity": 1,
+      "unitPrice": 50.00
     }
   ],
-  "notes": "Window seat"
+  "payments": [
+    {
+      "amount": 40.00,
+      "method": "credit_card",
+      "customerName": "John Doe",
+      "customerPhone": "555-1111",
+      "reference": "CC123456"
+    },
+    {
+      "amount": 35.00,
+      "method": "cash",
+      "customerName": "Jane Smith",
+      "customerPhone": "555-2222"
+    },
+    {
+      "amount": 25.00,
+      "method": "debit_card",
+      "customerName": "Bob Wilson",
+      "customerPhone": "555-3333",
+      "reference": "DC789012"
+    }
+  ]
 }
 ```
 
 **Response:**
 ```json
 {
-  "success": true,
-  "data": {
+  "message": "Split sale created successfully",
+  "sale": {
     "id": 1,
-    "orderNumber": "ORD-1704067200000-123",
-    "orderType": "dine_in",
-    "status": "pending",
-    "subtotal": 25.98,
-    "taxAmount": 2.60,
-    "totalAmount": 28.58,
-    "orderItems": [...]
-  },
-  "message": "Order created successfully"
+    "totalAmount": 100.00,
+    "status": "completed",
+    "payments": [
+      {
+        "amount": 40.00,
+        "method": "credit_card",
+        "customerName": "John Doe",
+        "customerPhone": "555-1111",
+        "reference": "CC123456",
+        "paidAt": "2025-01-01T00:00:00.000Z"
+      }
+    ],
+    "createdAt": "2025-01-01T00:00:00.000Z"
+  }
+}
+```
+
+### Add Payment to Existing Sale
+**POST** `/sales/{saleId}/payments`
+
+**Path Parameters:**
+- `saleId` (integer, required) - Sale ID
+
+**Required Fields:**
+- `amount` (number) - Payment amount
+- `method` (string) - Payment method
+
+**Optional Fields:**
+- `customerName` (string) - Customer name for this payment
+- `customerPhone` (string) - Customer phone for this payment
+- `reference` (string) - Payment reference number
+
+**Request Body:**
+```json
+{
+  "amount": 25.00,
+  "method": "cash",
+  "customerName": "Alice Johnson",
+  "customerPhone": "555-4444",
+  "reference": "CASH001"
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Payment added successfully",
+  "sale": {
+    "id": 1,
+    "totalAmount": 100.00,
+    "status": "completed",
+    "payments": [...],
+    "totalPaid": 100.00
+  }
+}
+```
+
+### Get Sale with Split Payment Details
+**GET** `/sales/{id}`
+
+**Path Parameters:**
+- `id` (integer, required) - Sale ID
+
+**Response:**
+```json
+{
+  "id": 1,
+  "totalAmount": 100.00,
+  "status": "completed",
+  "customerName": "Group Order",
+  "customerPhone": "555-1234",
+  "customerEmail": "group@example.com",
+  "notes": "Split between 3 people",
+  "payments": [
+    {
+      "amount": 40.00,
+      "method": "credit_card",
+      "customerName": "John Doe",
+      "customerPhone": "555-1111",
+      "reference": "CC123456",
+      "paidAt": "2025-01-01T00:00:00.000Z"
+    }
+  ],
+  "totalPaid": 100.00,
+  "remainingAmount": 0.00,
+  "createdAt": "2025-01-01T00:00:00.000Z",
+  "updatedAt": "2025-01-01T00:00:00.000Z"
+}
+```
+
+### Refund a Split Payment
+**POST** `/sales/{saleId}/refund`
+
+**Path Parameters:**
+- `saleId` (integer, required) - Sale ID
+
+**Required Fields:**
+- `paymentIndex` (integer) - Index of the payment to refund (0-based)
+- `refundAmount` (number) - Amount to refund
+
+**Optional Fields:**
+- `reason` (string) - Reason for refund
+
+**Request Body:**
+```json
+{
+  "paymentIndex": 0,
+  "refundAmount": 20.00,
+  "reason": "Customer requested partial refund"
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Refund processed successfully",
+  "sale": {
+    "id": 1,
+    "totalAmount": 100.00,
+    "status": "completed",
+    "refundAmount": 20.00,
+    "totalPaid": 80.00
+  }
+}
+```
+
+### Get Split Billing Statistics
+**GET** `/sales/split/stats`
+
+**Response:**
+```json
+{
+  "totalSplitSales": 15,
+  "totalAmount": 2500.00,
+  "averageSplitAmount": 166.67,
+  "averagePaymentsPerSale": 2.8
 }
 ```
 
@@ -302,15 +514,15 @@ Authorization: Bearer <your_jwt_token>
 **POST** `/items`
 
 **Required Fields:**
-- `name` (string)
-- `price` (number)
-- `stock` (integer)
-- `category` (string)
-- `sku` (string)
+- `name` (string) - Item name
+- `price` (number) - Non-negative price
 
 **Optional Fields:**
-- `description` (string)
-- `barcode` (string)
+- `description` (string) - Item description
+- `stock` (integer) - Stock quantity (default: 0)
+- `category` (string) - Item category (default: "General")
+- `sku` (string) - Auto-generated if not provided
+- `barcode` (string) - Auto-generated if not provided
 
 **Request Body:**
 ```json
@@ -367,20 +579,16 @@ Common HTTP Status Codes:
 - `400` - Bad Request (missing required fields)
 - `401` - Unauthorized (invalid or missing token)
 - `404` - Not Found
+- `409` - Conflict (e.g., duplicate SKU/barcode)
 - `500` - Internal Server Error
 
 ---
 
 ## Important Notes
 
-1. **For Simple Sales**: Use `POST /sales` with just `customerName` and `total`
-2. **For Sales with Items**: Use `POST /sales/with-items` with `orderItems` array (each item needs `itemId`, `quantity`, `unitPrice`)
-3. **For Restaurant Orders**: Use `POST /orders` with `orderType` and `items` array (each item needs `itemId`, `quantity`)
-4. **Authentication**: Always include `Authorization: Bearer <token>` header
-5. **Business Context**: All operations are scoped to the authenticated user's business
-
----
-
-## Complete Swagger Specification
-
-For the complete OpenAPI 3.0 specification, see `swagger.yaml` in the project root. This file contains the full API documentation that can be imported into Swagger UI, Postman, or other API tools.
+1. **Authentication**: All endpoints (except health checks) require Bearer token authentication
+2. **Business Scoping**: All data is scoped to the authenticated user's business
+3. **Validation**: Input validation is enforced at the controller level
+4. **Auto-generation**: SKU and barcode are auto-generated if not provided for items
+5. **Split Billing**: Total payment amounts must equal the sale total amount
+6. **User ID**: Most endpoints require or expect userId in the payload for proper tracking

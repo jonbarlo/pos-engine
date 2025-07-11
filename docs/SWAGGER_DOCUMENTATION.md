@@ -1,329 +1,440 @@
-# 📚 Swagger/OpenAPI Documentation
+# Swagger/OpenAPI Documentation
 
-## 🎯 Overview
+## Base URL
+```
+http://localhost:3000/api
+```
 
-The POS Engine API now includes comprehensive Swagger/OpenAPI documentation that provides an interactive interface for testing and exploring all API endpoints.
+## Authentication
+All endpoints require Bearer token authentication:
+```
+Authorization: Bearer <your_jwt_token>
+```
 
-## 🌐 Accessing the Documentation
+## OpenAPI 3.0 Specification
 
-### Swagger UI (Interactive)
-- **URL:** `http://localhost:3031/api-docs/`
-- **Description:** Interactive web interface for testing API endpoints
-- **Features:** 
-  - Try out endpoints directly from the browser
-  - View request/response schemas
-  - Authenticate with JWT tokens
-  - Download OpenAPI specification
+### Authentication Endpoints
 
-### OpenAPI JSON Specification
-- **URL:** `http://localhost:3031/api-docs/swagger.json`
-- **Description:** Machine-readable API specification
-- **Use Cases:**
-  - Code generation for client libraries
-  - API testing tools integration
-  - Documentation generation
+#### POST /auth/login
+**Summary:** Authenticate user and get access token
 
----
-
-## 🏗️ Implementation Details
-
-### Configuration Files
-
-#### `src/config/swagger.ts`
-- **Purpose:** Main Swagger configuration
-- **Features:**
-  - OpenAPI 3.0.0 specification
-  - Comprehensive schema definitions
-  - Security schemes (JWT Bearer)
-  - Server configurations
-  - API tags and descriptions
-
-#### Route Documentation
-Each route file contains JSDoc comments with Swagger annotations:
-- `src/routes/auth.ts` - Authentication endpoints
-- `src/routes/items.ts` - Item management endpoints
-- `src/routes/sales.ts` - Sales and transactions
-- `src/routes/users.ts` - User management
-- `src/routes/businesses.ts` - Business management
-- `src/index.ts` - Health and root endpoints
-
----
-
-## 📋 API Endpoints Documentation
-
-### 🔐 Authentication (`/api/auth`)
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| POST | `/login` | Authenticate user and get JWT token | No |
-| POST | `/register` | Register new user (admin only) | Yes |
-
-### 🏢 Businesses (`/api/businesses`)
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| GET | `/` | Get all businesses (admin only) | Yes |
-| GET | `/{id}` | Get business by ID | Yes |
-| GET | `/slug/{slug}` | Get business by slug | Yes |
-| POST | `/` | Create new business (admin only) | Yes |
-| PUT | `/{id}` | Update business | Yes |
-| DELETE | `/{id}` | Delete business | Yes |
-| GET | `/{id}/stats` | Get business statistics | Yes |
-| GET | `/search` | Search businesses | Yes |
-| GET | `/timezone/{timezone}` | Get businesses by timezone | Yes |
-| GET | `/currency/{currency}` | Get businesses by currency | Yes |
-
-### 👥 Users (`/api/users`)
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| GET | `/` | Get all users for business | Yes |
-| GET | `/{id}` | Get user by ID | Yes |
-| POST | `/` | Create new user | Yes |
-| PUT | `/{id}` | Update user | Yes |
-| DELETE | `/{id}` | Delete user | Yes |
-
-### 📦 Items (`/api/items`)
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| GET | `/` | Get all items | Yes |
-| GET | `/search` | Search items | Yes |
-| GET | `/category/{category}` | Get items by category | Yes |
-| GET | `/{id}` | Get item by ID | Yes |
-| POST | `/` | Create new item | Yes |
-| PUT | `/{id}` | Update item | Yes |
-| DELETE | `/{id}` | Delete item | Yes |
-| PUT | `/{id}/stock` | Update item stock | Yes |
-
-### 💰 Sales (`/api/sales`)
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| GET | `/` | Get all sales | Yes |
-| GET | `/stats` | Get sales statistics | Yes |
-| GET | `/user/{userId}` | Get sales by user | Yes |
-| GET | `/{id}` | Get sale by ID | Yes |
-| POST | `/` | Create new sale | Yes |
-| PUT | `/{id}` | Update sale | Yes |
-| DELETE | `/{id}` | Delete sale | Yes |
-
-### 🏥 Health (`/`)
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| GET | `/health` | Health check endpoint | No |
-| GET | `/` | Root endpoint | No |
-
----
-
-## 🔑 Authentication in Swagger UI
-
-### How to Authenticate
-1. **Login First:**
-   - Go to `/api/auth/login` endpoint
-   - Use the "Try it out" button
-   - Enter credentials:
-     ```json
-     {
-       "email": "maria@bellavista.com",
-       "password": "cashier123",
-       "businessSlug": "bella-vista-italian"
-     }
-     ```
-   - Copy the JWT token from the response
-
-2. **Authorize:**
-   - Click the "Authorize" button (🔒) at the top of Swagger UI
-   - Enter the token in format: `Bearer YOUR_JWT_TOKEN`
-   - Click "Authorize"
-
-3. **Test Protected Endpoints:**
-   - All protected endpoints will now work with your token
-   - The token will be automatically included in requests
-
----
-
-## 📊 Data Models (Schemas)
-
-### Business Schema
+**Request Body:**
 ```json
 {
-  "id": 1,
-  "name": "Demo Business",
-  "slug": "demo-business",
-  "description": "A demo business for testing",
-  "taxRate": 8.5,
-  "currency": "USD",
-  "timezone": "America/New_York",
-  "isActive": true
+  "email": "maria.esposito@example.com",
+  "password": "password123",
+  "businessId": 1
 }
 ```
 
-### User Schema
+**Required Fields:**
+- `email` (string) - Valid email address
+- `password` (string) - Minimum 6 characters, must contain at least one letter
+- Either `businessId` (integer) OR `businessSlug` (string) - One is required
+
+**Response (200):**
 ```json
 {
-  "id": 1,
-  "businessId": 1,
-  "name": "Admin User",
-  "email": "admin@demo.com",
-  "role": "admin",
-  "isActive": true
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": 1,
+    "email": "maria.esposito@example.com",
+    "businessId": 1
+  }
 }
 ```
 
-### Item Schema
+#### POST /auth/register
+**Summary:** Register a new user (admin only)
+
+**Request Body:**
 ```json
 {
-  "id": 1,
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "SecurePass123!",
   "businessId": 1,
-  "name": "Laptop",
-  "description": "High-performance laptop",
-  "price": 999.99,
-  "stock": 10,
-  "category": "Electronics",
-  "sku": "LAP001"
+  "role": "cashier"
 }
 ```
 
-### Sale Schema
+**Required Fields:**
+- `name` (string) - 2-100 characters, letters, spaces, hyphens, apostrophes only
+- `email` (string) - Valid email address
+- `password` (string) - Minimum 8 characters, must contain lowercase, uppercase, number, and special character
+- Either `businessId` (integer) OR `businessSlug` (string) - One is required
+
+**Optional Fields:**
+- `role` (string) - "admin", "cashier", or "manager"
+
+### Sales Endpoints
+
+#### POST /sales
+**Summary:** Create a new sale
+
+**Request Body:**
 ```json
 {
-  "id": 1,
-  "businessId": 1,
   "userId": 1,
-  "customerName": "John Doe",
-  "customerEmail": "john@example.com",
-  "subtotal": 1099.99,
-  "tax": 93.50,
-  "total": 1193.49,
+  "businessId": 1,
+  "totalAmount": 1193.49,
+  "customerId": 1,
+  "taxAmount": 93.50,
+  "discountAmount": 0,
+  "finalAmount": 1193.49,
   "paymentMethod": "card",
+  "status": "completed",
+  "notes": "Customer requested extra napkins"
+}
+```
+
+**Required Fields:**
+- `userId` (integer) - User ID who created the sale
+- `totalAmount` (number) - Total sale amount
+- `businessId` (integer) - Business ID (required by database schema)
+
+**Optional Fields:**
+- `customerId` (integer)
+- `taxAmount` (number)
+- `discountAmount` (number)
+- `finalAmount` (number)
+- `paymentMethod` (string: "cash", "card", "check")
+- `status` (string: "pending", "completed", "cancelled", "refunded")
+- `notes` (string)
+
+#### POST /sales/with-items
+**Summary:** Create a new sale with order items
+
+**Request Body:**
+```json
+{
+  "userId": 1,
+  "businessId": 1,
+  "customerName": "John Doe",
+  "total": 1193.49,
+  "orderItems": [
+    {
+      "itemId": 1,
+      "quantity": 2,
+      "unitPrice": 599.99
+    },
+    {
+      "itemId": 2,
+      "quantity": 1,
+      "unitPrice": 299.99
+    }
+  ]
+}
+```
+
+**Required Fields:**
+- `orderItems` (array) - Array of objects with `itemId`, `quantity`, `unitPrice`
+- `businessId` (integer) - Business ID (required by database schema)
+- `userId` (integer) - User ID who created the sale (required by database schema)
+
+**Optional Fields:**
+- `customerName`, `customerEmail`, `subtotal`, `tax`, `discount`, `total`, `paymentMethod`, `status`
+
+#### GET /sales
+**Summary:** Get all sales
+
+**Query Parameters:**
+- `page` (optional, default: 1)
+- `limit` (optional, default: 10)
+- `status` (optional: "pending", "completed", "cancelled")
+- `userId` (optional: integer)
+- `startDate` (optional: YYYY-MM-DD)
+- `endDate` (optional: YYYY-MM-DD)
+
+#### GET /sales/stats
+**Summary:** Get sales statistics
+
+#### GET /sales/user/{userId}
+**Summary:** Get sales by user ID
+
+**Path Parameters:**
+- `userId` (integer, required)
+
+#### GET /sales/{id}
+**Summary:** Get sale by ID
+
+**Path Parameters:**
+- `id` (integer, required)
+
+#### PUT /sales/{id}
+**Summary:** Update a sale
+
+**Path Parameters:**
+- `id` (integer, required)
+
+**Request Body:** (all fields optional)
+```json
+{
+  "customerName": "Jane Doe",
+  "total": 1299.99,
   "status": "completed"
 }
 ```
 
----
+#### DELETE /sales/{id}
+**Summary:** Delete a sale
 
-## 🧪 Testing with Swagger UI
+**Path Parameters:**
+- `id` (integer, required)
 
-### Step-by-Step Testing Guide
+### Split Billing Endpoints
 
-1. **Start the Server:**
-   ```bash
-   npm start
-   ```
+#### POST /sales/split
+**Summary:** Create a sale with split payments
 
-2. **Access Swagger UI:**
-   - Open browser to `http://localhost:3031/api-docs/`
-
-3. **Test Authentication:**
-   - Find `/api/auth/login` endpoint
-   - Click "Try it out"
-   - Enter test credentials
-   - Execute and copy the token
-
-4. **Authorize:**
-   - Click "Authorize" button
-   - Enter `Bearer YOUR_TOKEN`
-   - Authorize
-
-5. **Test Endpoints:**
-   - Try creating an item
-   - Test search functionality
-   - Create a sale
-   - View statistics
-
-### Example Test Flow
-1. **Login** → Get JWT token
-2. **Authorize** → Set token in Swagger UI
-3. **Create Item** → Add a new product
-4. **Search Items** → Test search functionality
-5. **Create Sale** → Process a transaction
-6. **View Stats** → Check sales statistics
-
----
-
-## 🔧 Customization
-
-### Modifying Swagger Configuration
-Edit `src/config/swagger.ts` to:
-- Change API title and description
-- Add new servers
-- Modify schemas
-- Update contact information
-
-### Adding New Endpoints
-1. Add JSDoc comments to your route
-2. Follow the existing pattern
-3. Include proper schema references
-4. Add security requirements if needed
-
-### Example Route Documentation
-```typescript
-/**
- * @swagger
- * /api/example:
- *   get:
- *     summary: Example endpoint
- *     tags: [Example]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Success
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Example'
- */
-```
-
----
-
-## 🚀 Production Deployment
-
-### Environment Configuration
-- Update server URLs in `src/config/swagger.ts`
-- Set production domain in servers array
-- Configure CORS for Swagger UI
-
-### Security Considerations
-- Swagger UI should be disabled in production
-- Use environment variables to control access
-- Implement rate limiting for API endpoints
-
-### Disabling Swagger in Production
-```typescript
-if (process.env.NODE_ENV !== 'production') {
-  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
+**Request Body:**
+```json
+{
+  "userId": 1,
+  "totalAmount": 100.00,
+  "customerName": "Group Order",
+  "customerPhone": "555-1234",
+  "customerEmail": "group@example.com",
+  "notes": "Split between 3 people",
+  "items": [
+    {
+      "itemId": 1,
+      "quantity": 2,
+      "unitPrice": 25.00
+    },
+    {
+      "itemId": 2,
+      "quantity": 1,
+      "unitPrice": 50.00
+    }
+  ],
+  "payments": [
+    {
+      "amount": 40.00,
+      "method": "credit_card",
+      "customerName": "John Doe",
+      "customerPhone": "555-1111",
+      "reference": "CC123456"
+    },
+    {
+      "amount": 35.00,
+      "method": "cash",
+      "customerName": "Jane Smith",
+      "customerPhone": "555-2222"
+    },
+    {
+      "amount": 25.00,
+      "method": "debit_card",
+      "customerName": "Bob Wilson",
+      "customerPhone": "555-3333",
+      "reference": "DC789012"
+    }
+  ]
 }
 ```
 
----
+**Required Fields:**
+- `userId` (integer) - User ID who created the sale
+- `totalAmount` (number) - Total sale amount
+- `payments` (array) - Array of payment objects
 
-## 📈 Benefits
+**Payment Object Required Fields:**
+- `amount` (number) - Payment amount
+- `method` (string) - Payment method
 
-### For Developers
-- **Interactive Testing:** Test endpoints directly in browser
-- **Auto-generated Documentation:** Always up-to-date
-- **Schema Validation:** Built-in request/response validation
-- **Code Generation:** Generate client libraries
+#### POST /sales/{saleId}/payments
+**Summary:** Add payment to existing sale
 
-### For API Consumers
-- **Clear Documentation:** Easy to understand API structure
-- **Example Requests:** Ready-to-use examples
-- **Response Schemas:** Know exactly what to expect
-- **Authentication Guide:** Clear auth instructions
+**Path Parameters:**
+- `saleId` (integer, required)
 
-### For Business
-- **Professional Appearance:** Enterprise-grade documentation
-- **Reduced Support:** Self-service API exploration
-- **Faster Integration:** Developers can integrate quickly
-- **API Versioning:** Clear version management
+**Request Body:**
+```json
+{
+  "amount": 25.00,
+  "method": "cash",
+  "customerName": "Alice Johnson",
+  "customerPhone": "555-4444",
+  "reference": "CASH001"
+}
+```
 
----
+**Required Fields:**
+- `amount` (number) - Payment amount
+- `method` (string) - Payment method
 
-## 🎉 Success Metrics
+#### GET /sales/{id}
+**Summary:** Get sale with split payment details
 
-- ✅ **15/18 endpoints documented** with full Swagger annotations
-- ✅ **Interactive testing interface** available at `/api-docs/`
-- ✅ **JWT authentication** integrated with Swagger UI
-- ✅ **Comprehensive schemas** for all data models
-- ✅ **Production-ready** configuration
-- ✅ **Professional documentation** for API consumers
+**Path Parameters:**
+- `id` (integer, required)
 
-The POS Engine API now provides a complete, professional-grade API documentation experience that rivals enterprise solutions! 
+#### POST /sales/{saleId}/refund
+**Summary:** Refund a split payment
+
+**Path Parameters:**
+- `saleId` (integer, required)
+
+**Request Body:**
+```json
+{
+  "paymentIndex": 0,
+  "refundAmount": 20.00,
+  "reason": "Customer requested partial refund"
+}
+```
+
+**Required Fields:**
+- `paymentIndex` (integer) - Index of the payment to refund (0-based)
+- `refundAmount` (number) - Amount to refund
+
+#### GET /sales/split/stats
+**Summary:** Get split billing statistics
+
+### Items Endpoints
+
+#### GET /items
+**Summary:** Get all items for the current business
+
+**Query Parameters:**
+- `page` (optional, default: 1)
+- `limit` (optional, default: 10)
+
+#### GET /items/search
+**Summary:** Search items by name or description
+
+**Query Parameters:**
+- `q` (string, required) - Search term
+
+#### GET /items/category/{category}
+**Summary:** Get items by category
+
+**Path Parameters:**
+- `category` (string, required)
+
+#### GET /items/{id}
+**Summary:** Get item by ID
+
+**Path Parameters:**
+- `id` (integer, required)
+
+#### POST /items
+**Summary:** Create a new item
+
+**Request Body:**
+```json
+{
+  "name": "Pepperoni Pizza",
+  "price": 14.99,
+  "stock": 50,
+  "category": "Pizza",
+  "sku": "PEP001",
+  "description": "Spicy pepperoni with cheese",
+  "barcode": "1234567890124"
+}
+```
+
+**Required Fields:**
+- `name` (string) - Item name
+- `price` (number) - Non-negative price
+
+**Optional Fields:**
+- `description` (string) - Item description
+- `stock` (integer) - Stock quantity (default: 0)
+- `category` (string) - Item category (default: "General")
+- `sku` (string) - Auto-generated if not provided
+- `barcode` (string) - Auto-generated if not provided
+
+#### PUT /items/{id}
+**Summary:** Update an item
+
+**Path Parameters:**
+- `id` (integer, required)
+
+**Request Body:** (all fields optional)
+```json
+{
+  "name": "Updated Pizza Name",
+  "price": 15.99,
+  "stock": 45
+}
+```
+
+#### DELETE /items/{id}
+**Summary:** Delete an item
+
+**Path Parameters:**
+- `id` (integer, required)
+
+#### PUT /items/{id}/stock
+**Summary:** Update item stock
+
+**Path Parameters:**
+- `id` (integer, required)
+
+### Error Responses
+
+All endpoints return errors in this format:
+```json
+{
+  "error": "Error message description"
+}
+```
+
+Common HTTP Status Codes:
+- `400` - Bad Request (missing required fields)
+- `401` - Unauthorized (invalid or missing token)
+- `404` - Not Found
+- `409` - Conflict (e.g., duplicate SKU/barcode)
+- `500` - Internal Server Error
+
+### Schemas
+
+#### Sale Schema
+```json
+{
+  "type": "object",
+  "properties": {
+    "id": { "type": "integer" },
+    "userId": { "type": "integer" },
+    "totalAmount": { "type": "number" },
+    "status": { "type": "string", "enum": ["pending", "completed", "cancelled", "refunded"] },
+    "createdAt": { "type": "string", "format": "date-time" }
+  }
+}
+```
+
+#### Item Schema
+```json
+{
+  "type": "object",
+  "properties": {
+    "id": { "type": "integer" },
+    "name": { "type": "string" },
+    "price": { "type": "number" },
+    "category": { "type": "string" },
+    "description": { "type": "string" },
+    "sku": { "type": "string" },
+    "barcode": { "type": "string" }
+  }
+}
+```
+
+#### Error Schema
+```json
+{
+  "type": "object",
+  "properties": {
+    "error": { "type": "string" }
+  }
+}
+```
+
+## Important Notes
+
+1. **Authentication**: All endpoints (except health checks) require Bearer token authentication
+2. **Business Scoping**: All data is scoped to the authenticated user's business
+3. **Validation**: Input validation is enforced at the controller level
+4. **Auto-generation**: SKU and barcode are auto-generated if not provided for items
+5. **Split Billing**: Total payment amounts must equal the sale total amount
+6. **User ID**: Most endpoints require or expect userId in the payload for proper tracking 

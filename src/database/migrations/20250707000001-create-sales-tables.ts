@@ -9,6 +9,16 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       primaryKey: true,
       type: DataTypes.INTEGER
     },
+    businessId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'businesses',
+        key: 'id',
+      },
+      onUpdate: 'CASCADE',
+      onDelete: 'CASCADE'
+    },
     userId: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -19,59 +29,40 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       onUpdate: 'CASCADE',
       onDelete: 'CASCADE'
     },
-    customerName: {
-      type: DataTypes.STRING(100),
-      allowNull: true,
-    },
-    customerEmail: {
-      type: DataTypes.STRING(255),
-      allowNull: true,
-    },
-    customerPhone: {
-      type: DataTypes.STRING(20),
-      allowNull: true,
-    },
-    subtotal: {
+    totalAmount: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
-      validate: {
-        min: 0
-      }
-    },
-    tax: {
-      type: DataTypes.DECIMAL(10, 2),
-      allowNull: false,
-      defaultValue: 0,
-      validate: {
-        min: 0
-      }
-    },
-    discount: {
-      type: DataTypes.DECIMAL(10, 2),
-      allowNull: false,
-      defaultValue: 0,
-      validate: {
-        min: 0
-      }
-    },
-    total: {
-      type: DataTypes.DECIMAL(10, 2),
-      allowNull: false,
+      defaultValue: 0.00,
       validate: {
         min: 0
       }
     },
     paymentMethod: {
-      type: DataTypes.ENUM('cash', 'card', 'mobile', 'other'),
-      allowNull: false,
-      defaultValue: 'cash',
+      type: DataTypes.STRING(50),
+      allowNull: true
     },
     status: {
       type: DataTypes.ENUM('pending', 'completed', 'cancelled', 'refunded'),
       allowNull: false,
       defaultValue: 'pending',
     },
+    customerName: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+    },
+    customerPhone: {
+      type: DataTypes.STRING(20),
+      allowNull: true,
+    },
+    customerEmail: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
     notes: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    payments: {
       type: DataTypes.TEXT,
       allowNull: true,
     },
@@ -87,8 +78,18 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     }
   });
 
-  // Create order_items table
-  await queryInterface.createTable('order_items', {
+  // Add index for businessId
+  await queryInterface.addIndex('sales', ['businessId'], {
+    name: 'sales_businessId_index'
+  });
+
+  // Update existing records to use the default business
+  await queryInterface.sequelize.query(`
+    UPDATE sales SET businessId = 1 WHERE businessId IS NULL;
+  `);
+
+  // Create sale_items table (renamed from order_items to match model)
+  await queryInterface.createTable('sale_items', {
     id: {
       allowNull: false,
       autoIncrement: true,
@@ -118,6 +119,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     quantity: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      defaultValue: 1,
       validate: {
         min: 1
       }
@@ -125,6 +127,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     unitPrice: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
+      defaultValue: 0.00,
       validate: {
         min: 0
       }
@@ -132,9 +135,30 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     totalPrice: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
+      defaultValue: 0.00,
       validate: {
         min: 0
       }
+    },
+    discountAmount: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0.00,
+      validate: {
+        min: 0
+      }
+    },
+    finalPrice: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0.00,
+      validate: {
+        min: 0
+      }
+    },
+    notes: {
+      type: DataTypes.TEXT,
+      allowNull: true
     },
     createdAt: {
       allowNull: false,
@@ -147,6 +171,26 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       defaultValue: DataTypes.NOW
     }
   });
+
+  // Add businessId column to sale_items table if needed
+  await queryInterface.addColumn('sale_items', 'businessId', {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'businesses',
+      key: 'id',
+    },
+  });
+
+  // Add index for businessId
+  await queryInterface.addIndex('sale_items', ['businessId'], {
+    name: 'sale_items_businessId_index'
+  });
+
+  // Update existing records to use the default business
+  await queryInterface.sequelize.query(`
+    UPDATE sale_items SET businessId = 1 WHERE businessId IS NULL;
+  `);
 
   // Add indexes for better performance
   await queryInterface.addIndex('sales', ['userId'], {
@@ -161,16 +205,20 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     name: 'sales_createdAt_index'
   });
   
-  await queryInterface.addIndex('order_items', ['saleId'], {
-    name: 'order_items_saleId_index'
+  await queryInterface.addIndex('sale_items', ['saleId'], {
+    name: 'sale_items_saleId_index'
   });
   
-  await queryInterface.addIndex('order_items', ['itemId'], {
-    name: 'order_items_itemId_index'
+  await queryInterface.addIndex('sale_items', ['itemId'], {
+    name: 'sale_items_itemId_index'
   });
 }
 
 export async function down(queryInterface: QueryInterface): Promise<void> {
-  await queryInterface.dropTable('order_items');
+  await queryInterface.dropTable('sale_items');
   await queryInterface.dropTable('sales');
+  await queryInterface.removeIndex('sales', 'sales_businessId_index');
+  await queryInterface.removeColumn('sales', 'businessId');
+  await queryInterface.removeIndex('sale_items', 'sale_items_businessId_index');
+  await queryInterface.removeColumn('sale_items', 'businessId');
 } 

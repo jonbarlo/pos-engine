@@ -57,7 +57,7 @@ async function runMigrations() {
     console.log('✅ SequelizeMeta table ready.');
 
     // Get list of migration files
-    const migrationsDir = path.join(__dirname, '../migrations');
+    const migrationsDir = path.join(__dirname, '../database/migrations');
     const migrationFiles = fs.readdirSync(migrationsDir)
       .filter(file => file.endsWith('.ts'))
       .sort();

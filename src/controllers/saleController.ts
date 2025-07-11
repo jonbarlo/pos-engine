@@ -11,8 +11,8 @@ export class SaleController {
     try {
       const saleData = req.body;
       
-      if (!saleData.userId || saleData.totalAmount === undefined) {
-        res.status(400).json({ error: 'User ID and total amount are required' });
+      if (!saleData.userId || saleData.totalAmount === undefined || !saleData.businessId) {
+        res.status(400).json({ error: 'User ID, business ID, and total amount are required' });
         return;
       }
 
@@ -220,8 +220,19 @@ export class SaleController {
     try {
       const { orderItems, ...saleData } = req.body;
       
+      // Log the incoming data for debugging
+      logger(`DEBUG: Incoming request body: ${JSON.stringify(req.body)}`);
+      logger(`DEBUG: Extracted saleData: ${JSON.stringify(saleData)}`);
+      logger(`DEBUG: Extracted orderItems: ${JSON.stringify(orderItems)}`);
+      
       if (!orderItems || !Array.isArray(orderItems) || orderItems.length === 0) {
         res.status(400).json({ error: 'Order items are required and must be an array' });
+        return;
+      }
+
+      // Validate required fields for sale creation
+      if (!saleData.userId || !saleData.businessId) {
+        res.status(400).json({ error: 'User ID and business ID are required' });
         return;
       }
 
@@ -235,6 +246,9 @@ export class SaleController {
         }
       }
 
+      // Log the final saleData being passed to service
+      logger(`DEBUG: Final saleData being passed to service: ${JSON.stringify(saleData)}`);
+
       logger('API endpoint POST /sales/with-items was called...');
       const sale = await SaleService.createSaleWithItems(saleData, orderItems);
       
@@ -243,7 +257,30 @@ export class SaleController {
         sale
       });
     } catch (error) {
-      logger(`Error creating sale with items: ${error}`);
+      logger('ERROR: Full error object:');
+      // Print the entire error object
+      // @ts-ignore
+      if (typeof error === 'object') {
+        // @ts-ignore
+        console.dir(error, { depth: null });
+      } else {
+        logger(String(error));
+      }
+      if (error instanceof Error) {
+        logger(`ERROR: Error name: ${error.name}`);
+        logger(`ERROR: Error message: ${error.message}`);
+        logger(`ERROR: Error stack: ${error.stack}`);
+        logger(`ERROR: Error (toString): ${error.toString()}`);
+        // Sequelize sometimes puts the real DB error in error.parent
+        // @ts-ignore
+        if ('parent' in error && error.parent) {
+          logger('ERROR: error.parent:');
+          // @ts-ignore
+          console.dir(error.parent, { depth: null });
+          // @ts-ignore
+          if (error.parent.message) logger(`ERROR: error.parent.message: ${error.parent.message}`);
+        }
+      }
       res.status(500).json({ error: 'Internal server error' });
     }
   };

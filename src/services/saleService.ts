@@ -26,8 +26,8 @@ export interface SalesStats {
 export class SaleService {
   static async createSale(saleData: SaleCreationAttributes): Promise<SaleAttributes> {
     try {
-      if (!saleData.userId || saleData.totalAmount === undefined) {
-        throw new Error('Missing required fields: userId, totalAmount');
+      if (!saleData.userId || saleData.totalAmount === undefined || !saleData.businessId) {
+        throw new Error('Missing required fields: userId, businessId, totalAmount');
       }
       const saleRepository = getSaleRepository();
       return await saleRepository.create(saleData);
@@ -172,6 +172,9 @@ export class SaleService {
     }>
   ): Promise<SaleAttributes> {
     try {
+      logger(`DEBUG: Service received saleData: ${JSON.stringify(saleData)}`);
+      logger(`DEBUG: Service received orderItems: ${JSON.stringify(orderItems)}`);
+      
       const sequelize = SaleModel.sequelize || SaleItemModel.sequelize;
       if (!sequelize) {
         throw new Error('Sequelize instance not available');
@@ -180,15 +183,21 @@ export class SaleService {
       const transaction = await sequelize.transaction();
 
       try {
+        // Log what we're about to create
+        logger(`DEBUG: About to create sale with data: ${JSON.stringify(saleData)}`);
+        
         // Create the sale
         const sale = await SaleModel.create(saleData, { transaction });
+        
+        logger(`DEBUG: Sale created successfully with ID: ${sale.id}`);
 
         // Create sale items
         const saleItemPromises = orderItems.map(async item => {
           const discountAmount = 0; // Calculate discount if needed
           const totalPrice = item.quantity * item.unitPrice;
           const finalPrice = totalPrice - discountAmount;
-          return SaleItemModel.create({
+          
+          const saleItemData = {
             saleId: sale.id,
             itemId: item.itemId,
             quantity: item.quantity,
@@ -196,10 +205,14 @@ export class SaleService {
             totalPrice: finalPrice,
             discountAmount: discountAmount,
             finalPrice: finalPrice
-          }, { transaction });
+          };
+          
+          logger(`DEBUG: Creating sale item: ${JSON.stringify(saleItemData)}`);
+          return SaleItemModel.create(saleItemData, { transaction });
         });
 
         await Promise.all(saleItemPromises);
+        logger(`DEBUG: All sale items created successfully`);
 
         // Update item stock
         const stockUpdatePromises = orderItems.map(async item => {
@@ -207,19 +220,26 @@ export class SaleService {
           if (itemModel) {
             const newStock = Math.max(0, itemModel.stock - item.quantity);
             await itemModel.update({ stock: newStock }, { transaction });
+            logger(`DEBUG: Updated stock for item ${item.itemId} to ${newStock}`);
+          } else {
+            logger(`WARNING: Item ${item.itemId} not found for stock update`);
           }
         });
 
         await Promise.all(stockUpdatePromises);
 
         await transaction.commit();
+        logger(`DEBUG: Transaction committed successfully`);
         return sale.toJSON();
       } catch (error) {
+        logger(`ERROR: Database operation failed: ${error}`);
+        logger(`ERROR: Database error stack: ${error instanceof Error ? error.stack : 'No stack trace'}`);
         await transaction.rollback();
         throw error;
       }
     } catch (error) {
-      logger(`Error creating sale with items: ${error}`);
+      logger(`ERROR: Service error: ${error}`);
+      logger(`ERROR: Service error stack: ${error instanceof Error ? error.stack : 'No stack trace'}`);
       throw error;
     }
   }

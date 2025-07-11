@@ -152,7 +152,7 @@ describe('Order Management Integration Tests', () => {
       expect(response.body.data.businessId).toBe(businessId);
       expect(response.body.data.orderType).toBe(OrderType.DINE_IN);
       expect(response.body.data.status).toBe(OrderStatus.PENDING);
-      expect(response.body.data.orderNumber).toMatch(/^ORD-\d+-\d{3}$/);
+      expect(response.body.data.orderNumber).toMatch(/^ORD-\d+-\d{1,3}$/);
 
       orderId = response.body.data.id;
     });

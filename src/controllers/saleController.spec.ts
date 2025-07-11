@@ -44,19 +44,24 @@ describe('SaleController', () => {
     it('should create a new sale with valid data', async () => {
       // Arrange (Red - Test will fail)
       const saleData = {
+        userId: 1,
+        businessId: 1,
+        totalAmount: 1193.49,
         customerName: 'John Doe',
         customerEmail: 'john@example.com',
-        subtotal: 1099.99,
-        tax: 93.50,
-        discount: 0,
-        total: 1193.49,
         paymentMethod: 'card',
         status: 'completed'
       };
 
       const mockSale = {
         id: 1,
-        ...saleData,
+        userId: 1,
+        businessId: 1,
+        totalAmount: 1193.49,
+        customerName: 'John Doe',
+        customerEmail: 'john@example.com',
+        paymentMethod: 'card',
+        status: 'completed',
         createdAt: new Date(),
         updatedAt: new Date()
       };
@@ -85,7 +90,7 @@ describe('SaleController', () => {
       // Arrange (Red - Test will fail)
       const invalidSaleData = {
         customerEmail: 'john@example.com',
-        // Missing customerName and total
+        // Missing userId, businessId, and totalAmount
       };
 
       mockRequest.body = invalidSaleData;
@@ -100,15 +105,16 @@ describe('SaleController', () => {
       // Assert (Green - Test should pass)
       expect(mockResponse.status).toHaveBeenCalledWith(400);
       expect(mockResponse.json).toHaveBeenCalledWith({
-        error: 'Customer name and total are required'
+        error: 'User ID, business ID, and total amount are required'
       });
     });
 
     it('should handle server errors', async () => {
       // Arrange (Red - Test will fail)
       const saleData = {
-        customerName: 'John Doe',
-        total: 100
+        userId: 1,
+        businessId: 1,
+        totalAmount: 100
       };
 
       const error = new Error('Database error');
@@ -137,8 +143,9 @@ describe('SaleController', () => {
       const saleId = 1;
       const mockSale = {
         id: saleId,
+        userId: 1,
+        totalAmount: 100,
         customerName: 'John Doe',
-        total: 100,
         status: 'completed'
       };
 
@@ -206,13 +213,13 @@ describe('SaleController', () => {
         {
           id: 1,
           customerName: 'John Doe',
-          total: 100,
+          totalAmount: 100,
           status: 'completed'
         },
         {
           id: 2,
           customerName: 'Jane Smith',
-          total: 75.25,
+          totalAmount: 75.25,
           status: 'completed'
         }
       ];
@@ -449,6 +456,8 @@ describe('SaleController', () => {
     it('should create sale with order items', async () => {
       // Arrange (Red - Test will fail)
       const saleData = {
+        userId: 1,
+        businessId: 1,
         customerName: 'John Doe',
         total: 200
       };
