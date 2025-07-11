@@ -87,6 +87,7 @@ export class UserService {
       if (updateData.password) {
         updateData.password = await bcrypt.hash(updateData.password, 10);
       }
+      // Pass assignment through if present
       const updated = await userRepository.update(id, updateData);
       if (!updated) return null;
       // eslint-disable-next-line @typescript-eslint/no-unused-vars

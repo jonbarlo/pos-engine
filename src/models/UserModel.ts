@@ -16,12 +16,14 @@ export interface UserAttributes {
   password: string;
   role: UserRole;
   isActive: boolean;
+  assignment?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface UserCreationAttributes extends Omit<UserAttributes, 'id' | 'isActive' | 'createdAt' | 'updatedAt'> {
   isActive?: boolean;
+  assignment?: string | null;
 }
 
 export class UserModel extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
@@ -32,6 +34,7 @@ export class UserModel extends Model<UserAttributes, UserCreationAttributes> imp
   public password!: string;
   public role!: UserRole;
   public isActive!: boolean;
+  public assignment!: string | null;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 
@@ -97,6 +100,11 @@ export const initializeUserModel = (sequelize: Sequelize): void => {
         type: DataTypes.BOOLEAN,
         allowNull: false,
         defaultValue: true
+      },
+      assignment: {
+        type: DataTypes.STRING(50),
+        allowNull: true,
+        defaultValue: null
       },
       createdAt: {
         type: DataTypes.DATE,

@@ -76,7 +76,7 @@ export class UserController {
                 return;
             }
 
-            const { name, email, password, role } = req.body;
+            const { name, email, password, role, assignment } = req.body;
 
             // Validate input
             if (!name || !email || !password) {
@@ -101,7 +101,8 @@ export class UserController {
                 email, 
                 password, 
                 businessId: req.user.businessId,
-                role: role || 'cashier'
+                role: role || 'cashier',
+                assignment: assignment || null
             });
             res.status(201).json(newUser);
         } catch (error) {
@@ -132,7 +133,7 @@ export class UserController {
                 return;
             }
 
-            const { name, email, password, role, isActive } = req.body;
+            const { name, email, password, role, isActive, assignment } = req.body;
             const updateData: any = {};
             
             if (name) updateData.name = name;
@@ -140,6 +141,7 @@ export class UserController {
             if (password) updateData.password = password;
             if (role) updateData.role = role;
             if (isActive !== undefined) updateData.isActive = isActive;
+            if (assignment !== undefined) updateData.assignment = assignment;
 
             if (Object.keys(updateData).length === 0) {
                 res.status(400).json({ error: 'No fields to update' });
