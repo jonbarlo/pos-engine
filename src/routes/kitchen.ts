@@ -265,6 +265,72 @@ router.get('/', authenticateToken, async (req: AuthRequest, res): Promise<void> 
   }
 });
 
+// Get all kitchen orders for a business (alias for /)
+router.get('/orders', authenticateToken, async (req: AuthRequest, res): Promise<void> => {
+  try {
+    const businessId = req.user?.businessId;
+    if (!businessId) {
+      res.status(401).json({ success: false, message: 'Authentication required' });
+      return;
+    }
+    const { 
+      status, 
+      priority, 
+      station, 
+      assignedTo,
+      orderType 
+    } = req.query;
+
+    const whereClause: any = { businessId };
+
+    // Filter by status
+    if (status) {
+      whereClause.status = status;
+    }
+
+    // Filter by priority
+    if (priority) {
+      whereClause.priority = priority;
+    }
+
+    // Filter by station
+    if (station) {
+      whereClause.station = station;
+    }
+
+    // Filter by assigned user
+    if (assignedTo) {
+      whereClause.assignedTo = assignedTo;
+    }
+
+    // Filter by order type
+    if (orderType) {
+      whereClause.orderType = orderType;
+    }
+
+    const kitchenOrders = await KitchenOrderModel.findAll({
+      where: whereClause,
+      order: [
+        ['priority', 'DESC'],
+        ['createdAt', 'ASC']
+      ]
+    });
+
+    logger(`Found ${kitchenOrders.length} kitchen orders for business ${businessId}`);
+
+    res.json({
+      success: true,
+      data: kitchenOrders
+    });
+  } catch (error) {
+    logger(`Error getting kitchen orders: ${error}`);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get kitchen orders'
+    });
+  }
+});
+
 // Get active kitchen orders (pending, confirmed, preparing)
 router.get('/active', authenticateToken, async (req: AuthRequest, res): Promise<void> => {
   try {
@@ -299,6 +365,136 @@ router.get('/active', authenticateToken, async (req: AuthRequest, res): Promise<
   }
 });
 
+// Get kitchen orders by station
+router.get('/station/:station', authenticateToken, async (req: AuthRequest, res): Promise<void> => {
+  try {
+    const businessId = req.user?.businessId;
+    if (!businessId) {
+      res.status(401).json({ success: false, message: 'Authentication required' });
+      return;
+    }
+    const { station } = req.params;
+
+    const kitchenOrders = await KitchenOrderModel.findAll({
+      where: {
+        businessId,
+        station,
+        status: ['pending', 'confirmed', 'preparing']
+      },
+      order: [
+        ['priority', 'DESC'],
+        ['createdAt', 'ASC']
+      ]
+    });
+
+    logger(`Found ${kitchenOrders.length} kitchen orders for station ${station}`);
+
+    res.json({
+      success: true,
+      data: kitchenOrders
+    });
+  } catch (error) {
+    logger(`Error getting kitchen orders by station: ${error}`);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get kitchen orders by station'
+    });
+  }
+});
+
+// Get kitchen orders assigned to user
+router.get('/assigned/:userId', authenticateToken, async (req: AuthRequest, res): Promise<void> => {
+  try {
+    const businessId = req.user?.businessId;
+    if (!businessId) {
+      res.status(401).json({ success: false, message: 'Authentication required' });
+      return;
+    }
+    const { userId } = req.params;
+
+    const kitchenOrders = await KitchenOrderModel.findAll({
+      where: {
+        businessId,
+        assignedTo: userId,
+        status: ['pending', 'confirmed', 'preparing']
+      },
+      order: [
+        ['priority', 'DESC'],
+        ['createdAt', 'ASC']
+      ]
+    });
+
+    logger(`Found ${kitchenOrders.length} kitchen orders assigned to user ${userId}`);
+
+    res.json({
+      success: true,
+      data: kitchenOrders
+    });
+  } catch (error) {
+    logger(`Error getting assigned kitchen orders: ${error}`);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get assigned kitchen orders'
+    });
+  }
+});
+
+// Get kitchen statistics
+router.get('/stats/overview', authenticateToken, async (req: AuthRequest, res): Promise<void> => {
+  try {
+    const businessId = req.user?.businessId;
+    if (!businessId) {
+      res.status(401).json({ success: false, message: 'Authentication required' });
+      return;
+    }
+    const { startDate, endDate } = req.query;
+
+    const whereClause: any = { businessId };
+
+    if (startDate && endDate) {
+      whereClause.createdAt = {
+        [Op.between]: [startDate, endDate]
+      };
+    }
+
+    const totalOrders = await KitchenOrderModel.count({ where: whereClause });
+    const pendingOrders = await KitchenOrderModel.count({ 
+      where: { ...whereClause, status: 'pending' } 
+    });
+    const preparingOrders = await KitchenOrderModel.count({ 
+      where: { ...whereClause, status: 'preparing' } 
+    });
+    const readyOrders = await KitchenOrderModel.count({ 
+      where: { ...whereClause, status: 'ready' } 
+    });
+    const servedOrders = await KitchenOrderModel.count({ 
+      where: { ...whereClause, status: 'served' } 
+    });
+
+    const stats = {
+      total: totalOrders,
+      pending: pendingOrders,
+      preparing: preparingOrders,
+      ready: readyOrders,
+      served: servedOrders,
+      completionRate: totalOrders > 0 ? (servedOrders / totalOrders * 100).toFixed(1) : 0
+    };
+
+    logger(`Generated kitchen stats for business ${businessId}`);
+
+    res.json({
+      success: true,
+      data: stats
+    });
+  } catch (error) {
+    logger(`Error getting kitchen stats: ${error}`);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get kitchen statistics'
+    });
+  }
+});
+
 // Get a specific kitchen order
 router.get('/:id', authenticateToken, async (req: AuthRequest, res): Promise<void> => {
   try {
@@ -309,8 +505,26 @@ router.get('/:id', authenticateToken, async (req: AuthRequest, res): Promise<voi
     }
     const { id } = req.params;
 
+    // Validate that id exists and is a number
+    if (!id) {
+      res.status(400).json({
+        success: false,
+        message: 'Kitchen order ID is required'
+      });
+      return;
+    }
+
+    const orderId = parseInt(id as string, 10);
+    if (isNaN(orderId)) {
+      res.status(400).json({
+        success: false,
+        message: 'Invalid kitchen order ID'
+      });
+      return;
+    }
+
     const kitchenOrder = await KitchenOrderModel.findOne({
-      where: { id, businessId }
+      where: { id: orderId, businessId }
     });
 
     if (!kitchenOrder) {
@@ -614,136 +828,6 @@ router.patch('/:id/items/:itemId/status', authenticateToken, async (req: AuthReq
     res.status(400).json({
       success: false,
       message: 'Failed to update item status'
-    });
-  }
-});
-
-// Get kitchen orders by station
-router.get('/station/:station', authenticateToken, async (req: AuthRequest, res): Promise<void> => {
-  try {
-    const businessId = req.user?.businessId;
-    if (!businessId) {
-      res.status(401).json({ success: false, message: 'Authentication required' });
-      return;
-    }
-    const { station } = req.params;
-
-    const kitchenOrders = await KitchenOrderModel.findAll({
-      where: {
-        businessId,
-        station,
-        status: ['pending', 'confirmed', 'preparing']
-      },
-      order: [
-        ['priority', 'DESC'],
-        ['createdAt', 'ASC']
-      ]
-    });
-
-    logger(`Found ${kitchenOrders.length} kitchen orders for station ${station}`);
-
-    res.json({
-      success: true,
-      data: kitchenOrders
-    });
-  } catch (error) {
-    logger(`Error getting kitchen orders by station: ${error}`);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to get kitchen orders by station'
-    });
-  }
-});
-
-// Get kitchen orders assigned to user
-router.get('/assigned/:userId', authenticateToken, async (req: AuthRequest, res): Promise<void> => {
-  try {
-    const businessId = req.user?.businessId;
-    if (!businessId) {
-      res.status(401).json({ success: false, message: 'Authentication required' });
-      return;
-    }
-    const { userId } = req.params;
-
-    const kitchenOrders = await KitchenOrderModel.findAll({
-      where: {
-        businessId,
-        assignedTo: userId,
-        status: ['pending', 'confirmed', 'preparing']
-      },
-      order: [
-        ['priority', 'DESC'],
-        ['createdAt', 'ASC']
-      ]
-    });
-
-    logger(`Found ${kitchenOrders.length} kitchen orders assigned to user ${userId}`);
-
-    res.json({
-      success: true,
-      data: kitchenOrders
-    });
-  } catch (error) {
-    logger(`Error getting assigned kitchen orders: ${error}`);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to get assigned kitchen orders'
-    });
-  }
-});
-
-// Get kitchen statistics
-router.get('/stats/overview', authenticateToken, async (req: AuthRequest, res): Promise<void> => {
-  try {
-    const businessId = req.user?.businessId;
-    if (!businessId) {
-      res.status(401).json({ success: false, message: 'Authentication required' });
-      return;
-    }
-    const { startDate, endDate } = req.query;
-
-    const whereClause: any = { businessId };
-
-    if (startDate && endDate) {
-      whereClause.createdAt = {
-        [Op.between]: [startDate, endDate]
-      };
-    }
-
-    const totalOrders = await KitchenOrderModel.count({ where: whereClause });
-    const pendingOrders = await KitchenOrderModel.count({ 
-      where: { ...whereClause, status: 'pending' } 
-    });
-    const preparingOrders = await KitchenOrderModel.count({ 
-      where: { ...whereClause, status: 'preparing' } 
-    });
-    const readyOrders = await KitchenOrderModel.count({ 
-      where: { ...whereClause, status: 'ready' } 
-    });
-    const servedOrders = await KitchenOrderModel.count({ 
-      where: { ...whereClause, status: 'served' } 
-    });
-
-    const stats = {
-      total: totalOrders,
-      pending: pendingOrders,
-      preparing: preparingOrders,
-      ready: readyOrders,
-      served: servedOrders,
-      completionRate: totalOrders > 0 ? (servedOrders / totalOrders * 100).toFixed(1) : 0
-    };
-
-    logger(`Generated kitchen stats for business ${businessId}`);
-
-    res.json({
-      success: true,
-      data: stats
-    });
-  } catch (error) {
-    logger(`Error getting kitchen stats: ${error}`);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to get kitchen statistics'
     });
   }
 });
