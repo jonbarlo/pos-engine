@@ -1,11 +1,14 @@
-import { SaleModel } from '../models/SaleModel';
-import { UserModel } from '../models/UserModel';
-import { ItemModel } from '../models/ItemModel';
+import { Model, QueryTypes } from 'sequelize';
+import { SaleModel, SaleAttributes, SaleCreationAttributes } from '../models/SaleModel';
 import { SaleItemModel } from '../models/SaleItemModel';
-import { SaleAttributes, SaleCreationAttributes } from '../models/SaleModel';
-import { QueryTypes } from 'sequelize';
-import { logger } from '../utils/logger';
+import { ItemModel } from '../models/ItemModel';
+import { UserModel } from '../models/UserModel';
+import { OrderModel, OrderStatus, OrderType } from '../models/OrderModel';
+import { OrderItemModel } from '../models/OrderItemModel';
+import { KitchenOrderModel } from '../models/KitchenOrderModel';
 import { getSaleRepository } from '../repositories/RepositoryFactory';
+import { logger } from '../utils/logger';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface SaleFilters {
   page?: number;
@@ -29,6 +32,20 @@ export class SaleService {
       if (!saleData.userId || saleData.totalAmount === undefined || !saleData.businessId) {
         throw new Error('Missing required fields: userId, businessId, totalAmount');
       }
+      
+      // Always generate idempotencyKey on the backend, ignore any client value
+      saleData.idempotencyKey = uuidv4();
+      logger(`DEBUG: Backend-generated idempotencyKey for createSale: ${saleData.idempotencyKey}`);
+      
+      // Check for idempotency
+      const existingSale = await SaleModel.findOne({
+        where: { idempotencyKey: saleData.idempotencyKey }
+      });
+      if (existingSale) {
+        logger(`DEBUG: Found existing sale with idempotencyKey ${saleData.idempotencyKey}, returning existing sale`);
+        return existingSale.toJSON();
+      }
+      
       const saleRepository = getSaleRepository();
       return await saleRepository.create(saleData);
     } catch (error) {
@@ -174,21 +191,26 @@ export class SaleService {
     try {
       logger(`DEBUG: Service received saleData: ${JSON.stringify(saleData)}`);
       logger(`DEBUG: Service received orderItems: ${JSON.stringify(orderItems)}`);
-      
+      // Always generate idempotencyKey on the backend, ignore any client value
+      saleData.idempotencyKey = uuidv4();
+      logger(`DEBUG: Backend-generated idempotencyKey: ${saleData.idempotencyKey}`);
+      // Check for idempotency - if idempotencyKey is provided, check for existing sale
+      const existingSale = await SaleModel.findOne({
+        where: { idempotencyKey: saleData.idempotencyKey }
+      });
+      if (existingSale) {
+        logger(`DEBUG: Found existing sale with idempotencyKey ${saleData.idempotencyKey}, returning existing sale`);
+        return existingSale.toJSON();
+      }
       const sequelize = SaleModel.sequelize || SaleItemModel.sequelize;
       if (!sequelize) {
         throw new Error('Sequelize instance not available');
       }
-
       const transaction = await sequelize.transaction();
-
       try {
-        // Log what we're about to create
         logger(`DEBUG: About to create sale with data: ${JSON.stringify(saleData)}`);
-        
         // Create the sale
         const sale = await SaleModel.create(saleData, { transaction });
-        
         logger(`DEBUG: Sale created successfully with ID: ${sale.id}`);
 
         // Create sale items
@@ -230,8 +252,30 @@ export class SaleService {
 
         await transaction.commit();
         logger(`DEBUG: Transaction committed successfully`);
+
+        // Automatically create order and kitchen order for all sales with items
+        // This follows POS industry standards where kitchen orders are created immediately when orders are placed
+        try {
+          await this.createOrderAndKitchenOrderFromSale(sale, orderItems);
+          logger(`DEBUG: Automatically created order and kitchen order for sale ${sale.id} (status: ${sale.status})`);
+        } catch (error) {
+          logger(`WARNING: Failed to create automatic order and kitchen order for sale ${sale.id}: ${error}`);
+          // Don't fail the sale creation if kitchen order creation fails
+        }
+
         return sale.toJSON();
       } catch (error) {
+        const err: any = error;
+        if (err.name === 'SequelizeUniqueConstraintError') {
+          logger(`ERROR: Unique constraint violation on idempotencyKey: ${saleData.idempotencyKey}`);
+          // Try to find the conflicting sale
+          const conflict = await SaleModel.findOne({ where: { idempotencyKey: saleData.idempotencyKey } });
+          if (conflict) {
+            logger(`ERROR: Conflicting sale found: ${JSON.stringify(conflict.toJSON())}`);
+          } else {
+            logger(`ERROR: No conflicting sale found for idempotencyKey: ${saleData.idempotencyKey}`);
+          }
+        }
         logger(`ERROR: Database operation failed: ${error}`);
         logger(`ERROR: Database error stack: ${error instanceof Error ? error.stack : 'No stack trace'}`);
         await transaction.rollback();
@@ -282,5 +326,97 @@ export class SaleService {
     const tax = subtotal * taxRate;
     const total = subtotal + tax - discount;
     return { subtotal, tax, total };
+  }
+
+  /**
+   * Automatically create an order and kitchen order from a completed sale
+   */
+  private static async createOrderAndKitchenOrderFromSale(
+    sale: SaleModel,
+    orderItems: Array<{
+      itemId: number;
+      quantity: number;
+      unitPrice: number;
+    }>
+  ): Promise<void> {
+    try {
+      logger(`DEBUG: Creating order and kitchen order from sale ${sale.id}`);
+
+      // Generate unique order number
+      const timestamp = Date.now();
+      const random = Math.floor(Math.random() * 10000);
+      const saleId = sale.id;
+      const orderNumber = `ORD-${timestamp}-${random}-${saleId}`;
+
+      // Create order
+      const order = await OrderModel.create({
+        businessId: sale.businessId,
+        serverId: sale.userId,
+        orderNumber,
+        orderType: OrderType.DINE_IN, // Default to dine-in, can be enhanced later
+        status: OrderStatus.CONFIRMED,
+        subtotal: sale.totalAmount,
+        taxAmount: 0, // Could be calculated from sale data
+        discountAmount: 0,
+        totalAmount: sale.totalAmount,
+        notes: sale.notes || `Auto-generated from sale ${sale.id}`
+      });
+
+      logger(`DEBUG: Created order ${order.id} from sale ${sale.id}`);
+
+      // Create order items
+      for (const item of orderItems) {
+        const itemModel = await ItemModel.findByPk(item.itemId);
+        if (itemModel) {
+          await OrderItemModel.create({
+            orderId: order.id,
+            itemId: item.itemId,
+            itemName: itemModel.name,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            totalPrice: item.quantity * item.unitPrice,
+            status: 'confirmed'
+          } as any);
+        }
+      }
+
+      logger(`DEBUG: Created order items for order ${order.id}`);
+
+      // Create kitchen order with actual item names
+      const kitchenItems = await Promise.all(orderItems.map(async (item, index) => {
+        const itemModel = await ItemModel.findByPk(item.itemId);
+        return {
+          id: index + 1,
+          itemName: itemModel?.name || `Item ${item.itemId}`,
+          quantity: item.quantity,
+          status: 'pending' as const,
+          specialInstructions: '',
+          modifications: [],
+          allergens: [],
+          preparationTime: 15 // Default preparation time
+        };
+      }));
+
+      const kitchenOrder = await KitchenOrderModel.create({
+        businessId: sale.businessId,
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        customerName: sale.customerName || 'Customer',
+        orderType: 'dine_in',
+        priority: 'normal',
+        status: 'pending',
+        estimatedPrepTime: 15,
+        items: kitchenItems,
+        totalItems: kitchenItems.length,
+        completedItems: 0,
+        notes: `Auto-generated from sale ${sale.id}`
+      });
+
+      logger(`DEBUG: Created kitchen order ${kitchenOrder.id} from order ${order.id}`);
+
+    } catch (error) {
+      logger(`ERROR: Failed to create order and kitchen order from sale ${sale.id}: ${error}`);
+      throw error;
+    }
   }
 } 

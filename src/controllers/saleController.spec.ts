@@ -474,7 +474,7 @@ describe('SaleController', () => {
 
       (SaleService.createSaleWithItems as jest.Mock).mockResolvedValue(sale);
 
-      mockRequest.body = { ...saleData, orderItems };
+      mockRequest.body = { ...saleData, orderItems, idempotencyKey: 'test-key-123' };
 
       // Act
       await SaleController.createSaleWithItems(
@@ -484,7 +484,10 @@ describe('SaleController', () => {
       );
 
       // Assert (Green - Test should pass)
-      expect(SaleService.createSaleWithItems).toHaveBeenCalledWith(saleData, orderItems);
+      expect(SaleService.createSaleWithItems).toHaveBeenCalledWith({
+        ...saleData,
+        idempotencyKey: 'test-key-123'
+      }, orderItems);
       expect(mockResponse.status).toHaveBeenCalledWith(201);
       expect(mockResponse.json).toHaveBeenCalledWith({
         message: 'Sale with items created successfully',

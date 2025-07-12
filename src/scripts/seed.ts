@@ -625,7 +625,7 @@ async function seedDatabase() {
       businessTables[business.id] = createdTables;
     }
 
-    // Create sample orders, sales, and reservations
+    // Create sample orders
     for (const business of createdBusinesses) {
       const users = businessUsers[business.id] as any[];
       const customers = businessCustomers[business.id] as any[];
@@ -645,7 +645,7 @@ async function seedDatabase() {
           customerId: customer.id,
           serverId: server.id,
           tableId: table.id,
-          orderNumber: `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          orderNumber: `ORD-${Date.now()}-${Math.floor(Math.random() * 10000)}-${i}`,
           orderType: ['dine_in', 'takeaway', 'delivery'][Math.floor(Math.random() * 3)] as any,
           status: ['pending', 'confirmed', 'in_progress', 'ready', 'completed', 'cancelled'][Math.floor(Math.random() * 6)] as any,
           totalAmount: 0,
@@ -698,7 +698,8 @@ async function seedDatabase() {
           totalAmount: 0.00,
           paymentMethod: ['cash', 'card', 'check'][Math.floor(Math.random() * 3)] || 'cash',
           status: randomStatus,
-          notes: saleNotes
+          notes: saleNotes,
+          idempotencyKey: `seed-${business.id}-${Date.now()}-${i}-${Math.floor(Math.random() * 10000)}`
         });
 
         // Create sale items
@@ -802,31 +803,59 @@ async function seedDatabase() {
       for (let i = 0; i < 10; i++) {
         const chef = users.find(u => u.role === 'chef') || users[0];
         const order = await OrderModel.findOne({
-          where: { businessId: business.id }
+          where: { businessId: business.id },
+          include: [
+            {
+              model: OrderItemModel,
+              as: 'orderItems'
+            }
+          ]
         });
         
-        if (order) {
+        if (order && (order as any).orderItems && (order as any).orderItems.length > 0) {
+          // Convert order items to kitchen order items
+          const kitchenItems = (order as any).orderItems.map((item: any, index: number) => ({
+            id: index + 1,
+            itemName: item.itemName || `Item ${item.itemId}`,
+            quantity: item.quantity,
+            status: 'pending' as const,
+            specialInstructions: item.notes || '',
+            modifications: [],
+            allergens: [],
+            preparationTime: Math.floor(Math.random() * 15) + 10, // 10-25 minutes
+            startTime: null,
+            readyTime: null,
+            servedTime: null,
+            assignedTo: null,
+            assignedToName: null,
+            station: null
+          }));
+
           // For all possibly undefined order fields
           const orderNumber = order?.orderNumber || '';
           const orderType = order?.orderType || 'dine_in';
+          const customerName = customers[Math.floor(Math.random() * customers.length)]?.name || 'Customer';
           // For all possibly undefined notes fields, use ''
           const kitchenOrderNotes = Math.random() > 0.7 ? 'Extra crispy please' : '';
+          
           await KitchenOrderModel.create({
             businessId: business.id,
             orderId: order.id,
-            chefId: chef.id,
-            assignedTo: chef.id,
+            orderNumber,
+            customerName,
+            orderType,
             priority: ['low', 'high', 'urgent', 'normal'][Math.floor(Math.random() * 4)] as any,
             status: ['pending', 'confirmed', 'preparing', 'ready', 'served', 'cancelled'][Math.floor(Math.random() * 6)] as any,
             estimatedPrepTime: Math.floor(Math.random() * 30) + 15,
             notes: kitchenOrderNotes,
-            items: [],
-            orderNumber,
-            orderType,
-            totalItems: Math.floor(Math.random() * 5) + 1,
-            completedItems: 0
+            items: kitchenItems,
+            totalItems: kitchenItems.length,
+            completedItems: 0,
+            assignedTo: chef.id,
+            assignedToName: chef.name,
+            station: ['grill', 'salad', 'dessert', 'pizza'][Math.floor(Math.random() * 4)] || 'grill'
           });
-          logger(`✅ Created kitchen order for ${business.name}`);
+          logger(`✅ Created kitchen order with ${kitchenItems.length} items for ${business.name}`);
         }
       }
     }

@@ -219,12 +219,11 @@ export class SaleController {
   public static createSaleWithItems = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { orderItems, ...saleData } = req.body;
-      
       // Log the incoming data for debugging
       logger(`DEBUG: Incoming request body: ${JSON.stringify(req.body)}`);
       logger(`DEBUG: Extracted saleData: ${JSON.stringify(saleData)}`);
       logger(`DEBUG: Extracted orderItems: ${JSON.stringify(orderItems)}`);
-      
+
       if (!orderItems || !Array.isArray(orderItems) || orderItems.length === 0) {
         res.status(400).json({ error: 'Order items are required and must be an array' });
         return;
@@ -246,41 +245,15 @@ export class SaleController {
         }
       }
 
-      // Log the final saleData being passed to service
-      logger(`DEBUG: Final saleData being passed to service: ${JSON.stringify(saleData)}`);
-
       logger('API endpoint POST /sales/with-items was called...');
       const sale = await SaleService.createSaleWithItems(saleData, orderItems);
-      
       res.status(201).json({
         message: 'Sale with items created successfully',
         sale
       });
     } catch (error) {
       logger('ERROR: Full error object:');
-      // Print the entire error object
-      // @ts-ignore
-      if (typeof error === 'object') {
-        // @ts-ignore
-        console.dir(error, { depth: null });
-      } else {
-        logger(String(error));
-      }
-      if (error instanceof Error) {
-        logger(`ERROR: Error name: ${error.name}`);
-        logger(`ERROR: Error message: ${error.message}`);
-        logger(`ERROR: Error stack: ${error.stack}`);
-        logger(`ERROR: Error (toString): ${error.toString()}`);
-        // Sequelize sometimes puts the real DB error in error.parent
-        // @ts-ignore
-        if ('parent' in error && error.parent) {
-          logger('ERROR: error.parent:');
-          // @ts-ignore
-          console.dir(error.parent, { depth: null });
-          // @ts-ignore
-          if (error.parent.message) logger(`ERROR: error.parent.message: ${error.parent.message}`);
-        }
-      }
+      logger(`ERROR: ${error instanceof Error ? error.message : String(error)}`);
       res.status(500).json({ error: 'Internal server error' });
     }
   };

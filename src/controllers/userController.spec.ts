@@ -181,7 +181,8 @@ describe('UserController', () => {
                 email: userData.email,
                 password: userData.password,
                 businessId: 1,
-                role: userData.role
+                role: userData.role,
+                assignment: null
             });
             expect(mockStatus).toHaveBeenCalledWith(201);
             expect(mockJson).toHaveBeenCalledWith(mockUser);

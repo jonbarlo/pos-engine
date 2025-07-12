@@ -202,9 +202,10 @@ const router = Router();
 // Get all kitchen orders for a business
 router.get('/', authenticateToken, async (req: AuthRequest, res): Promise<void> => {
   try {
-    const businessId = req.user?.businessId;
+    // Use businessId from query parameter if provided, otherwise use from token
+    const businessId = req.query.businessId ? parseInt(req.query.businessId as string) : req.user?.businessId;
     if (!businessId) {
-      res.status(401).json({ success: false, message: 'Authentication required' });
+      res.status(401).json({ success: false, message: 'Business ID required' });
       return;
     }
     const { 
@@ -265,12 +266,111 @@ router.get('/', authenticateToken, async (req: AuthRequest, res): Promise<void> 
   }
 });
 
-// Get all kitchen orders for a business (alias for /)
-router.get('/orders', authenticateToken, async (req: AuthRequest, res): Promise<void> => {
+// Create kitchen order directly (for testing)
+router.post('/', authenticateToken, async (req: AuthRequest, res): Promise<void> => {
   try {
     const businessId = req.user?.businessId;
     if (!businessId) {
       res.status(401).json({ success: false, message: 'Authentication required' });
+      return;
+    }
+
+    const {
+      orderId,
+      orderNumber,
+      customerName,
+      orderType = 'dine_in',
+      priority = 'normal',
+      estimatedPrepTime = 15,
+      specialInstructions,
+      notes,
+      items
+    } = req.body;
+
+    // Validate required fields
+    if (!orderNumber || !items || !Array.isArray(items) || items.length === 0) {
+      res.status(400).json({
+        success: false,
+        message: 'Order number and items array are required'
+      });
+      return;
+    }
+
+    // Validate items
+    for (const item of items) {
+      if (!item.itemName || !item.quantity) {
+        res.status(400).json({
+          success: false,
+          message: 'Each item must have itemName and quantity'
+        });
+        return;
+      }
+    }
+
+    // Check if kitchen order already exists for this order
+    if (orderId) {
+      const existingKitchenOrder = await KitchenOrderModel.findOne({
+        where: { orderId, businessId }
+      });
+
+      if (existingKitchenOrder) {
+        res.status(409).json({
+          success: false,
+          message: 'Kitchen order already exists for this order'
+        });
+        return;
+      }
+    }
+
+    // Create kitchen order
+    const kitchenOrder = await KitchenOrderModel.create({
+      businessId,
+      orderId: orderId || null,
+      orderNumber,
+      customerName: customerName || 'Customer',
+      orderType,
+      priority,
+      status: 'pending',
+      estimatedPrepTime,
+      specialInstructions,
+      items: items.map((item: any, index: number) => ({
+        id: index + 1,
+        itemName: item.itemName,
+        quantity: item.quantity,
+        status: 'pending' as const,
+        specialInstructions: item.specialInstructions || '',
+        modifications: item.modifications || [],
+        allergens: item.allergens || [],
+        preparationTime: item.preparationTime || 15
+      })),
+      totalItems: items.length,
+      completedItems: 0,
+      notes: notes || ''
+    });
+
+    logger(`Created kitchen order ${kitchenOrder.id} for business ${businessId}`);
+
+    res.status(201).json({
+      success: true,
+      data: kitchenOrder,
+      message: 'Kitchen order created successfully'
+    });
+  } catch (error) {
+    logger(`Error creating kitchen order: ${error}`);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create kitchen order'
+    });
+  }
+});
+
+// Get all kitchen orders for a business (alias for /)
+router.get('/orders', authenticateToken, async (req: AuthRequest, res): Promise<void> => {
+  try {
+    // Use businessId from query parameter if provided, otherwise use from token
+    const businessId = req.query.businessId ? parseInt(req.query.businessId as string) : req.user?.businessId;
+    if (!businessId) {
+      res.status(401).json({ success: false, message: 'Business ID required' });
       return;
     }
     const { 

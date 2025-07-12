@@ -18,6 +18,7 @@ export interface SaleAttributes {
   customerPhone?: string;
   customerEmail?: string;
   notes?: string;
+  idempotencyKey?: string;
   payments?: Array<{
     amount: number;
     method: string;
@@ -41,6 +42,7 @@ export interface SaleCreationAttributes {
   customerPhone?: string;
   customerEmail?: string;
   notes?: string;
+  idempotencyKey?: string;
   payments?: Array<{
     amount: number;
     method: string;
@@ -62,6 +64,7 @@ export class SaleModel extends Model<SaleAttributes, SaleCreationAttributes> imp
   public customerPhone?: string;
   public customerEmail?: string;
   public notes?: string;
+  public idempotencyKey?: string;
   public payments?: Array<{
     amount: number;
     method: string;
@@ -142,6 +145,11 @@ export const initializeSaleModel = (sequelize: Sequelize): void => {
       notes: {
         type: DataTypes.TEXT,
         allowNull: true
+      },
+      idempotencyKey: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+        unique: true
       },
       payments: {
         type: DataTypes.TEXT,
