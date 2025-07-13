@@ -1,7 +1,6 @@
 import { QueryInterface, DataTypes } from 'sequelize';
 
-export async function up(queryInterface: QueryInterface) {
-  // Create businesses table
+export async function up(queryInterface: QueryInterface): Promise<void> {
   await queryInterface.createTable('businesses', {
     id: {
       type: DataTypes.INTEGER,
@@ -13,7 +12,7 @@ export async function up(queryInterface: QueryInterface) {
       allowNull: false,
     },
     slug: {
-      type: DataTypes.STRING(50),
+      type: DataTypes.STRING(100),
       allowNull: false,
       unique: true,
     },
@@ -42,7 +41,7 @@ export async function up(queryInterface: QueryInterface) {
       allowNull: true,
     },
     email: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.STRING(100),
       allowNull: true,
     },
     website: {
@@ -52,7 +51,7 @@ export async function up(queryInterface: QueryInterface) {
     taxRate: {
       type: DataTypes.DECIMAL(5, 2),
       allowNull: false,
-      defaultValue: 0,
+      defaultValue: 0.00,
     },
     currency: {
       type: DataTypes.STRING(3),
@@ -69,6 +68,11 @@ export async function up(queryInterface: QueryInterface) {
       allowNull: false,
       defaultValue: true,
     },
+    type: {
+      type: DataTypes.ENUM('generic', 'restaurant'),
+      allowNull: false,
+      defaultValue: 'generic',
+    },
     createdAt: {
       type: DataTypes.DATE,
       allowNull: false,
@@ -78,11 +82,15 @@ export async function up(queryInterface: QueryInterface) {
       type: DataTypes.DATE,
       allowNull: false,
       defaultValue: DataTypes.NOW,
-    },
+    }
   });
+
+  // Add indexes
+  await queryInterface.addIndex('businesses', ['slug'], { unique: true });
+  await queryInterface.addIndex('businesses', ['type']);
+  await queryInterface.addIndex('businesses', ['isActive']);
 }
 
-export async function down(queryInterface: QueryInterface) {
-  // Drop businesses table
+export async function down(queryInterface: QueryInterface): Promise<void> {
   await queryInterface.dropTable('businesses');
 } 
