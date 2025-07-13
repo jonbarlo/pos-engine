@@ -24,6 +24,18 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       allowNull: false,
       defaultValue: 4,
     },
+    currentOrderId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    serverId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'users',
+        key: 'id'
+      },
+    },
     section: {
       type: DataTypes.STRING(50),
       allowNull: true,
@@ -54,6 +66,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   await queryInterface.addIndex('restaurant_tables', ['businessId', 'tableNumber'], { unique: true });
   await queryInterface.addIndex('restaurant_tables', ['businessId', 'status']);
   await queryInterface.addIndex('restaurant_tables', ['businessId', 'isActive']);
+  await queryInterface.addIndex('restaurant_tables', ['businessId', 'serverId']);
 }
 
 

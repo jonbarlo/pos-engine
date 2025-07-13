@@ -46,7 +46,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       },
     },
     status: {
-      type: DataTypes.ENUM('pending', 'confirmed', 'preparing', 'ready', 'served', 'cancelled'),
+      type: DataTypes.ENUM('pending', 'confirmed', 'in_progress', 'ready', 'served', 'completed', 'cancelled'),
       allowNull: false,
       defaultValue: 'pending'
     },
@@ -54,6 +54,11 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       type: DataTypes.ENUM('dine_in', 'takeaway', 'delivery'),
       allowNull: false,
       defaultValue: 'dine_in'
+    },
+    subtotal: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0.00
     },
     totalAmount: {
       type: DataTypes.DECIMAL(10, 2),
@@ -65,13 +70,30 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       allowNull: false,
       defaultValue: 0.00
     },
+    discountAmount: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0.00
+    },
     tipAmount: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
       defaultValue: 0.00
     },
+    notes: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
     specialInstructions: {
       type: DataTypes.TEXT,
+      allowNull: true
+    },
+    estimatedReadyTime: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    actualReadyTime: {
+      type: DataTypes.DATE,
       allowNull: true
     },
     createdAt: {

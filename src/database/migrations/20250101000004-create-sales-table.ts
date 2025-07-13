@@ -23,6 +23,26 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
         key: 'id'
       },
     },
+    saleNumber: {
+      type: DataTypes.STRING(50),
+      allowNull: false,
+      unique: true,
+    },
+    subtotal: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0.00,
+    },
+    taxAmount: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0.00,
+    },
+    discountAmount: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0.00,
+    },
     totalAmount: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
@@ -48,6 +68,14 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     customerEmail: {
       type: DataTypes.STRING(255),
       allowNull: true,
+    },
+    customerId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'customers',
+        key: 'id'
+      },
     },
     notes: {
       type: DataTypes.TEXT,

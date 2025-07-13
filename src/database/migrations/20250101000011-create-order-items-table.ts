@@ -24,6 +24,10 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
         key: 'id'
       },
     },
+    itemName: {
+      type: DataTypes.STRING(100),
+      allowNull: false
+    },
     quantity: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -42,7 +46,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       allowNull: true
     },
     status: {
-      type: DataTypes.ENUM('pending', 'preparing', 'ready', 'served'),
+      type: DataTypes.ENUM('pending', 'confirmed', 'in_progress', 'ready', 'served', 'cancelled'),
       allowNull: false,
       defaultValue: 'pending'
     },

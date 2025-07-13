@@ -1,4 +1,5 @@
 import { QueryInterface, QueryTypes } from 'sequelize';
+import { v4 as uuidv4 } from 'uuid';
 import { UserRole } from '../../models/UserModel';
 import { OrderStatus, OrderType } from '../../models/OrderModel';
 import { TableStatus } from '../../models/TableModel';
@@ -7,12 +8,11 @@ import { OrderItemStatus } from '../../models/OrderItemModel';
 import { MessageType, MessageStatus, RecipientType } from '../../models/StaffMessageModel';
 import dotenv from 'dotenv';
 
-// Load environment variables
 dotenv.config();
 
 export async function up(queryInterface: QueryInterface): Promise<void> {
   // 1. Create Businesses
-  await queryInterface.bulkInsert('businesses', [
+  const businessData = [
     {
       name: 'Italian Delight Restaurant',
       slug: 'italian-delight',
@@ -70,534 +70,186 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       createdAt: new Date(),
       updatedAt: new Date()
     }
-  ]);
+  ];
+  await queryInterface.bulkInsert('businesses', businessData);
 
-  // Get the created businesses
-  const businesses = await queryInterface.sequelize.query(
-    'SELECT id FROM businesses ORDER BY id',
-    { type: QueryTypes.SELECT }
-  ) as any[];
+  // Query businesses by slug for IDs
+  const businesses: { [key: string]: number } = {};
+  for (const b of businessData) {
+    const [biz] = await queryInterface.sequelize.query(
+      'SELECT id FROM businesses WHERE slug = ?',
+      { type: QueryTypes.SELECT, replacements: [b.slug] }
+    ) as any[];
+    businesses[b.slug] = biz.id;
+  }
 
-  const italianBusiness = businesses[0];
-  const sushiBusiness = businesses[1];
-  const coffeeBusiness = businesses[2];
+  // 2. Create Users
+  const userData = [
+    // Italian Delight
+    { businessSlug: 'italian-delight', name: 'Marco Rossi', email: 'marco@italiandelight.com', role: UserRole.OWNER, assignment: 'Kitchen Manager' },
+    { businessSlug: 'italian-delight', name: 'Sofia Bianchi', email: 'sofia@italiandelight.com', role: UserRole.MANAGER, assignment: 'Floor Manager' },
+    { businessSlug: 'italian-delight', name: 'Giuseppe Verdi', email: 'giuseppe@italiandelight.com', role: UserRole.WAITSTAFF, assignment: 'Section A' },
+    { businessSlug: 'italian-delight', name: 'Maria Esposito', email: 'maria@italiandelight.com', role: UserRole.WAITSTAFF, assignment: 'Section B' },
+    { businessSlug: 'italian-delight', name: 'Antonio Romano', email: 'antonio@italiandelight.com', role: UserRole.CASHIER, assignment: 'Front Counter' },
+    { businessSlug: 'italian-delight', name: 'Elena Conti', email: 'elena@italiandelight.com', role: UserRole.VIEWER, assignment: 'Reports Only' },
+    { businessSlug: 'italian-delight', name: 'Carlo Moretti', email: 'carlo@italiandelight.com', role: UserRole.ADMIN, assignment: 'System Admin' },
+    // Sushi Master
+    { businessSlug: 'sushi-master', name: 'Yuki Tanaka', email: 'yuki@sushimaster.com', role: UserRole.OWNER, assignment: 'Head Chef' },
+    { businessSlug: 'sushi-master', name: 'Kenji Yamamoto', email: 'kenji@sushimaster.com', role: UserRole.MANAGER, assignment: 'Operations Manager' },
+    { businessSlug: 'sushi-master', name: 'Aiko Sato', email: 'aiko@sushimaster.com', role: UserRole.WAITSTAFF, assignment: 'Main Floor' },
+    { businessSlug: 'sushi-master', name: 'Hiroshi Nakamura', email: 'hiroshi@sushimaster.com', role: UserRole.CASHIER, assignment: 'Cash Register' },
+    { businessSlug: 'sushi-master', name: 'Mika Suzuki', email: 'mika@sushimaster.com', role: UserRole.VIEWER, assignment: 'Analytics' },
+    // Coffee Corner
+    { businessSlug: 'coffee-corner', name: 'Sarah Johnson', email: 'sarah@coffeecorner.com', role: UserRole.OWNER, assignment: 'Owner' },
+    { businessSlug: 'coffee-corner', name: 'Mike Chen', email: 'mike@coffeecorner.com', role: UserRole.MANAGER, assignment: 'Store Manager' },
+    { businessSlug: 'coffee-corner', name: 'Emma Davis', email: 'emma@coffeecorner.com', role: UserRole.WAITSTAFF, assignment: 'Barista' },
+    { businessSlug: 'coffee-corner', name: 'Alex Thompson', email: 'alex@coffeecorner.com', role: UserRole.CASHIER, assignment: 'Cashier' },
+    { businessSlug: 'coffee-corner', name: 'Lisa Wang', email: 'lisa@coffeecorner.com', role: UserRole.VIEWER, assignment: 'Reports' }
+  ];
+  await queryInterface.bulkInsert('users', userData.map(u => ({
+    businessId: businesses[u.businessSlug],
+    name: u.name,
+    email: u.email,
+    password: '$2b$10$hashedpassword123',
+    role: u.role,
+    isActive: true,
+    assignment: u.assignment,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  })));
 
-  // 2. Create Users (all types including waitstaff and viewers)
-  await queryInterface.bulkInsert('users', [
-    // Italian Delight Users
-    {
-      businessId: italianBusiness.id,
-      name: 'Marco Rossi',
-      email: 'marco@italiandelight.com',
-      password: '$2b$10$hashedpassword123',
-      role: UserRole.OWNER,
-      isActive: true,
-      assignment: 'Kitchen Manager',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: italianBusiness.id,
-      name: 'Sofia Bianchi',
-      email: 'sofia@italiandelight.com',
-      password: '$2b$10$hashedpassword123',
-      role: UserRole.MANAGER,
-      isActive: true,
-      assignment: 'Floor Manager',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: italianBusiness.id,
-      name: 'Giuseppe Verdi',
-      email: 'giuseppe@italiandelight.com',
-      password: '$2b$10$hashedpassword123',
-      role: UserRole.WAITSTAFF,
-      isActive: true,
-      assignment: 'Section A',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: italianBusiness.id,
-      name: 'Maria Esposito',
-      email: 'maria@italiandelight.com',
-      password: '$2b$10$hashedpassword123',
-      role: UserRole.WAITSTAFF,
-      isActive: true,
-      assignment: 'Section B',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: italianBusiness.id,
-      name: 'Antonio Romano',
-      email: 'antonio@italiandelight.com',
-      password: '$2b$10$hashedpassword123',
-      role: UserRole.CASHIER,
-      isActive: true,
-      assignment: 'Front Counter',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: italianBusiness.id,
-      name: 'Elena Conti',
-      email: 'elena@italiandelight.com',
-      password: '$2b$10$hashedpassword123',
-      role: UserRole.VIEWER,
-      isActive: true,
-      assignment: 'Reports Only',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: italianBusiness.id,
-      name: 'Carlo Moretti',
-      email: 'carlo@italiandelight.com',
-      password: '$2b$10$hashedpassword123',
-      role: UserRole.ADMIN,
-      isActive: true,
-      assignment: 'System Admin',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
+  // Query users by email for IDs
+  const users: { [key: string]: number } = {};
+  for (const u of userData) {
+    const [user] = await queryInterface.sequelize.query(
+      'SELECT id FROM users WHERE email = ?',
+      { type: QueryTypes.SELECT, replacements: [u.email] }
+    ) as any[];
+    users[u.email] = user.id;
+    console.log(`User ${u.email} has ID: ${user.id}`);
+  }
 
-    // Sushi Master Users
-    {
-      businessId: sushiBusiness.id,
-      name: 'Yuki Tanaka',
-      email: 'yuki@sushimaster.com',
-      password: '$2b$10$hashedpassword123',
-      role: UserRole.OWNER,
-      isActive: true,
-      assignment: 'Head Chef',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: sushiBusiness.id,
-      name: 'Kenji Yamamoto',
-      email: 'kenji@sushimaster.com',
-      password: '$2b$10$hashedpassword123',
-      role: UserRole.MANAGER,
-      isActive: true,
-      assignment: 'Operations Manager',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: sushiBusiness.id,
-      name: 'Aiko Sato',
-      email: 'aiko@sushimaster.com',
-      password: '$2b$10$hashedpassword123',
-      role: UserRole.WAITSTAFF,
-      isActive: true,
-      assignment: 'Main Floor',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: sushiBusiness.id,
-      name: 'Hiroshi Nakamura',
-      email: 'hiroshi@sushimaster.com',
-      password: '$2b$10$hashedpassword123',
-      role: UserRole.CASHIER,
-      isActive: true,
-      assignment: 'Cash Register',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: sushiBusiness.id,
-      name: 'Mika Suzuki',
-      email: 'mika@sushimaster.com',
-      password: '$2b$10$hashedpassword123',
-      role: UserRole.VIEWER,
-      isActive: true,
-      assignment: 'Analytics',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-
-    // Coffee Corner Users
-    {
-      businessId: coffeeBusiness.id,
-      name: 'Sarah Johnson',
-      email: 'sarah@coffeecorner.com',
-      password: '$2b$10$hashedpassword123',
-      role: UserRole.OWNER,
-      isActive: true,
-      assignment: 'Owner',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: coffeeBusiness.id,
-      name: 'Mike Chen',
-      email: 'mike@coffeecorner.com',
-      password: '$2b$10$hashedpassword123',
-      role: UserRole.MANAGER,
-      isActive: true,
-      assignment: 'Store Manager',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: coffeeBusiness.id,
-      name: 'Emma Davis',
-      email: 'emma@coffeecorner.com',
-      password: '$2b$10$hashedpassword123',
-      role: UserRole.WAITSTAFF,
-      isActive: true,
-      assignment: 'Barista',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: coffeeBusiness.id,
-      name: 'Alex Thompson',
-      email: 'alex@coffeecorner.com',
-      password: '$2b$10$hashedpassword123',
-      role: UserRole.CASHIER,
-      isActive: true,
-      assignment: 'Cashier',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: coffeeBusiness.id,
-      name: 'Lisa Wang',
-      email: 'lisa@coffeecorner.com',
-      password: '$2b$10$hashedpassword123',
-      role: UserRole.VIEWER,
-      isActive: true,
-      assignment: 'Reports',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }
-  ]);
-
-  // Get the created users
-  const users = await queryInterface.sequelize.query(
-    'SELECT id FROM users ORDER BY id',
-    { type: QueryTypes.SELECT }
-  ) as any[];
+  console.log('Users object:', users);
 
   // 3. Create Items
-  await queryInterface.bulkInsert('items', [
+  const itemData = [
     // Italian Delight Items
-    {
-      businessId: italianBusiness.id,
-      name: 'Margherita Pizza',
-      description: 'Fresh mozzarella, tomato sauce, basil',
-      price: 18.99,
-      cost: 8.50,
-      stock: 50,
-      sku: 'IT-PIZ-001',
-      barcode: '123456789001',
-      category: 'Pizza',
-      unit: 'piece',
-      minStock: 10,
-      maxStock: 100,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: italianBusiness.id,
-      name: 'Spaghetti Carbonara',
-      description: 'Pasta with eggs, cheese, pancetta, black pepper',
-      price: 16.99,
-      cost: 7.20,
-      stock: 30,
-      sku: 'IT-PAS-001',
-      barcode: '123456789002',
-      category: 'Pasta',
-      unit: 'piece',
-      minStock: 5,
-      maxStock: 80,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: italianBusiness.id,
-      name: 'Tiramisu',
-      description: 'Classic Italian dessert with coffee and mascarpone',
-      price: 8.99,
-      cost: 3.50,
-      stock: 20,
-      sku: 'IT-DES-001',
-      barcode: '123456789003',
-      category: 'Dessert',
-      unit: 'piece',
-      minStock: 5,
-      maxStock: 50,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-
+    { businessSlug: 'italian-delight', name: 'Margherita Pizza', description: 'Fresh mozzarella, tomato sauce, basil', price: 18.99, cost: 8.50, stock: 50, sku: 'IT-PIZ-001', barcode: '123456789001', category: 'Pizza', unit: 'piece', minStock: 10, maxStock: 100 },
+    { businessSlug: 'italian-delight', name: 'Spaghetti Carbonara', description: 'Pasta with eggs, cheese, pancetta, black pepper', price: 16.99, cost: 7.20, stock: 30, sku: 'IT-PAS-001', barcode: '123456789002', category: 'Pasta', unit: 'piece', minStock: 5, maxStock: 80 },
+    { businessSlug: 'italian-delight', name: 'Tiramisu', description: 'Classic Italian dessert with coffee and mascarpone', price: 8.99, cost: 3.50, stock: 20, sku: 'IT-DES-001', barcode: '123456789003', category: 'Dessert', unit: 'piece', minStock: 5, maxStock: 50 },
     // Sushi Master Items
-    {
-      businessId: sushiBusiness.id,
-      name: 'California Roll',
-      description: 'Crab, avocado, cucumber',
-      price: 12.99,
-      cost: 5.80,
-      stock: 40,
-      sku: 'SU-ROL-001',
-      barcode: '123456789004',
-      category: 'Rolls',
-      unit: 'piece',
-      minStock: 10,
-      maxStock: 100,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: sushiBusiness.id,
-      name: 'Salmon Nigiri',
-      description: 'Fresh salmon over rice',
-      price: 6.99,
-      cost: 3.20,
-      stock: 60,
-      sku: 'SU-NIG-001',
-      barcode: '123456789005',
-      category: 'Nigiri',
-      unit: 'piece',
-      minStock: 15,
-      maxStock: 120,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: sushiBusiness.id,
-      name: 'Miso Soup',
-      description: 'Traditional Japanese soup',
-      price: 4.99,
-      cost: 1.80,
-      stock: 80,
-      sku: 'SU-SOU-001',
-      barcode: '123456789006',
-      category: 'Soup',
-      unit: 'bowl',
-      minStock: 20,
-      maxStock: 150,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-
+    { businessSlug: 'sushi-master', name: 'California Roll', description: 'Crab, avocado, cucumber', price: 12.99, cost: 5.80, stock: 40, sku: 'SU-ROL-001', barcode: '123456789004', category: 'Rolls', unit: 'piece', minStock: 10, maxStock: 100 },
+    { businessSlug: 'sushi-master', name: 'Salmon Nigiri', description: 'Fresh salmon over rice', price: 6.99, cost: 3.20, stock: 60, sku: 'SU-NIG-001', barcode: '123456789005', category: 'Nigiri', unit: 'piece', minStock: 15, maxStock: 120 },
+    { businessSlug: 'sushi-master', name: 'Miso Soup', description: 'Traditional Japanese soup', price: 4.99, cost: 1.80, stock: 80, sku: 'SU-SOU-001', barcode: '123456789006', category: 'Soup', unit: 'bowl', minStock: 20, maxStock: 150 },
     // Coffee Corner Items
-    {
-      businessId: coffeeBusiness.id,
-      name: 'Espresso',
-      description: 'Single shot of espresso',
-      price: 3.50,
-      cost: 1.20,
-      stock: 200,
-      sku: 'CO-ESP-001',
-      barcode: '123456789007',
-      category: 'Coffee',
-      unit: 'shot',
-      minStock: 50,
-      maxStock: 500,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: coffeeBusiness.id,
-      name: 'Cappuccino',
-      description: 'Espresso with steamed milk and foam',
-      price: 4.99,
-      cost: 1.80,
-      stock: 150,
-      sku: 'CO-CAP-001',
-      barcode: '123456789008',
-      category: 'Coffee',
-      unit: 'cup',
-      minStock: 30,
-      maxStock: 300,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: coffeeBusiness.id,
-      name: 'Blueberry Muffin',
-      description: 'Fresh baked blueberry muffin',
-      price: 3.99,
-      cost: 1.50,
-      stock: 25,
-      sku: 'CO-PAS-001',
-      barcode: '123456789009',
-      category: 'Pastry',
-      unit: 'piece',
-      minStock: 5,
-      maxStock: 60,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }
-  ]);
+    { businessSlug: 'coffee-corner', name: 'Espresso', description: 'Single shot of espresso', price: 3.50, cost: 1.20, stock: 200, sku: 'CO-ESP-001', barcode: '123456789007', category: 'Coffee', unit: 'shot', minStock: 50, maxStock: 500 },
+    { businessSlug: 'coffee-corner', name: 'Cappuccino', description: 'Espresso with steamed milk and foam', price: 4.99, cost: 1.80, stock: 150, sku: 'CO-CAP-001', barcode: '123456789008', category: 'Coffee', unit: 'cup', minStock: 30, maxStock: 300 },
+    { businessSlug: 'coffee-corner', name: 'Blueberry Muffin', description: 'Fresh baked blueberry muffin', price: 3.99, cost: 1.50, stock: 25, sku: 'CO-PAS-001', barcode: '123456789009', category: 'Pastry', unit: 'piece', minStock: 5, maxStock: 60 }
+  ];
+  await queryInterface.bulkInsert('items', itemData.map(i => ({
+    businessId: businesses[i.businessSlug],
+    name: i.name,
+    description: i.description,
+    price: i.price,
+    cost: i.cost,
+    stock: i.stock,
+    sku: i.sku,
+    barcode: i.barcode,
+    category: i.category,
+    unit: i.unit,
+    minStock: i.minStock,
+    maxStock: i.maxStock,
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  })));
 
-  // Get the created items
-  const items = await queryInterface.sequelize.query(
-    'SELECT id FROM items ORDER BY id',
-    { type: QueryTypes.SELECT }
-  ) as any[];
+  // Query items by sku for IDs
+  const items: { [key: string]: number } = {};
+  for (const i of itemData) {
+    const [item] = await queryInterface.sequelize.query(
+      'SELECT id FROM items WHERE sku = ?',
+      { type: QueryTypes.SELECT, replacements: [i.sku] }
+    ) as any[];
+    items[i.sku] = item.id;
+  }
 
   // 4. Create Tables
-  await queryInterface.bulkInsert('restaurant_tables', [
+  const tableData = [
     // Italian Delight Tables
-    {
-      businessId: italianBusiness.id,
-      tableNumber: 'A1',
-      capacity: 4,
-      status: TableStatus.AVAILABLE,
-      section: 'Main Floor',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: italianBusiness.id,
-      tableNumber: 'A2',
-      capacity: 6,
-      status: TableStatus.OCCUPIED,
-      section: 'Main Floor',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: italianBusiness.id,
-      tableNumber: 'B1',
-      capacity: 2,
-      status: TableStatus.RESERVED,
-      section: 'Patio',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-
+    { businessSlug: 'italian-delight', tableNumber: 'A1', capacity: 4, status: TableStatus.AVAILABLE, section: 'Main Floor' },
+    { businessSlug: 'italian-delight', tableNumber: 'A2', capacity: 6, status: TableStatus.OCCUPIED, section: 'Main Floor' },
+    { businessSlug: 'italian-delight', tableNumber: 'B1', capacity: 2, status: TableStatus.RESERVED, section: 'Patio' },
     // Sushi Master Tables
-    {
-      businessId: sushiBusiness.id,
-      tableNumber: 'S1',
-      capacity: 4,
-      status: TableStatus.AVAILABLE,
-      section: 'Main Floor',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: sushiBusiness.id,
-      tableNumber: 'S2',
-      capacity: 8,
-      status: TableStatus.OCCUPIED,
-      section: 'Bar',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-
+    { businessSlug: 'sushi-master', tableNumber: 'S1', capacity: 4, status: TableStatus.AVAILABLE, section: 'Main Floor' },
+    { businessSlug: 'sushi-master', tableNumber: 'S2', capacity: 8, status: TableStatus.OCCUPIED, section: 'Bar' },
     // Coffee Corner Tables
-    {
-      businessId: coffeeBusiness.id,
-      tableNumber: 'C1',
-      capacity: 2,
-      status: TableStatus.AVAILABLE,
-      section: 'Indoor',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: coffeeBusiness.id,
-      tableNumber: 'C2',
-      capacity: 4,
-      status: TableStatus.CLEANING,
-      section: 'Outdoor',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }
-  ]);
+    { businessSlug: 'coffee-corner', tableNumber: 'C1', capacity: 2, status: TableStatus.AVAILABLE, section: 'Indoor' },
+    { businessSlug: 'coffee-corner', tableNumber: 'C2', capacity: 4, status: TableStatus.CLEANING, section: 'Outdoor' }
+  ];
+  await queryInterface.bulkInsert('restaurant_tables', tableData.map(t => ({
+    businessId: businesses[t.businessSlug],
+    tableNumber: t.tableNumber,
+    capacity: t.capacity,
+    status: t.status,
+    section: t.section,
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  })));
 
-  // Get the created tables
-  const tables = await queryInterface.sequelize.query(
-    'SELECT id FROM restaurant_tables ORDER BY id',
-    { type: QueryTypes.SELECT }
-  ) as any[];
+  // Query tables by business and table number for IDs
+  const tables: { [key: string]: number } = {};
+  for (const t of tableData) {
+    const [table] = await queryInterface.sequelize.query(
+      'SELECT id FROM restaurant_tables WHERE businessId = ? AND tableNumber = ?',
+      { type: QueryTypes.SELECT, replacements: [businesses[t.businessSlug], t.tableNumber] }
+    ) as any[];
+    tables[`${t.businessSlug}-${t.tableNumber}`] = table.id;
+  }
 
   // 5. Create Customers
-  await queryInterface.bulkInsert('customers', [
-    {
-      businessId: italianBusiness.id,
-      name: 'John Smith',
-      email: 'john.smith@email.com',
-      phone: '+1-555-0101',
-      address: '123 Oak Street, Downtown, NY 10001',
-      loyaltyPoints: 150,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: italianBusiness.id,
-      name: 'Maria Garcia',
-      email: 'maria.garcia@email.com',
-      phone: '+1-555-0102',
-      address: '456 Pine Avenue, Midtown, NY 10002',
-      loyaltyPoints: 75,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: sushiBusiness.id,
-      name: 'David Kim',
-      email: 'david.kim@email.com',
-      phone: '+1-555-0201',
-      address: '789 Beach Road, Ocean City, CA 90211',
-      loyaltyPoints: 200,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: coffeeBusiness.id,
-      name: 'Jennifer Lee',
-      email: 'jennifer.lee@email.com',
-      phone: '+1-555-0301',
-      address: '321 Coffee Lane, Brew Town, WA 98102',
-      loyaltyPoints: 300,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }
-  ]);
+  const customerData = [
+    { businessSlug: 'italian-delight', name: 'John Smith', email: 'john.smith@email.com', phone: '+1-555-0101', address: '123 Oak Street, Downtown, NY 10001', loyaltyPoints: 150 },
+    { businessSlug: 'italian-delight', name: 'Maria Garcia', email: 'maria.garcia@email.com', phone: '+1-555-0102', address: '456 Pine Avenue, Midtown, NY 10002', loyaltyPoints: 75 },
+    { businessSlug: 'sushi-master', name: 'David Kim', email: 'david.kim@email.com', phone: '+1-555-0201', address: '789 Beach Road, Ocean City, CA 90211', loyaltyPoints: 200 },
+    { businessSlug: 'coffee-corner', name: 'Jennifer Lee', email: 'jennifer.lee@email.com', phone: '+1-555-0301', address: '321 Coffee Lane, Brew Town, WA 98102', loyaltyPoints: 300 }
+  ];
+  await queryInterface.bulkInsert('customers', customerData.map(c => ({
+    businessId: businesses[c.businessSlug],
+    name: c.name,
+    email: c.email,
+    phone: c.phone,
+    address: c.address,
+    loyaltyPoints: c.loyaltyPoints,
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  })));
 
-  // Get the created customers
-  const customers = await queryInterface.sequelize.query(
-    'SELECT id FROM customers ORDER BY id',
+  // Query customers by email for IDs
+  const customers: { [key: string]: number } = {};
+  for (const c of customerData) {
+    const [customer] = await queryInterface.sequelize.query(
+      'SELECT id FROM customers WHERE email = ?',
+      { type: QueryTypes.SELECT, replacements: [c.email] }
+    ) as any[];
+    customers[c.email] = customer.id;
+  }
+
+  // Print all users in the database before inserting orders
+  const allUsers = await queryInterface.sequelize.query(
+    'SELECT id, name, email, role, businessId FROM users ORDER BY id',
     { type: QueryTypes.SELECT }
-  ) as any[];
+  );
+  console.log('All users in DB before inserting orders:', allUsers);
 
   // 6. Create Orders
-  await queryInterface.bulkInsert('orders', [
+  const orderData = [
     {
-      businessId: italianBusiness.id,
-      tableId: tables[1].id, // A2 table
-      serverId: users[2].id, // Giuseppe (waitstaff)
-      customerId: customers[0].id, // John Smith
+      businessSlug: 'italian-delight',
+      serverEmail: 'giuseppe@italiandelight.com',
+      customerEmail: 'john.smith@email.com',
       orderNumber: 'IT-2024-001',
       status: OrderStatus.CONFIRMED,
       orderType: OrderType.DINE_IN,
@@ -607,15 +259,12 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       totalAmount: 39.17,
       notes: 'Table A2 - Window seat',
       specialInstructions: 'Extra cheese on pizza',
-      estimatedReadyTime: new Date(Date.now() + 30 * 60 * 1000), // 30 minutes from now
-      createdAt: new Date(),
-      updatedAt: new Date()
+      estimatedReadyTime: new Date(Date.now() + 30 * 60 * 1000)
     },
     {
-      businessId: sushiBusiness.id,
-      tableId: tables[4].id, // S2 table
-      serverId: users[8].id, // Aiko (waitstaff)
-      customerId: customers[2].id, // David Kim
+      businessSlug: 'sushi-master',
+      serverEmail: 'aiko@sushimaster.com',
+      customerEmail: 'david.kim@email.com',
       orderNumber: 'SU-2024-001',
       status: OrderStatus.IN_PROGRESS,
       orderType: OrderType.DINE_IN,
@@ -625,14 +274,12 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       totalAmount: 27.28,
       notes: 'Bar seating',
       specialInstructions: 'Extra wasabi',
-      estimatedReadyTime: new Date(Date.now() + 20 * 60 * 1000), // 20 minutes from now
-      createdAt: new Date(),
-      updatedAt: new Date()
+      estimatedReadyTime: new Date(Date.now() + 20 * 60 * 1000)
     },
     {
-      businessId: coffeeBusiness.id,
-      serverId: users[12].id, // Emma (waitstaff)
-      customerId: customers[3].id, // Jennifer Lee
+      businessSlug: 'coffee-corner',
+      serverEmail: 'emma@coffeecorner.com',
+      customerEmail: 'jennifer.lee@email.com',
       orderNumber: 'CO-2024-001',
       status: OrderStatus.READY,
       orderType: OrderType.TAKEAWAY,
@@ -642,223 +289,169 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       totalAmount: 9.35,
       notes: 'Takeaway order',
       specialInstructions: 'Extra hot cappuccino',
-      actualReadyTime: new Date(),
+      actualReadyTime: new Date()
+    }
+  ];
+  await queryInterface.bulkInsert('orders', orderData.map(o => {
+    const serverId = users[o.serverEmail];
+    const customerId = customers[o.customerEmail];
+    console.log(`Creating order ${o.orderNumber}: serverId=${serverId} (${o.serverEmail}), customerId=${customerId} (${o.customerEmail})`);
+    
+    return {
+      businessId: businesses[o.businessSlug],
+      serverId: serverId,
+      customerId: customerId,
+      orderNumber: o.orderNumber,
+      status: o.status,
+      orderType: o.orderType,
+      subtotal: o.subtotal,
+      taxAmount: o.taxAmount,
+      discountAmount: o.discountAmount,
+      totalAmount: o.totalAmount,
+      notes: o.notes,
+      specialInstructions: o.specialInstructions,
+      estimatedReadyTime: o.estimatedReadyTime,
+      actualReadyTime: o.actualReadyTime,
       createdAt: new Date(),
       updatedAt: new Date()
-    }
-  ]);
+    };
+  }));
 
-  // Get the created orders
-  const orders = await queryInterface.sequelize.query(
-    'SELECT id FROM orders ORDER BY id',
-    { type: QueryTypes.SELECT }
-  ) as any[];
+  // Query orders by order number for IDs
+  const orders: { [key: string]: number } = {};
+  for (const o of orderData) {
+    const [order] = await queryInterface.sequelize.query(
+      'SELECT id FROM orders WHERE orderNumber = ?',
+      { type: QueryTypes.SELECT, replacements: [o.orderNumber] }
+    ) as any[];
+    orders[o.orderNumber] = order.id;
+  }
 
   // 7. Create Order Items
-  await queryInterface.bulkInsert('order_items', [
-    {
-      orderId: orders[0].id,
-      itemId: items[0].id, // Margherita Pizza
-      itemName: 'Margherita Pizza',
-      quantity: 1,
-      unitPrice: 18.99,
-      totalPrice: 18.99,
-      specialInstructions: 'Extra cheese',
-      status: OrderItemStatus.IN_PROGRESS,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      orderId: orders[0].id,
-      itemId: items[1].id, // Spaghetti Carbonara
-      itemName: 'Spaghetti Carbonara',
-      quantity: 1,
-      unitPrice: 16.99,
-      totalPrice: 16.99,
-      specialInstructions: null,
-      status: OrderItemStatus.IN_PROGRESS,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      orderId: orders[1].id,
-      itemId: items[3].id, // California Roll
-      itemName: 'California Roll',
-      quantity: 1,
-      unitPrice: 12.99,
-      totalPrice: 12.99,
-      specialInstructions: 'Extra wasabi',
-      status: OrderItemStatus.READY,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      orderId: orders[1].id,
-      itemId: items[4].id, // Salmon Nigiri
-      itemName: 'Salmon Nigiri',
-      quantity: 2,
-      unitPrice: 6.99,
-      totalPrice: 13.98,
-      specialInstructions: null,
-      status: OrderItemStatus.READY,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      orderId: orders[2].id,
-      itemId: items[7].id, // Cappuccino
-      itemName: 'Cappuccino',
-      quantity: 1,
-      unitPrice: 4.99,
-      totalPrice: 4.99,
-      specialInstructions: 'Extra hot',
-      status: OrderItemStatus.SERVED,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      orderId: orders[2].id,
-      itemId: items[8].id, // Blueberry Muffin
-      itemName: 'Blueberry Muffin',
-      quantity: 1,
-      unitPrice: 3.99,
-      totalPrice: 3.99,
-      specialInstructions: null,
-      status: OrderItemStatus.SERVED,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }
-  ]);
+  const orderItemData = [
+    { orderNumber: 'IT-2024-001', itemSku: 'IT-PIZ-001', itemName: 'Margherita Pizza', quantity: 1, unitPrice: 18.99, totalPrice: 18.99, specialInstructions: 'Extra cheese', status: OrderItemStatus.IN_PROGRESS },
+    { orderNumber: 'IT-2024-001', itemSku: 'IT-PAS-001', itemName: 'Spaghetti Carbonara', quantity: 1, unitPrice: 16.99, totalPrice: 16.99, specialInstructions: null, status: OrderItemStatus.IN_PROGRESS },
+    { orderNumber: 'SU-2024-001', itemSku: 'SU-ROL-001', itemName: 'California Roll', quantity: 1, unitPrice: 12.99, totalPrice: 12.99, specialInstructions: 'Extra wasabi', status: OrderItemStatus.READY },
+    { orderNumber: 'SU-2024-001', itemSku: 'SU-NIG-001', itemName: 'Salmon Nigiri', quantity: 2, unitPrice: 6.99, totalPrice: 13.98, specialInstructions: null, status: OrderItemStatus.READY },
+    { orderNumber: 'CO-2024-001', itemSku: 'CO-CAP-001', itemName: 'Cappuccino', quantity: 1, unitPrice: 4.99, totalPrice: 4.99, specialInstructions: 'Extra hot', status: OrderItemStatus.SERVED },
+    { orderNumber: 'CO-2024-001', itemSku: 'CO-PAS-001', itemName: 'Blueberry Muffin', quantity: 1, unitPrice: 3.99, totalPrice: 3.99, specialInstructions: null, status: OrderItemStatus.SERVED }
+  ];
+  
+  console.log('DEBUG: OrderItemStatus enum values:', Object.values(OrderItemStatus));
+  console.log('DEBUG: Order item data statuses:', orderItemData.map(oi => oi.status));
+  await queryInterface.bulkInsert('order_items', orderItemData.map(oi => ({
+    orderId: orders[oi.orderNumber],
+    itemId: items[oi.itemSku],
+    itemName: oi.itemName,
+    quantity: oi.quantity,
+    unitPrice: oi.unitPrice,
+    totalPrice: oi.totalPrice,
+    specialInstructions: oi.specialInstructions,
+    status: oi.status,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  })));
 
   // 8. Create Sales
-  await queryInterface.bulkInsert('sales', [
+  const saleData = [
     {
-      businessId: italianBusiness.id,
-      userId: users[4].id, // Antonio (cashier)
+      businessSlug: 'italian-delight',
+      cashierEmail: 'antonio@italiandelight.com',
+      customerEmail: 'john.smith@email.com',
       saleNumber: 'SALE-IT-2024-001',
       status: SaleStatus.COMPLETED,
       subtotal: 35.98,
       taxAmount: 3.19,
       discountAmount: 0.00,
       totalAmount: 39.17,
-      paymentMethod: 'credit_card',
-      customerId: customers[0].id,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      paymentMethod: 'credit_card'
     },
     {
-      businessId: sushiBusiness.id,
-      userId: users[9].id, // Hiroshi (cashier)
+      businessSlug: 'sushi-master',
+      cashierEmail: 'hiroshi@sushimaster.com',
+      customerEmail: 'david.kim@email.com',
       saleNumber: 'SALE-SU-2024-001',
       status: SaleStatus.COMPLETED,
       subtotal: 24.97,
       taxAmount: 2.31,
       discountAmount: 0.00,
       totalAmount: 27.28,
-      paymentMethod: 'cash',
-      customerId: customers[2].id,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      paymentMethod: 'cash'
     },
     {
-      businessId: coffeeBusiness.id,
-      userId: users[13].id, // Alex (cashier)
+      businessSlug: 'coffee-corner',
+      cashierEmail: 'alex@coffeecorner.com',
+      customerEmail: 'jennifer.lee@email.com',
       saleNumber: 'SALE-CO-2024-001',
       status: SaleStatus.COMPLETED,
       subtotal: 8.49,
       taxAmount: 0.86,
       discountAmount: 0.00,
       totalAmount: 9.35,
-      paymentMethod: 'debit_card',
-      customerId: customers[3].id,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      paymentMethod: 'debit_card'
     }
-  ]);
+  ];
+  await queryInterface.bulkInsert('sales', saleData.map(s => ({
+    businessId: businesses[s.businessSlug],
+    userId: users[s.cashierEmail],
+    saleNumber: s.saleNumber,
+    status: s.status,
+    subtotal: s.subtotal,
+    taxAmount: s.taxAmount,
+    discountAmount: s.discountAmount,
+    totalAmount: s.totalAmount,
+    paymentMethod: s.paymentMethod,
+    customerId: customers[s.customerEmail],
+    idempotencyKey: uuidv4(),
+    createdAt: new Date(),
+    updatedAt: new Date()
+  })));
 
-  // Get the created sales
-  const sales = await queryInterface.sequelize.query(
-    'SELECT id FROM sales ORDER BY id',
-    { type: QueryTypes.SELECT }
-  ) as any[];
+  // Query sales by sale number for IDs
+  const sales: { [key: string]: number } = {};
+  for (const s of saleData) {
+    const [sale] = await queryInterface.sequelize.query(
+      'SELECT id FROM sales WHERE saleNumber = ?',
+      { type: QueryTypes.SELECT, replacements: [s.saleNumber] }
+    ) as any[];
+    sales[s.saleNumber] = sale.id;
+  }
 
   // 9. Create Sale Items
-  await queryInterface.bulkInsert('sale_items', [
-    {
-      saleId: sales[0].id,
-      itemId: items[0].id, // Margherita Pizza
-      quantity: 1,
-      unitPrice: 18.99,
-      totalPrice: 18.99,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      saleId: sales[0].id,
-      itemId: items[1].id, // Spaghetti Carbonara
-      quantity: 1,
-      unitPrice: 16.99,
-      totalPrice: 16.99,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      saleId: sales[1].id,
-      itemId: items[3].id, // California Roll
-      quantity: 1,
-      unitPrice: 12.99,
-      totalPrice: 12.99,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      saleId: sales[1].id,
-      itemId: items[4].id, // Salmon Nigiri
-      quantity: 2,
-      unitPrice: 6.99,
-      totalPrice: 13.98,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      saleId: sales[2].id,
-      itemId: items[7].id, // Cappuccino
-      quantity: 1,
-      unitPrice: 4.99,
-      totalPrice: 4.99,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      saleId: sales[2].id,
-      itemId: items[8].id, // Blueberry Muffin
-      quantity: 1,
-      unitPrice: 3.99,
-      totalPrice: 3.99,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }
-  ]);
+  const saleItemData = [
+    { saleNumber: 'SALE-IT-2024-001', itemSku: 'IT-PIZ-001', quantity: 1, unitPrice: 18.99, totalPrice: 18.99 },
+    { saleNumber: 'SALE-IT-2024-001', itemSku: 'IT-PAS-001', quantity: 1, unitPrice: 16.99, totalPrice: 16.99 },
+    { saleNumber: 'SALE-SU-2024-001', itemSku: 'SU-ROL-001', quantity: 1, unitPrice: 12.99, totalPrice: 12.99 },
+    { saleNumber: 'SALE-SU-2024-001', itemSku: 'SU-NIG-001', quantity: 2, unitPrice: 6.99, totalPrice: 13.98 },
+    { saleNumber: 'SALE-CO-2024-001', itemSku: 'CO-CAP-001', quantity: 1, unitPrice: 4.99, totalPrice: 4.99 },
+    { saleNumber: 'SALE-CO-2024-001', itemSku: 'CO-PAS-001', quantity: 1, unitPrice: 3.99, totalPrice: 3.99 }
+  ];
+  await queryInterface.bulkInsert('sale_items', saleItemData.map(si => ({
+    saleId: sales[si.saleNumber],
+    itemId: items[si.itemSku],
+    quantity: si.quantity,
+    unitPrice: si.unitPrice,
+    totalPrice: si.totalPrice,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  })));
 
   // 10. Create Reservations
-  await queryInterface.bulkInsert('reservations', [
+  const reservationData = [
     {
-      businessId: italianBusiness.id,
-      tableId: tables[2].id, // B1 table
-      customerId: customers[1].id, // Maria Garcia
+      businessSlug: 'italian-delight',
+      tableKey: 'italian-delight-B1',
+      customerEmail: 'maria.garcia@email.com',
       customerName: 'Maria Garcia',
       customerPhone: '+1-555-0102',
-      customerEmail: 'maria.garcia@email.com',
       partySize: 4,
       reservationDate: '2024-01-15',
       reservationTime: '19:00:00',
       status: 'confirmed',
-      specialRequests: 'Anniversary celebration',
-      createdAt: new Date(),
-      updatedAt: new Date()
+      specialRequests: 'Anniversary celebration'
     },
     {
-      businessId: sushiBusiness.id,
+      businessSlug: 'sushi-master',
       customerName: 'New Customer',
       customerPhone: '+1-555-0202',
       customerEmail: 'newcustomer@email.com',
@@ -866,177 +459,238 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       reservationDate: '2024-01-16',
       reservationTime: '20:00:00',
       status: 'pending',
-      specialRequests: 'Window seat preferred',
-      createdAt: new Date(),
-      updatedAt: new Date()
+      specialRequests: 'Window seat preferred'
     }
-  ]);
+  ];
+  await queryInterface.bulkInsert('reservations', reservationData.map(r => ({
+    businessId: businesses[r.businessSlug],
+    tableId: r.tableKey ? tables[r.tableKey] : null,
+    customerId: r.customerEmail ? customers[r.customerEmail] : null,
+    customerName: r.customerName,
+    customerPhone: r.customerPhone,
+    customerEmail: r.customerEmail,
+    partySize: r.partySize,
+    reservationDate: r.reservationDate,
+    reservationTime: r.reservationTime,
+    status: r.status,
+    specialRequests: r.specialRequests,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  })));
 
   // 11. Create Kitchen Orders
-  await queryInterface.bulkInsert('kitchen_orders', [
+  const kitchenOrderData = [
     {
-      businessId: italianBusiness.id,
-      orderId: orders[0].id,
-      assignedTo: users[0].id, // Marco (owner/kitchen)
-      chefId: users[0].id, // Marco
+      businessSlug: 'italian-delight',
+      orderNumber: 'IT-2024-001',
+      chefEmail: 'marco@italiandelight.com',
       status: 'preparing',
       priority: 'normal',
       estimatedPrepTime: 25,
       specialInstructions: 'Extra cheese on pizza',
-      notes: 'Table A2 - Window seat',
-      createdAt: new Date(),
-      updatedAt: new Date()
+      notes: 'Table A2 - Window seat'
     },
     {
-      businessId: sushiBusiness.id,
-      orderId: orders[1].id,
-      assignedTo: users[7].id, // Yuki (owner/chef)
-      chefId: users[7].id, // Yuki
+      businessSlug: 'sushi-master',
+      orderNumber: 'SU-2024-001',
+      chefEmail: 'yuki@sushimaster.com',
       status: 'ready',
       priority: 'high',
       estimatedPrepTime: 15,
       actualPrepTime: 12,
       specialInstructions: 'Extra wasabi',
-      notes: 'Bar seating',
-      createdAt: new Date(),
-      updatedAt: new Date()
+      notes: 'Bar seating'
     }
-  ]);
+  ];
+  await queryInterface.bulkInsert('kitchen_orders', kitchenOrderData.map(ko => ({
+    businessId: businesses[ko.businessSlug],
+    orderId: orders[ko.orderNumber],
+    assignedTo: users[ko.chefEmail],
+    chefId: users[ko.chefEmail],
+    status: ko.status,
+    priority: ko.priority,
+    estimatedPrepTime: ko.estimatedPrepTime,
+    actualPrepTime: ko.actualPrepTime,
+    specialInstructions: ko.specialInstructions,
+    notes: ko.notes,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  })));
 
   // 12. Create Deliveries
-  await queryInterface.bulkInsert('deliveries', [
+  const deliveryData = [
     {
-      businessId: italianBusiness.id,
-      orderId: orders[0].id,
-      customerId: customers[0].id,
-      driverId: users[2].id, // Giuseppe (also driver)
+      businessSlug: 'italian-delight',
+      orderNumber: 'IT-2024-001',
+      customerEmail: 'john.smith@email.com',
+      driverEmail: 'giuseppe@italiandelight.com',
       deliveryAddress: '123 Oak Street, Downtown, NY 10001',
       deliveryInstructions: 'Ring doorbell twice',
-      estimatedDeliveryTime: new Date(Date.now() + 45 * 60 * 1000), // 45 minutes from now
+      estimatedDeliveryTime: new Date(Date.now() + 45 * 60 * 1000),
       status: 'pending',
       deliveryFee: 5.00,
-      tipAmount: 3.00,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      tipAmount: 3.00
     }
-  ]);
+  ];
+  await queryInterface.bulkInsert('deliveries', deliveryData.map(d => ({
+    businessId: businesses[d.businessSlug],
+    orderId: orders[d.orderNumber],
+    customerId: customers[d.customerEmail],
+    driverId: users[d.driverEmail],
+    deliveryAddress: d.deliveryAddress,
+    deliveryInstructions: d.deliveryInstructions,
+    estimatedDeliveryTime: d.estimatedDeliveryTime,
+    status: d.status,
+    deliveryFee: d.deliveryFee,
+    tipAmount: d.tipAmount,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  })));
 
   // 13. Create Staff Messages
-  await queryInterface.bulkInsert('staff_messages', [
+  const messageData = [
     {
-      businessId: italianBusiness.id,
-      senderId: users[1].id, // Sofia (manager)
+      businessSlug: 'italian-delight',
+      senderEmail: 'sofia@italiandelight.com',
       senderName: 'Sofia Bianchi',
       messageType: MessageType.ANNOUNCEMENT,
       title: 'Staff Meeting Tomorrow',
       content: 'Reminder: Staff meeting tomorrow at 2 PM in the back room. All staff must attend.',
       recipientType: RecipientType.ALL,
       status: MessageStatus.SENT,
-      priority: 'normal',
-      createdAt: new Date(),
-      updatedAt: new Date()
+      priority: 'normal'
     },
     {
-      businessId: sushiBusiness.id,
-      senderId: users[8].id, // Kenji (manager)
+      businessSlug: 'sushi-master',
+      senderEmail: 'kenji@sushimaster.com',
       senderName: 'Kenji Yamamoto',
       messageType: MessageType.INVENTORY_ALERT,
       title: 'Low Salmon Stock',
       content: 'We are running low on fresh salmon. Please order more by end of day.',
       recipientType: RecipientType.KITCHEN,
       status: MessageStatus.SENT,
-      priority: 'high',
-      createdAt: new Date(),
-      updatedAt: new Date()
+      priority: 'high'
     },
     {
-      businessId: coffeeBusiness.id,
-      senderId: users[11].id, // Sarah (owner)
+      businessSlug: 'coffee-corner',
+      senderEmail: 'sarah@coffeecorner.com',
       senderName: 'Sarah Johnson',
       messageType: MessageType.PROMOTION,
       title: 'New Seasonal Drink',
       content: 'Introducing our new Pumpkin Spice Latte! Available starting tomorrow.',
       recipientType: RecipientType.ALL,
       status: MessageStatus.SENT,
-      priority: 'normal',
-      createdAt: new Date(),
-      updatedAt: new Date()
+      priority: 'normal'
     }
-  ]);
+  ];
+  await queryInterface.bulkInsert('staff_messages', messageData.map(m => ({
+    businessId: businesses[m.businessSlug],
+    senderId: users[m.senderEmail],
+    senderName: m.senderName,
+    messageType: m.messageType,
+    title: m.title,
+    content: m.content,
+    recipientType: m.recipientType,
+    status: m.status,
+    priority: m.priority,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  })));
 
   // 14. Create Menu Categories
-  await queryInterface.bulkInsert('menu_categories', [
-    {
-      businessId: italianBusiness.id,
-      name: 'Pizza',
-      description: 'Authentic Italian pizzas',
-      sortOrder: 1,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: italianBusiness.id,
-      name: 'Pasta',
-      description: 'Fresh pasta dishes',
-      sortOrder: 2,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: sushiBusiness.id,
-      name: 'Rolls',
-      description: 'Fresh sushi rolls',
-      sortOrder: 1,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: coffeeBusiness.id,
-      name: 'Coffee',
-      description: 'Artisanal coffee drinks',
-      sortOrder: 1,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
+  console.log('🔍 DEBUG: Creating menu categories...');
+  console.log('🔍 DEBUG: Available businesses:', businesses);
+  
+  const categoryData = [
+    { businessSlug: 'italian-delight', name: 'Pizza', description: 'Authentic Italian pizzas', displayOrder: 1 },
+    { businessSlug: 'italian-delight', name: 'Pasta', description: 'Fresh pasta dishes', displayOrder: 2 },
+    { businessSlug: 'sushi-master', name: 'Rolls', description: 'Fresh sushi rolls', displayOrder: 1 },
+    { businessSlug: 'coffee-corner', name: 'Coffee', description: 'Artisanal coffee drinks', displayOrder: 1 }
+  ];
+  
+  console.log('🔍 DEBUG: Category data to insert:', categoryData);
+  
+  const categoriesToInsert = categoryData.map(c => {
+    const businessId = businesses[c.businessSlug];
+    console.log(`🔍 DEBUG: Category ${c.name}: businessId=${businessId}, businessSlug=${c.businessSlug}`);
+    
+    if (!businessId) {
+      throw new Error(`Business not found for slug: ${c.businessSlug}. Available businesses: ${JSON.stringify(businesses)}`);
     }
-  ]);
+    
+    return {
+      businessId: businessId,
+      name: c.name,
+      description: c.description,
+      displayOrder: c.displayOrder,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+  });
+  
+  console.log('🔍 DEBUG: Final categories to insert:', JSON.stringify(categoriesToInsert, null, 2));
+  
+  await queryInterface.bulkInsert('menu_categories', categoriesToInsert);
+
+  // Query categories by business and name for IDs
+  console.log('🔍 DEBUG: Querying categories for IDs...');
+  const categories: { [key: string]: number } = {};
+  for (const c of categoryData) {
+    console.log(`🔍 DEBUG: Querying category: businessId=${businesses[c.businessSlug]}, name=${c.name}`);
+    const [category] = await queryInterface.sequelize.query(
+      'SELECT id FROM menu_categories WHERE businessId = ? AND name = ?',
+      { type: QueryTypes.SELECT, replacements: [businesses[c.businessSlug], c.name] }
+    ) as any[];
+    console.log(`🔍 DEBUG: Found category:`, category);
+    categories[`${c.businessSlug}-${c.name}`] = category.id;
+  }
+  
+  console.log('🔍 DEBUG: Final categories object:', categories);
 
   // 15. Create Menu Items
-  await queryInterface.bulkInsert('menu_items', [
-    {
-      businessId: italianBusiness.id,
-      categoryId: 1, // Pizza category
-      name: 'Margherita Pizza',
-      description: 'Fresh mozzarella, tomato sauce, basil',
-      price: 18.99,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: sushiBusiness.id,
-      categoryId: 3, // Rolls category
-      name: 'California Roll',
-      description: 'Crab, avocado, cucumber',
-      price: 12.99,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: coffeeBusiness.id,
-      categoryId: 4, // Coffee category
-      name: 'Cappuccino',
-      description: 'Espresso with steamed milk and foam',
-      price: 4.99,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
+  console.log('🔍 DEBUG: Creating menu items...');
+  console.log('🔍 DEBUG: Available categories:', categories);
+  
+  const menuItemData = [
+    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Pizza', name: 'Margherita Pizza', description: 'Fresh mozzarella, tomato sauce, basil', price: 18.99, cost: 8.50, sku: 'MI-PIZ-001', barcode: '123456789010' },
+    { businessSlug: 'sushi-master', categoryKey: 'sushi-master-Rolls', name: 'California Roll', description: 'Crab, avocado, cucumber', price: 12.99, cost: 5.80, sku: 'MI-ROL-001', barcode: '123456789011' },
+    { businessSlug: 'coffee-corner', categoryKey: 'coffee-corner-Coffee', name: 'Cappuccino', description: 'Espresso with steamed milk and foam', price: 4.99, cost: 1.80, sku: 'MI-COF-001', barcode: '123456789012' }
+  ];
+  
+  console.log('🔍 DEBUG: Menu item data to insert:', menuItemData);
+  
+  const menuItemsToInsert = menuItemData.map(mi => {
+    const categoryId = categories[mi.categoryKey];
+    console.log(`🔍 DEBUG: Menu item ${mi.name}: businessId=${businesses[mi.businessSlug]}, categoryId=${categoryId}, categoryKey=${mi.categoryKey}`);
+    
+    if (!categoryId) {
+      throw new Error(`Category not found for key: ${mi.categoryKey}. Available categories: ${JSON.stringify(categories)}`);
     }
-  ]);
+    
+    return {
+      businessId: businesses[mi.businessSlug],
+      categoryId: categoryId,
+      name: mi.name,
+      description: mi.description,
+      price: mi.price,
+      cost: mi.cost,
+      sku: mi.sku,
+      barcode: mi.barcode,
+      preparationTime: 15,
+      isAvailable: true,
+      isVegetarian: false,
+      isVegan: false,
+      isGlutenFree: false,
+      isSpicy: false,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+  });
+  
+  console.log('🔍 DEBUG: Final menu items to insert:', JSON.stringify(menuItemsToInsert, null, 2));
+  
+  await queryInterface.bulkInsert('menu_items', menuItemsToInsert);
 }
 
 export async function down(queryInterface: QueryInterface): Promise<void> {

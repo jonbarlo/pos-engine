@@ -24,6 +24,10 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
         key: 'id'
       },
     },
+    senderName: {
+      type: DataTypes.STRING(100),
+      allowNull: false
+    },
     recipientId: {
       type: DataTypes.INTEGER,
       allowNull: true,
@@ -33,17 +37,22 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       },
     },
     messageType: {
-      type: DataTypes.ENUM('general', 'order_update', 'kitchen_alert', 'staff_notice', 'emergency'),
+      type: DataTypes.ENUM('announcement', 'inventory_alert', 'promotion', 'discount', 'urgent', 'general', 'order_update', 'kitchen_alert', 'staff_notice', 'emergency', 'maintenance', 'training'),
       allowNull: false,
       defaultValue: 'general'
     },
-    subject: {
+    title: {
       type: DataTypes.STRING(200),
-      allowNull: true
+      allowNull: false
     },
-    message: {
+    content: {
       type: DataTypes.TEXT,
       allowNull: false
+    },
+    recipientType: {
+      type: DataTypes.ENUM('all', 'waitstaff', 'kitchen', 'managers', 'specific_users', 'cashiers', 'drivers', 'hosts', 'bartenders'),
+      allowNull: false,
+      defaultValue: 'all'
     },
     priority: {
       type: DataTypes.ENUM('low', 'normal', 'high', 'urgent'),
