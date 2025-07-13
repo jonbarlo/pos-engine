@@ -5,6 +5,10 @@ import { TableStatus } from '../../models/TableModel';
 import { SaleStatus } from '../../models/SaleModel';
 import { OrderItemStatus } from '../../models/OrderItemModel';
 import { MessageType, MessageStatus, RecipientType } from '../../models/StaffMessageModel';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 export async function up(queryInterface: QueryInterface): Promise<void> {
   // 1. Create Businesses
@@ -289,8 +293,13 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       description: 'Fresh mozzarella, tomato sauce, basil',
       price: 18.99,
       cost: 8.50,
+      stock: 50,
       sku: 'IT-PIZ-001',
+      barcode: '123456789001',
       category: 'Pizza',
+      unit: 'piece',
+      minStock: 10,
+      maxStock: 100,
       isActive: true,
       createdAt: new Date(),
       updatedAt: new Date()
@@ -301,8 +310,13 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       description: 'Pasta with eggs, cheese, pancetta, black pepper',
       price: 16.99,
       cost: 7.20,
+      stock: 30,
       sku: 'IT-PAS-001',
+      barcode: '123456789002',
       category: 'Pasta',
+      unit: 'piece',
+      minStock: 5,
+      maxStock: 80,
       isActive: true,
       createdAt: new Date(),
       updatedAt: new Date()
@@ -313,8 +327,13 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       description: 'Classic Italian dessert with coffee and mascarpone',
       price: 8.99,
       cost: 3.50,
+      stock: 20,
       sku: 'IT-DES-001',
+      barcode: '123456789003',
       category: 'Dessert',
+      unit: 'piece',
+      minStock: 5,
+      maxStock: 50,
       isActive: true,
       createdAt: new Date(),
       updatedAt: new Date()
@@ -327,8 +346,13 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       description: 'Crab, avocado, cucumber',
       price: 12.99,
       cost: 5.80,
+      stock: 40,
       sku: 'SU-ROL-001',
+      barcode: '123456789004',
       category: 'Rolls',
+      unit: 'piece',
+      minStock: 10,
+      maxStock: 100,
       isActive: true,
       createdAt: new Date(),
       updatedAt: new Date()
@@ -339,8 +363,13 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       description: 'Fresh salmon over rice',
       price: 6.99,
       cost: 3.20,
+      stock: 60,
       sku: 'SU-NIG-001',
+      barcode: '123456789005',
       category: 'Nigiri',
+      unit: 'piece',
+      minStock: 15,
+      maxStock: 120,
       isActive: true,
       createdAt: new Date(),
       updatedAt: new Date()
@@ -351,8 +380,13 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       description: 'Traditional Japanese soup',
       price: 4.99,
       cost: 1.80,
+      stock: 80,
       sku: 'SU-SOU-001',
+      barcode: '123456789006',
       category: 'Soup',
+      unit: 'bowl',
+      minStock: 20,
+      maxStock: 150,
       isActive: true,
       createdAt: new Date(),
       updatedAt: new Date()
@@ -365,8 +399,13 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       description: 'Single shot of espresso',
       price: 3.50,
       cost: 1.20,
+      stock: 200,
       sku: 'CO-ESP-001',
+      barcode: '123456789007',
       category: 'Coffee',
+      unit: 'shot',
+      minStock: 50,
+      maxStock: 500,
       isActive: true,
       createdAt: new Date(),
       updatedAt: new Date()
@@ -377,8 +416,13 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       description: 'Espresso with steamed milk and foam',
       price: 4.99,
       cost: 1.80,
+      stock: 150,
       sku: 'CO-CAP-001',
+      barcode: '123456789008',
       category: 'Coffee',
+      unit: 'cup',
+      minStock: 30,
+      maxStock: 300,
       isActive: true,
       createdAt: new Date(),
       updatedAt: new Date()
@@ -389,8 +433,13 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       description: 'Fresh baked blueberry muffin',
       price: 3.99,
       cost: 1.50,
+      stock: 25,
       sku: 'CO-PAS-001',
+      barcode: '123456789009',
       category: 'Pastry',
+      unit: 'piece',
+      minStock: 5,
+      maxStock: 60,
       isActive: true,
       createdAt: new Date(),
       updatedAt: new Date()
@@ -1007,4 +1056,31 @@ export async function down(queryInterface: QueryInterface): Promise<void> {
   await queryInterface.bulkDelete('items', {});
   await queryInterface.bulkDelete('users', {});
   await queryInterface.bulkDelete('businesses', {});
+}
+
+// Main execution
+if (require.main === module) {
+  const { Sequelize } = require('sequelize');
+  const { getDatabaseConfig } = require('../../config/database');
+  
+  const config = getDatabaseConfig();
+  const sequelize = new Sequelize(config);
+  
+  async function runSeeder() {
+    try {
+      console.log('🌱 Starting comprehensive data seeder...');
+      await sequelize.authenticate();
+      console.log('✅ Database connection established.');
+      
+      await up(sequelize.getQueryInterface());
+      console.log('✅ Comprehensive data seeded successfully!');
+      
+      process.exit(0);
+    } catch (error) {
+      console.error('❌ Seeder failed:', error);
+      process.exit(1);
+    }
+  }
+  
+  runSeeder();
 } 

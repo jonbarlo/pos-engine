@@ -32,11 +32,16 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
         key: 'id'
       },
     },
+    orderNumber: {
+      type: DataTypes.STRING(50),
+      allowNull: false,
+      unique: true,
+    },
     tableId: {
       type: DataTypes.INTEGER,
       allowNull: true,
       references: {
-        model: 'tables',
+        model: 'restaurant_tables',
         key: 'id'
       },
     },
@@ -85,6 +90,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   await queryInterface.addIndex('orders', ['businessId']);
   await queryInterface.addIndex('orders', ['serverId']);
   await queryInterface.addIndex('orders', ['customerId']);
+  await queryInterface.addIndex('orders', ['orderNumber'], { unique: true });
   await queryInterface.addIndex('orders', ['tableId']);
   await queryInterface.addIndex('orders', ['status']);
   await queryInterface.addIndex('orders', ['createdAt']);

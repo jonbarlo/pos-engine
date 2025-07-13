@@ -50,6 +50,11 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       allowNull: false,
       defaultValue: 'normal'
     },
+    status: {
+      type: DataTypes.ENUM('sent', 'read', 'acknowledged', 'expired'),
+      allowNull: false,
+      defaultValue: 'sent'
+    },
     isRead: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
@@ -81,6 +86,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   await queryInterface.addIndex('staff_messages', ['recipientId']);
   await queryInterface.addIndex('staff_messages', ['messageType']);
   await queryInterface.addIndex('staff_messages', ['priority']);
+  await queryInterface.addIndex('staff_messages', ['status']);
   await queryInterface.addIndex('staff_messages', ['isRead']);
   await queryInterface.addIndex('staff_messages', ['createdAt']);
 }

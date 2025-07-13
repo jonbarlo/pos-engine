@@ -1,7 +1,7 @@
 import { QueryInterface, DataTypes } from 'sequelize';
 
 export async function up(queryInterface: QueryInterface): Promise<void> {
-  await queryInterface.createTable('tables', {
+  await queryInterface.createTable('restaurant_tables', {
     id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
@@ -10,6 +10,10 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     businessId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: 'businesses',
+        key: 'id'
+      },
     },
     tableNumber: {
       type: DataTypes.STRING(20),
@@ -47,25 +51,12 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   });
 
   // Add indexes
-  await queryInterface.addIndex('tables', ['businessId', 'tableNumber'], { unique: true });
-  await queryInterface.addIndex('tables', ['businessId', 'status']);
-  await queryInterface.addIndex('tables', ['businessId', 'isActive']);
-
-  // Add foreign key constraint
-  await queryInterface.addConstraint('tables', {
-    fields: ['businessId'],
-    type: 'foreign key',
-    name: 'tables_businessId_fkey',
-    references: {
-      table: 'businesses',
-      field: 'id'
-    },
-    onUpdate: 'CASCADE',
-    onDelete: 'CASCADE'
-  });
+  await queryInterface.addIndex('restaurant_tables', ['businessId', 'tableNumber'], { unique: true });
+  await queryInterface.addIndex('restaurant_tables', ['businessId', 'status']);
+  await queryInterface.addIndex('restaurant_tables', ['businessId', 'isActive']);
 }
 
+
 export async function down(queryInterface: QueryInterface): Promise<void> {
-  await queryInterface.removeConstraint('tables', 'tables_businessId_fkey');
-  await queryInterface.dropTable('tables');
+  await queryInterface.dropTable('restaurant_tables');
 } 
