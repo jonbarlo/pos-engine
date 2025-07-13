@@ -2,6 +2,7 @@ import { SaleService } from './saleService';
 import { SaleModel } from '../models/SaleModel';
 import { SaleItemModel } from '../models/SaleItemModel';
 import { OrderModel } from '../models/OrderModel';
+import { OrderItemModel } from '../models/OrderItemModel';
 import { KitchenOrderModel } from '../models/KitchenOrderModel';
 import { ItemModel } from '../models/ItemModel';
 import { UserModel } from '../models/UserModel';
@@ -11,6 +12,7 @@ import { BusinessModel } from '../models/BusinessModel';
 jest.mock('../models/SaleModel');
 jest.mock('../models/SaleItemModel');
 jest.mock('../models/OrderModel');
+jest.mock('../models/OrderItemModel');
 jest.mock('../models/KitchenOrderModel');
 jest.mock('../models/ItemModel');
 jest.mock('../models/UserModel');
@@ -124,7 +126,14 @@ describe('SaleService', () => {
       (OrderModel.create as jest.Mock).mockResolvedValue(mockOrder);
 
       // Mock successful order item creation
-      (OrderItemModel.create as jest.Mock).mockResolvedValue({});
+      (OrderItemModel.create as jest.Mock).mockResolvedValue({
+        id: 1,
+        orderId: 1,
+        itemId: 1,
+        quantity: 1,
+        unitPrice: 12.99,
+        totalPrice: 12.99
+      });
 
       // Mock successful kitchen order creation
       const mockKitchenOrder = { id: 1 };
@@ -184,7 +193,14 @@ describe('SaleService', () => {
       (OrderModel.create as jest.Mock).mockResolvedValue(mockOrder);
 
       // Mock successful order item creation
-      (OrderItemModel.create as jest.Mock).mockResolvedValue({});
+      (OrderItemModel.create as jest.Mock).mockResolvedValue({
+        id: 1,
+        orderId: 1,
+        itemId: 1,
+        quantity: 1,
+        unitPrice: 12.99,
+        totalPrice: 12.99
+      });
 
       // Mock successful kitchen order creation
       const mockKitchenOrder = { id: 1 };

@@ -54,7 +54,13 @@ export const initializeAllModels = (): void => {
   // and skipped for unit tests to avoid import issues
 };
 
+let associationsSetup = false;
+
 export const setupAssociations = (): void => {
+  if (associationsSetup) {
+    return; // Prevent duplicate setup
+  }
+  associationsSetup = true;
   // Business associations
   BusinessModel.hasMany(UserModel, {
     foreignKey: 'businessId',
@@ -105,19 +111,19 @@ export const setupAssociations = (): void => {
   // User associations
   UserModel.belongsTo(BusinessModel, {
     foreignKey: 'businessId',
-    as: 'business'
+    as: 'userBusiness'
   });
 
   // Item associations
   ItemModel.belongsTo(BusinessModel, {
     foreignKey: 'businessId',
-    as: 'business'
+    as: 'itemBusiness'
   });
 
   // Sale associations
   SaleModel.belongsTo(BusinessModel, {
     foreignKey: 'businessId',
-    as: 'business'
+    as: 'saleBusiness'
   });
   SaleModel.belongsTo(UserModel, {
     foreignKey: 'userId',
@@ -141,7 +147,7 @@ export const setupAssociations = (): void => {
   // Order associations
   OrderModel.belongsTo(BusinessModel, {
     foreignKey: 'businessId',
-    as: 'business'
+    as: 'orderBusiness'
   });
   OrderModel.belongsTo(UserModel, {
     foreignKey: 'serverId',
@@ -177,13 +183,13 @@ export const setupAssociations = (): void => {
   // Customer associations
   CustomerModel.belongsTo(BusinessModel, {
     foreignKey: 'businessId',
-    as: 'business'
+    as: 'customerBusiness'
   });
 
   // Menu associations
   MenuItemModel.belongsTo(BusinessModel, {
     foreignKey: 'businessId',
-    as: 'business'
+    as: 'menuItemBusiness'
   });
   MenuItemModel.belongsTo(MenuCategoryModel, {
     foreignKey: 'categoryId',
@@ -192,7 +198,7 @@ export const setupAssociations = (): void => {
 
   MenuCategoryModel.belongsTo(BusinessModel, {
     foreignKey: 'businessId',
-    as: 'business'
+    as: 'menuCategoryBusiness'
   });
   MenuCategoryModel.hasMany(MenuItemModel, {
     foreignKey: 'categoryId',
@@ -202,7 +208,7 @@ export const setupAssociations = (): void => {
   // Reservation associations
   ReservationModel.belongsTo(BusinessModel, {
     foreignKey: 'businessId',
-    as: 'business'
+    as: 'reservationBusiness'
   });
   ReservationModel.belongsTo(TableModel, {
     foreignKey: 'tableId',
@@ -216,7 +222,7 @@ export const setupAssociations = (): void => {
   // Table associations
   TableModel.belongsTo(BusinessModel, {
     foreignKey: 'businessId',
-    as: 'business'
+    as: 'tableBusiness'
   });
   TableModel.hasMany(ReservationModel, {
     foreignKey: 'tableId',
@@ -232,7 +238,7 @@ export const setupAssociations = (): void => {
 
   DeliveryModel.belongsTo(BusinessModel, {
     foreignKey: 'businessId',
-    as: 'business'
+    as: 'deliveryBusiness'
   });
   DeliveryModel.belongsTo(OrderModel, {
     foreignKey: 'orderId',
@@ -256,7 +262,7 @@ export const setupAssociations = (): void => {
 
   KitchenOrderModel.belongsTo(BusinessModel, {
     foreignKey: 'businessId',
-    as: 'business'
+    as: 'kitchenOrderBusiness'
   });
   KitchenOrderModel.belongsTo(OrderModel, {
     foreignKey: 'orderId',
@@ -280,7 +286,7 @@ export const setupAssociations = (): void => {
 
   StaffMessageModel.belongsTo(BusinessModel, {
     foreignKey: 'businessId',
-    as: 'business'
+    as: 'staffMessageBusiness'
   });
   StaffMessageModel.belongsTo(UserModel, {
     foreignKey: 'senderId',
