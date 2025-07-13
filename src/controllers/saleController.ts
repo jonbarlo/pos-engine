@@ -303,7 +303,7 @@ export class SaleController {
         res.status(400).json({ error: 'Start date and end date are required' });
         return;
       }
-
+      
       const start = new Date(startDate as string);
       const end = new Date(endDate as string);
       
@@ -319,6 +319,34 @@ export class SaleController {
       res.json(sales);
     } catch (error) {
       logger(`Error getting sales by date range: ${error}`);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  };
+
+  /**
+   * Create missing orders for existing sales (data recovery endpoint)
+   * This endpoint should be used when sales exist but orders are missing
+   */
+  public static createMissingOrders = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      logger(`API endpoint POST /sales/create-missing-orders was called...`);
+      
+      const businessId = req.user!.businessId;
+      
+      // This is a potentially expensive operation, so we should add some safety checks
+      const result = await SaleService.createMissingOrdersForSales(businessId);
+      
+      res.json({
+        message: 'Missing orders creation completed',
+        result: {
+          success: result.success,
+          failed: result.failed,
+          totalProcessed: result.success + result.failed,
+          errors: result.errors
+        }
+      });
+    } catch (error) {
+      logger(`Error creating missing orders: ${error}`);
       res.status(500).json({ error: 'Internal server error' });
     }
   };

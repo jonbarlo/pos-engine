@@ -264,18 +264,14 @@ export class SaleService {
 
         await Promise.all(stockUpdatePromises);
 
-        await transaction.commit();
-        logger(`DEBUG: Transaction committed successfully`);
+        // Create order and kitchen order within the same transaction
+        // This ensures data consistency - if order creation fails, the entire sale is rolled back
+        logger(`DEBUG: Creating order and kitchen order within transaction for sale ${sale.id}`);
+        await this.createOrderAndKitchenOrderFromSale(sale, orderItems, transaction);
+        logger(`DEBUG: Order and kitchen order created successfully within transaction`);
 
-        // Automatically create order and kitchen order for all sales with items
-        // This follows POS industry standards where kitchen orders are created immediately when orders are placed
-          try {
-            await this.createOrderAndKitchenOrderFromSale(sale, orderItems);
-          logger(`DEBUG: Automatically created order and kitchen order for sale ${sale.id} (status: ${sale.status})`);
-          } catch (error) {
-            logger(`WARNING: Failed to create automatic order and kitchen order for sale ${sale.id}: ${error}`);
-            // Don't fail the sale creation if kitchen order creation fails
-        }
+        await transaction.commit();
+        logger(`DEBUG: Transaction committed successfully - sale, items, stock updates, order, and kitchen order all created`);
 
         return sale.toJSON();
       } catch (error) {
@@ -344,6 +340,7 @@ export class SaleService {
 
   /**
    * Automatically create an order and kitchen order from a completed sale
+   * This method must be called within a transaction to ensure data consistency
    */
   private static async createOrderAndKitchenOrderFromSale(
     sale: SaleModel,
@@ -351,7 +348,8 @@ export class SaleService {
       itemId: number;
       quantity: number;
       unitPrice: number;
-    }>
+    }>,
+    transaction: any
   ): Promise<void> {
     try {
       logger(`DEBUG: Creating order and kitchen order from sale ${sale.id}`);
@@ -374,7 +372,7 @@ export class SaleService {
         discountAmount: 0,
         totalAmount: sale.totalAmount,
         notes: sale.notes || `Auto-generated from sale ${sale.id}`
-      });
+      }, { transaction });
 
       logger(`DEBUG: Created order ${order.id} from sale ${sale.id}`);
 
@@ -390,7 +388,7 @@ export class SaleService {
             unitPrice: item.unitPrice,
             totalPrice: item.quantity * item.unitPrice,
             status: 'confirmed'
-          } as any);
+          } as any, { transaction });
         }
       }
 
@@ -424,12 +422,183 @@ export class SaleService {
         totalItems: kitchenItems.length,
         completedItems: 0,
         notes: `Auto-generated from sale ${sale.id}`
-      });
+      }, { transaction });
 
       logger(`DEBUG: Created kitchen order ${kitchenOrder.id} from order ${order.id}`);
 
     } catch (error) {
       logger(`ERROR: Failed to create order and kitchen order from sale ${sale.id}: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Create order and kitchen order from sale without transaction (for recovery purposes)
+   */
+  private static async createOrderAndKitchenOrderFromSaleRecovery(
+    sale: SaleModel,
+    orderItems: Array<{
+      itemId: number;
+      quantity: number;
+      unitPrice: number;
+    }>
+  ): Promise<void> {
+    try {
+      logger(`DEBUG: Creating order and kitchen order from sale ${sale.id} (recovery mode)`);
+
+      // Generate unique order number
+      const timestamp = Date.now();
+      const random = Math.floor(Math.random() * 10000);
+      const saleId = sale.id;
+      const orderNumber = `ORD-${timestamp}-${random}-${saleId}`;
+
+      // Create order
+      const order = await OrderModel.create({
+        businessId: sale.businessId,
+        serverId: sale.userId,
+        orderNumber,
+        orderType: OrderType.DINE_IN, // Default to dine-in, can be enhanced later
+        status: OrderStatus.CONFIRMED,
+        subtotal: sale.totalAmount,
+        taxAmount: 0, // Could be calculated from sale data
+        discountAmount: 0,
+        totalAmount: sale.totalAmount,
+        notes: sale.notes || `Auto-generated from sale ${sale.id} (recovery)`
+      });
+
+      logger(`DEBUG: Created order ${order.id} from sale ${sale.id} (recovery mode)`);
+
+      // Create order items
+      for (const item of orderItems) {
+        const itemModel = await ItemModel.findByPk(item.itemId);
+        if (itemModel) {
+          await OrderItemModel.create({
+            orderId: order.id,
+            itemId: item.itemId,
+            itemName: itemModel.name,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            totalPrice: item.quantity * item.unitPrice,
+            status: 'confirmed'
+          } as any);
+        }
+      }
+
+      logger(`DEBUG: Created order items for order ${order.id} (recovery mode)`);
+
+      // Create kitchen order with actual item names
+      const kitchenItems = await Promise.all(orderItems.map(async (item, index) => {
+        const itemModel = await ItemModel.findByPk(item.itemId);
+        return {
+        id: index + 1,
+          itemName: itemModel?.name || `Item ${item.itemId}`,
+        quantity: item.quantity,
+        status: 'pending' as const,
+        specialInstructions: '',
+        modifications: [],
+          allergens: [],
+        preparationTime: 15 // Default preparation time
+        };
+      }));
+
+      const kitchenOrder = await KitchenOrderModel.create({
+        businessId: sale.businessId,
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        customerName: sale.customerName || 'Customer',
+        orderType: 'dine_in',
+        priority: 'normal',
+        status: 'pending',
+        estimatedPrepTime: 15,
+        items: kitchenItems,
+        totalItems: kitchenItems.length,
+        completedItems: 0,
+        notes: `Auto-generated from sale ${sale.id} (recovery)`
+      });
+
+      logger(`DEBUG: Created kitchen order ${kitchenOrder.id} from order ${order.id} (recovery mode)`);
+
+    } catch (error) {
+      logger(`ERROR: Failed to create order and kitchen order from sale ${sale.id} (recovery mode): ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Create missing orders for existing sales that don't have associated orders
+   * This is a recovery method for cases where sales were created but orders failed
+   */
+  static async createMissingOrdersForSales(businessId: number): Promise<{ success: number; failed: number; errors: string[] }> {
+    const result = { success: 0, failed: 0, errors: [] as string[] };
+    
+    try {
+      logger(`INFO: Starting to create missing orders for business ${businessId}`);
+      
+      // Find sales that don't have associated orders
+      const salesWithoutOrders = await SaleModel.findAll({
+        where: { businessId },
+        include: [
+          {
+            model: SaleItemModel,
+            as: 'saleItems',
+            include: [
+              {
+                model: ItemModel,
+                as: 'item'
+              }
+            ]
+          }
+        ]
+      });
+
+      logger(`INFO: Found ${salesWithoutOrders.length} sales to check for missing orders`);
+
+      for (const sale of salesWithoutOrders) {
+        try {
+          // Check if order already exists for this sale
+          const existingOrder = await OrderModel.findOne({
+            where: { 
+              businessId,
+              notes: { [require('sequelize').Op.like]: `%Auto-generated from sale ${sale.id}%` }
+            }
+          });
+
+          if (existingOrder) {
+            logger(`DEBUG: Order already exists for sale ${sale.id}, skipping`);
+            continue;
+          }
+
+          // Convert sale items to order items format
+          const saleItems = (sale as any).saleItems || [];
+          const orderItems = saleItems.map((saleItem: any) => ({
+            itemId: saleItem.itemId,
+            quantity: saleItem.quantity,
+            unitPrice: saleItem.unitPrice
+          }));
+
+          if (orderItems.length === 0) {
+            logger(`WARNING: Sale ${sale.id} has no items, skipping order creation`);
+            continue;
+          }
+
+          // Create order and kitchen order (without transaction for recovery method)
+          await this.createOrderAndKitchenOrderFromSaleRecovery(sale, orderItems);
+          result.success++;
+          logger(`SUCCESS: Created missing order for sale ${sale.id}`);
+
+        } catch (error) {
+          result.failed++;
+          const errorMsg = `Failed to create order for sale ${sale.id}: ${error}`;
+          result.errors.push(errorMsg);
+          logger(`ERROR: ${errorMsg}`);
+        }
+      }
+
+      logger(`INFO: Completed creating missing orders. Success: ${result.success}, Failed: ${result.failed}`);
+      return result;
+
+    } catch (error) {
+      logger(`ERROR: Failed to create missing orders for business ${businessId}: ${error}`);
       throw error;
     }
   }

@@ -403,4 +403,59 @@ salesRouter.put('/:id', SaleController.updateSale);
  */
 salesRouter.delete('/:id', SaleController.deleteSale);
 
+/**
+ * @swagger
+ * /api/sales/create-missing-orders:
+ *   post:
+ *     summary: Create missing orders for existing sales (data recovery)
+ *     tags: [Sales]
+ *     security:
+ *       - bearerAuth: []
+ *     description: |
+ *       This endpoint creates missing orders and kitchen orders for existing sales.
+ *       Use this when sales exist but orders are missing due to previous errors.
+ *       This is a recovery operation and should be used carefully.
+ *     responses:
+ *       200:
+ *         description: Missing orders creation completed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Missing orders creation completed"
+ *                 result:
+ *                   type: object
+ *                   properties:
+ *                     success:
+ *                       type: integer
+ *                       description: Number of orders successfully created
+ *                     failed:
+ *                       type: integer
+ *                       description: Number of orders that failed to create
+ *                     totalProcessed:
+ *                       type: integer
+ *                       description: Total number of sales processed
+ *                     errors:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                       description: List of error messages for failed operations
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+salesRouter.post('/create-missing-orders', SaleController.createMissingOrders);
+
 export default salesRouter; 
