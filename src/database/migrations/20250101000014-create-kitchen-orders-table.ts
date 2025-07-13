@@ -24,6 +24,23 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
         key: 'id'
       },
     },
+    orderNumber: {
+      type: DataTypes.STRING(50),
+      allowNull: false
+    },
+    tableNumber: {
+      type: DataTypes.STRING(20),
+      allowNull: true
+    },
+    customerName: {
+      type: DataTypes.STRING(100),
+      allowNull: true
+    },
+    orderType: {
+      type: DataTypes.ENUM('dine_in', 'takeaway', 'delivery'),
+      allowNull: false,
+      defaultValue: 'dine_in'
+    },
     assignedTo: {
       type: DataTypes.INTEGER,
       allowNull: true,
@@ -39,6 +56,44 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
         model: 'users',
         key: 'id'
       },
+    },
+    assignedToName: {
+      type: DataTypes.STRING(100),
+      allowNull: true
+    },
+    startTime: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    readyTime: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    servedTime: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    allergies: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    dietaryRestrictions: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    items: {
+      type: DataTypes.TEXT,
+      allowNull: false
+    },
+    totalItems: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0
+    },
+    completedItems: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0
     },
     status: {
       type: DataTypes.ENUM('pending', 'preparing', 'ready', 'served', 'cancelled'),
@@ -64,6 +119,10 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     },
     notes: {
       type: DataTypes.TEXT,
+      allowNull: true
+    },
+    station: {
+      type: DataTypes.STRING(50),
       allowNull: true
     },
     createdAt: {

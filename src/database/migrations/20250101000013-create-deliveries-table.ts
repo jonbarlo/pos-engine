@@ -40,6 +40,11 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
         key: 'id'
       },
     },
+    trackingNumber: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+      unique: true
+    },
     deliveryAddress: {
       type: DataTypes.TEXT,
       allowNull: false

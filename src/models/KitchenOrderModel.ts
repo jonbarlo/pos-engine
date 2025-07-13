@@ -133,6 +133,7 @@ export class KitchenOrderModel extends Model<KitchenOrderAttributes, KitchenOrde
         item.servedTime = new Date();
       }
       this.updateCompletionStatus();
+      this.items = [...this.items]; // trigger setter with new reference
     }
   }
 
@@ -142,6 +143,7 @@ export class KitchenOrderModel extends Model<KitchenOrderAttributes, KitchenOrde
       item.assignedTo = userId;
       item.assignedToName = userName;
       if (station) item.station = station;
+      this.items = [...this.items]; // trigger setter with new reference
     }
   }
 
@@ -150,6 +152,9 @@ export class KitchenOrderModel extends Model<KitchenOrderAttributes, KitchenOrde
     if (this.completedItems === this.totalItems) {
       this.markReady();
     }
+    
+    // Force Sequelize to detect the change in completedItems
+    this.setDataValue('completedItems', this.completedItems);
   }
 
   public getPreparationProgress(): number {

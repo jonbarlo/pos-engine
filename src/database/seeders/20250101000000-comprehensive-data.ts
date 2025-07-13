@@ -504,15 +504,30 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   ];
   await queryInterface.bulkInsert('kitchen_orders', kitchenOrderData.map(ko => ({
     businessId: businesses[ko.businessSlug],
-    orderId: orders[ko.orderNumber],
-    assignedTo: users[ko.chefEmail],
-    chefId: users[ko.chefEmail],
+    orderId: orders[ko.orderNumber] || 1, // Fallback to 1 if order not found
+    orderNumber: ko.orderNumber,
+    orderType: 'dine_in',
+    assignedTo: users[ko.chefEmail] || null,
+    assignedToName: ko.chefEmail ? ko.chefEmail.split('@')[0] : 'Unknown',
+    chefId: users[ko.chefEmail] || null,
     status: ko.status,
     priority: ko.priority,
     estimatedPrepTime: ko.estimatedPrepTime,
-    actualPrepTime: ko.actualPrepTime,
-    specialInstructions: ko.specialInstructions,
-    notes: ko.notes,
+    actualPrepTime: ko.actualPrepTime || null,
+    specialInstructions: ko.specialInstructions || null,
+    notes: ko.notes || null,
+    items: JSON.stringify([
+      {
+        id: 1,
+        itemName: 'Test Item',
+        quantity: 1,
+        status: 'pending',
+        preparationTime: 10,
+        specialInstructions: ko.specialInstructions || null
+      }
+    ]),
+    totalItems: 1,
+    completedItems: 0,
     createdAt: new Date(),
     updatedAt: new Date()
   })));
@@ -529,7 +544,8 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       estimatedDeliveryTime: new Date(Date.now() + 45 * 60 * 1000),
       status: 'pending',
       deliveryFee: 5.00,
-      tipAmount: 3.00
+      tipAmount: 3.00,
+      trackingNumber: 'TRACK-0001'
     }
   ];
   await queryInterface.bulkInsert('deliveries', deliveryData.map(d => ({
@@ -543,6 +559,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     status: d.status,
     deliveryFee: d.deliveryFee,
     tipAmount: d.tipAmount,
+    trackingNumber: d.trackingNumber,
     createdAt: new Date(),
     updatedAt: new Date()
   })));

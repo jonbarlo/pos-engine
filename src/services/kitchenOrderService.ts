@@ -255,9 +255,8 @@ export class KitchenOrderService {
       }
 
       await order.save();
-      
+      await order.reload();
       logger(`Item ${itemId} in kitchen order ${orderId} updated to status: ${status}`);
-      
       return order.toJSON();
     } catch (error) {
       logger(`Error updating item status: ${error}`);
