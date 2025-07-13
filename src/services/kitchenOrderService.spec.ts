@@ -352,25 +352,26 @@ describe('KitchenOrderService', () => {
         testKitchenOrder.id,
         testBusiness.id,
         1,
-        'preparing'
+        'preparing',
+        undefined
       );
-
+      console.log('DEBUG updatedOrder:', updatedOrder);
       expect(updatedOrder).toBeDefined();
       expect(updatedOrder?.items[0]?.status).toBe('preparing');
     });
 
     it('should update item status with assignment', async () => {
-      const updatedOrder = await KitchenOrderService.updateItemStatus(
+      const updatedOrder2 = await KitchenOrderService.updateItemStatus(
         testKitchenOrder.id,
         testBusiness.id,
         1,
         'ready',
         testUser.id
       );
-
-      expect(updatedOrder).toBeDefined();
-      expect(updatedOrder?.items[0]?.status).toBe('ready');
-      expect(updatedOrder?.items[0]?.assignedTo).toBe(testUser.id);
+      console.log('DEBUG updatedOrder2:', updatedOrder2);
+      expect(updatedOrder2).toBeDefined();
+      expect(updatedOrder2?.items[0]?.status).toBe('ready');
+      expect(updatedOrder2?.items[0]?.assignedTo).toBe(testUser.id);
     });
 
     it('should return null for non-existent order', async () => {

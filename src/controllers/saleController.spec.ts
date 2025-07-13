@@ -406,7 +406,7 @@ describe('SaleController', () => {
           id: 1,
           userId,
           customerName: 'John Doe',
-          total: 100
+          totalAmount: 100
         }
       ];
 
@@ -459,7 +459,7 @@ describe('SaleController', () => {
         userId: 1,
         businessId: 1,
         customerName: 'John Doe',
-        total: 200
+        totalAmount: 200
       };
 
       const orderItems = [

@@ -17,13 +17,14 @@
     "migrate:status": "ts-node src/scripts/migrate-status.ts",
     "migrate:undo": "ts-node src/scripts/migrate-undo.ts",
     "migrate:create": "ts-node src/scripts/create-migration.ts",
-    "seed": "ts-node src/database/seeders/20250101000000-demo-data.ts",
-    "seed:test": "NODE_ENV=test ts-node src/database/seeders/20250101000001-test-data.ts",
-    "db:seed:dev": "cross-env NODE_ENV=development ts-node src/scripts/seed.ts",
-    "db:seed:test": "cross-env NODE_ENV=test ts-node src/scripts/seed.ts",
+    "seed": "ts-node src/scripts/run-seeder.ts",
+    "seed:test": "NODE_ENV=test ts-node src/scripts/run-seeder.ts",
+    "db:seed:dev": "cross-env NODE_ENV=development ts-node src/scripts/run-seeder.ts",
+    "db:seed:test": "cross-env NODE_ENV=test ts-node src/scripts/run-seeder.ts",
     "deploy:mochahost": "ts-node src/scripts/deploy-mochahost.ts",
     "test": "cross-env NODE_ENV=test jest",
-    "db:cleanup": "ts-node src/scripts/cleanup-db.ts"
+    "db:drop:tables": "ts-node src/scripts/drop-tables.ts",
+    "db:drop:records": "ts-node src/scripts/drop-records.ts"
   },
   "repository": {
     "type": "git",

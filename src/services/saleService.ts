@@ -220,6 +220,7 @@ export class SaleService {
           const finalPrice = totalPrice - discountAmount;
           
           const saleItemData = {
+            businessId: saleData.businessId,
             saleId: sale.id,
             itemId: item.itemId,
             quantity: item.quantity,
@@ -321,11 +322,11 @@ export class SaleService {
     items: Array<{ quantity: number; unitPrice: number }>,
     taxRate: number = 0.10,
     discount: number = 0
-  ): { subtotal: number; tax: number; total: number } {
+  ): { subtotal: number; tax: number; totalAmount: number } {
     const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
     const tax = subtotal * taxRate;
-    const total = subtotal + tax - discount;
-    return { subtotal, tax, total };
+    const totalAmount = subtotal + tax - discount;
+    return { subtotal, tax, totalAmount };
   }
 
   /**

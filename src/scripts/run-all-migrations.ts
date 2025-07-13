@@ -87,7 +87,7 @@ async function runMigrations() {
       const migration = await import(migrationPath);
       
       console.log(`🔄 Running migration: ${migrationFile}`);
-      await migration.up(sequelize.getQueryInterface(), sequelize);
+      await migration.up(sequelize.getQueryInterface());
       
       // Log the migration as executed
       await sequelize.query(

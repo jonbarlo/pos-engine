@@ -109,7 +109,7 @@ salesRouter.get('/', SaleController.getAllSales);
  *         application/json:
  *           schema:
  *             type: object
- *             required: [customerName, total]
+ *             required: [customerName, totalAmount]
  *             properties:
  *               customerName:
  *                 type: string
@@ -127,7 +127,7 @@ salesRouter.get('/', SaleController.getAllSales);
  *               discount:
  *                 type: number
  *                 example: 0
- *               total:
+ *               totalAmount:
  *                 type: number
  *                 example: 1193.49
  *               paymentMethod:
@@ -174,7 +174,7 @@ salesRouter.post('/', SaleController.createSale);
  *         application/json:
  *           schema:
  *             type: object
- *             required: [customerName, total, orderItems]
+ *             required: [customerName, totalAmount, orderItems]
  *             properties:
  *               customerName:
  *                 type: string
@@ -192,7 +192,7 @@ salesRouter.post('/', SaleController.createSale);
  *               discount:
  *                 type: number
  *                 example: 0
- *               total:
+ *               totalAmount:
  *                 type: number
  *                 example: 1193.49
  *               paymentMethod:
@@ -342,7 +342,7 @@ salesRouter.get('/:id', SaleController.getSaleById);
  *                 type: number
  *               discount:
  *                 type: number
- *               total:
+ *               totalAmount:
  *                 type: number
  *               paymentMethod:
  *                 type: string

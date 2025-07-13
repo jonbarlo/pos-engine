@@ -2,6 +2,7 @@ import { Model, DataTypes, Sequelize } from 'sequelize';
 
 export interface SaleItemAttributes {
   id: number;
+  businessId: number;
   saleId: number;
   itemId: number;
   quantity: number;
@@ -20,6 +21,7 @@ export interface SaleItemCreationAttributes extends Omit<SaleItemAttributes, 'id
 
 export class SaleItemModel extends Model<SaleItemAttributes, SaleItemCreationAttributes> implements SaleItemAttributes {
   public id!: number;
+  public businessId!: number;
   public saleId!: number;
   public itemId!: number;
   public quantity!: number;
@@ -45,6 +47,16 @@ export const initializeSaleItemModel = (sequelize: Sequelize): void => {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true,
+      },
+      businessId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'businesses',
+          key: 'id'
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
       },
       saleId: {
         type: DataTypes.INTEGER,

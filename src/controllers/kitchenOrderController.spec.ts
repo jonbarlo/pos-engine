@@ -5,6 +5,7 @@ import { OrderModel, OrderType, OrderStatus } from '../models/OrderModel';
 import { UserModel, UserRole } from '../models/UserModel';
 import { BusinessModel } from '../models/BusinessModel';
 import { ItemModel } from '../models/ItemModel';
+import { UserService } from '../services/userService';
 
 describe('KitchenOrderController', () => {
   let testBusiness: any;
@@ -27,8 +28,8 @@ describe('KitchenOrderController', () => {
       timezone: 'UTC'
     });
 
-    // Create test user
-    testUser = await UserModel.create({
+    // Create test user using UserService to ensure password is hashed
+    testUser = await UserService.createUser({
       name: 'Test Chef',
       email: 'chef@test.com',
       password: 'password123',
@@ -36,20 +37,7 @@ describe('KitchenOrderController', () => {
       businessId: testBusiness.id,
       assignment: 'kitchen'
     });
-
-    // Create test item
-    const testItem = await ItemModel.create({
-      name: 'Test Burger',
-      description: 'A delicious test burger',
-      price: 12.99,
-      category: 'Main Course',
-      businessId: testBusiness.id,
-      stock: 100,
-      cost: 8.00,
-      unit: 'piece',
-      minStock: 10,
-      maxStock: 200
-    });
+    console.log('DEBUG testUser:', testUser?.toJSON ? testUser.toJSON() : testUser);
 
     // Create test order
     testOrder = await OrderModel.create({
@@ -63,6 +51,7 @@ describe('KitchenOrderController', () => {
       totalAmount: 14.29,
       notes: 'Test order'
     });
+    console.log('DEBUG testOrder:', testOrder?.toJSON ? testOrder.toJSON() : testOrder);
 
     // Create test kitchen order
     testKitchenOrder = await KitchenOrderModel.create({
@@ -93,7 +82,8 @@ describe('KitchenOrderController', () => {
       .post('/api/auth/login')
       .send({
         email: 'chef@test.com',
-        password: 'password123'
+        password: 'password123',
+        businessId: testBusiness.id
       });
 
     authToken = loginResponse.body.token;
@@ -346,8 +336,8 @@ describe('KitchenOrderController', () => {
         } else if (endpoint.method === 'put') {
           response = await request(app).put(endpoint.path);
         }
-        expect(response.status).toBe(401);
-        expect(response.body.success).toBe(false);
+        expect(response!.status).toBe(401);
+        expect(response!.body.success).toBe(false);
       }
     });
   });

@@ -46,6 +46,479 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
 /**
  * @swagger
+ * components:
+ *   schemas:
+ *     StaffMessage:
+ *       type: object
+ *       required:
+ *         - businessId
+ *         - senderId
+ *         - senderName
+ *         - messageType
+ *         - title
+ *         - content
+ *         - recipientType
+ *         - status
+ *         - priority
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: Unique identifier for the message
+ *         businessId:
+ *           type: integer
+ *           description: ID of the business this message belongs to
+ *         senderId:
+ *           type: integer
+ *           description: ID of the user who sent the message
+ *         senderName:
+ *           type: string
+ *           description: Name of the sender
+ *         messageType:
+ *           type: string
+ *           enum: [announcement, inventory_alert, promotion, discount, urgent, general]
+ *           description: Type of message
+ *         title:
+ *           type: string
+ *           maxLength: 200
+ *           description: Message title
+ *         content:
+ *           type: string
+ *           description: Message content
+ *         recipientType:
+ *           type: string
+ *           enum: [all, waitstaff, kitchen, managers, specific_users]
+ *           description: Type of recipients
+ *         recipientIds:
+ *           type: array
+ *           items:
+ *             type: integer
+ *           description: Array of specific user IDs (when recipientType is specific_users)
+ *         status:
+ *           type: string
+ *           enum: [sent, read, acknowledged, expired]
+ *           description: Current status of the message
+ *         priority:
+ *           type: string
+ *           enum: [low, normal, high, urgent]
+ *           description: Priority level of the message
+ *         expiresAt:
+ *           type: string
+ *           format: date-time
+ *           description: Expiration date of the message
+ *         readBy:
+ *           type: array
+ *           items:
+ *             type: integer
+ *           description: Array of user IDs who have read the message
+ *         acknowledgedBy:
+ *           type: array
+ *           items:
+ *             type: integer
+ *           description: Array of user IDs who have acknowledged the message
+ *         metadata:
+ *           type: object
+ *           description: Additional metadata for the message
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           description: Creation timestamp
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *           description: Last update timestamp
+ *     
+ *     StaffMessageCreate:
+ *       type: object
+ *       required:
+ *         - messageType
+ *         - title
+ *         - content
+ *         - recipientType
+ *       properties:
+ *         messageType:
+ *           type: string
+ *           enum: [announcement, inventory_alert, promotion, discount, urgent, general]
+ *         title:
+ *           type: string
+ *           maxLength: 200
+ *         content:
+ *           type: string
+ *         recipientType:
+ *           type: string
+ *           enum: [all, waitstaff, kitchen, managers, specific_users]
+ *         recipientIds:
+ *           type: array
+ *           items:
+ *             type: integer
+ *         priority:
+ *           type: string
+ *           enum: [low, normal, high, urgent]
+ *           default: normal
+ *         expiresAt:
+ *           type: string
+ *           format: date-time
+ *         metadata:
+ *           type: object
+ *     
+ *     StaffMessageUpdate:
+ *       type: object
+ *       properties:
+ *         title:
+ *           type: string
+ *           maxLength: 200
+ *         content:
+ *           type: string
+ *         recipientType:
+ *           type: string
+ *           enum: [all, waitstaff, kitchen, managers, specific_users]
+ *         recipientIds:
+ *           type: array
+ *           items:
+ *             type: integer
+ *         priority:
+ *           type: string
+ *           enum: [low, normal, high, urgent]
+ *         expiresAt:
+ *           type: string
+ *           format: date-time
+ *         metadata:
+ *           type: object
+ *     
+ *     UnreadCount:
+ *       type: object
+ *       properties:
+ *         unreadCount:
+ *           type: integer
+ *           description: Number of unread messages for the user
+ *     
+ *     SuccessResponse:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *           description: Whether the operation was successful
+ */
+
+/**
+ * @swagger
+ * tags:
+ *   name: Staff Messages
+ *   description: Internal staff communication and messaging system
+ */
+
+/**
+ * @swagger
+ * /api/staff-messages:
+ *   post:
+ *     summary: Create a new staff message
+ *     tags: [Staff Messages]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/StaffMessageCreate'
+ *     responses:
+ *       201:
+ *         description: Message created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/StaffMessage'
+ *       400:
+ *         description: Missing required fields or invalid data
+ *       401:
+ *         description: Authentication required
+ *       500:
+ *         description: Internal server error
+ *   
+ *   get:
+ *     summary: Get all staff messages for the business
+ *     tags: [Staff Messages]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: messageType
+ *         schema:
+ *           type: string
+ *           enum: [announcement, inventory_alert, promotion, discount, urgent, general]
+ *         description: Filter by message type
+ *       - in: query
+ *         name: recipientType
+ *         schema:
+ *           type: string
+ *           enum: [all, waitstaff, kitchen, managers, specific_users]
+ *         description: Filter by recipient type
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [sent, read, acknowledged, expired]
+ *         description: Filter by message status
+ *       - in: query
+ *         name: priority
+ *         schema:
+ *           type: string
+ *           enum: [low, normal, high, urgent]
+ *         description: Filter by priority
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 50
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: List of staff messages
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/StaffMessage'
+ *       401:
+ *         description: Authentication required
+ *       500:
+ *         description: Internal server error
+ */
+
+/**
+ * @swagger
+ * /api/staff-messages/{id}:
+ *   get:
+ *     summary: Get a specific staff message by ID
+ *     tags: [Staff Messages]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Message ID
+ *     responses:
+ *       200:
+ *         description: Staff message details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/StaffMessage'
+ *       400:
+ *         description: Invalid message ID
+ *       401:
+ *         description: Authentication required
+ *       404:
+ *         description: Message not found
+ *       500:
+ *         description: Internal server error
+ *   
+ *   put:
+ *     summary: Update a staff message
+ *     tags: [Staff Messages]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Message ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/StaffMessageUpdate'
+ *     responses:
+ *       200:
+ *         description: Message updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/StaffMessage'
+ *       400:
+ *         description: Invalid message ID or data
+ *       401:
+ *         description: Authentication required
+ *       404:
+ *         description: Message not found
+ *       500:
+ *         description: Internal server error
+ *   
+ *   delete:
+ *     summary: Delete a staff message
+ *     tags: [Staff Messages]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Message ID
+ *     responses:
+ *       204:
+ *         description: Message deleted successfully
+ *       400:
+ *         description: Invalid message ID
+ *       401:
+ *         description: Authentication required
+ *       404:
+ *         description: Message not found
+ *       500:
+ *         description: Internal server error
+ */
+
+/**
+ * @swagger
+ * /api/staff-messages/user/me:
+ *   get:
+ *     summary: Get messages for the current user (role-based filtering)
+ *     tags: [Staff Messages]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of messages relevant to the current user
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/StaffMessage'
+ *       400:
+ *         description: Missing user information
+ *       401:
+ *         description: Authentication required
+ *       500:
+ *         description: Internal server error
+ */
+
+/**
+ * @swagger
+ * /api/staff-messages/{id}/read:
+ *   post:
+ *     summary: Mark a message as read by the current user
+ *     tags: [Staff Messages]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Message ID
+ *     responses:
+ *       200:
+ *         description: Message marked as read
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *       400:
+ *         description: Invalid message ID or user information
+ *       401:
+ *         description: Authentication required
+ *       500:
+ *         description: Internal server error
+ */
+
+/**
+ * @swagger
+ * /api/staff-messages/{id}/acknowledge:
+ *   post:
+ *     summary: Mark a message as acknowledged by the current user
+ *     tags: [Staff Messages]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Message ID
+ *     responses:
+ *       200:
+ *         description: Message marked as acknowledged
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *       400:
+ *         description: Invalid message ID or user information
+ *       401:
+ *         description: Authentication required
+ *       500:
+ *         description: Internal server error
+ */
+
+/**
+ * @swagger
+ * /api/staff-messages/user/me/unread-count:
+ *   get:
+ *     summary: Get unread message count for the current user
+ *     tags: [Staff Messages]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Unread message count
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UnreadCount'
+ *       400:
+ *         description: Missing user information
+ *       401:
+ *         description: Authentication required
+ *       500:
+ *         description: Internal server error
+ */
+
+/**
+ * @swagger
+ * /api/staff-messages/active:
+ *   get:
+ *     summary: Get active (non-expired) messages for the current user's role
+ *     tags: [Staff Messages]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of active messages
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/StaffMessage'
+ *       400:
+ *         description: Missing business or user role information
+ *       401:
+ *         description: Authentication required
+ *       500:
+ *         description: Internal server error
+ */
+
+/**
+ * @swagger
  * /health:
  *   get:
  *     summary: Health check endpoint
@@ -138,13 +611,13 @@ async function startServer() {
     const saleRoutes = (await import('./routes/sales')).default;
     const orderRoutes = (await import('./routes/orders')).default;
     const customerRoutes = (await import('./routes/customers')).default;
-    const menuRoutes = (await import('./routes/menuRoutes')).default;
+    // const menuRoutes = (await import('./routes/menuRoutes')).default;
     const tableRoutes = (await import('./routes/tables')).default;
     const reservationRoutes = (await import('./routes/reservations')).default;
     const deliveryRoutes = (await import('./routes/deliveries')).default;
     const kitchenRoutes = (await import('./routes/kitchen')).default;
     const splitBillingRoutes = (await import('./routes/splitBilling')).default;
-
+    const staffMessagesRoutes = (await import('./routes/staffMessages')).default;
     // API routes
     app.use('/api/auth', authRoutes);
     app.use('/api/businesses', businessRoutes);
@@ -153,12 +626,13 @@ async function startServer() {
     app.use('/api/sales', saleRoutes);
     app.use('/api/orders', orderRoutes);
     app.use('/api/customers', customerRoutes);
-    app.use('/api/menu', menuRoutes);
+    // app.use('/api/menu', menuRoutes);
     app.use('/api/tables', tableRoutes);
     app.use('/api/reservations', reservationRoutes);
     app.use('/api/deliveries', deliveryRoutes);
     app.use('/api/kitchen', kitchenRoutes);
     app.use('/api/sales', splitBillingRoutes);
+    app.use('/api/staff-messages', staffMessagesRoutes);
 
     logger('Routes registered successfully.');
 

@@ -1,5 +1,5 @@
 import DatabaseService from '../services/databaseService';
-import { initializeAllModels } from '../models/index';
+import { initializeAllModels, setupAssociations } from '../models/index';
 
 // Global test setup
 beforeAll(async () => {
@@ -8,6 +8,9 @@ beforeAll(async () => {
   
   // Initialize all models
   initializeAllModels();
+  
+  // Setup associations
+  setupAssociations();
   
   // Connect and sync for tests
   await dbService.connect();

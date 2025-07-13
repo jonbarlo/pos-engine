@@ -176,6 +176,7 @@ export function initializeMenuCategoryModel(sequelize: Sequelize): void {
     sequelize,
     tableName: 'menu_categories',
     timestamps: true,
+    freezeTableName: true, // Prevent auto-table creation
     indexes: [
       {
         unique: true,

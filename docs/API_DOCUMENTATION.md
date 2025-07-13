@@ -59,7 +59,7 @@ Authorization: Bearer <your_jwt_token>
 - Either `businessId` (integer) OR `businessSlug` (string) - One is required
 
 **Optional Fields:**
-- `role` (string) - "admin", "cashier", or "manager"
+- `role` (string) - "admin", "cashier", "manager", or "waitstaff"
 
 **Request Body:**
 ```json
@@ -85,11 +85,13 @@ Authorization: Bearer <your_jwt_token>
 - `businessId` (integer) - Business ID (required by database schema)
 
 **Optional Fields:**
-- `customerId` (integer)
-- `taxAmount` (number)
-- `discountAmount` (number)
-- `finalAmount` (number)
-- `paymentMethod` (string: "cash", "card", "check")
+- `customerName` (string) - Customer name
+- `customerEmail` (string) - Customer email
+- `customerPhone` (string) - Customer phone
+- `subtotal` (number) - Subtotal before tax
+- `tax` (number) - Tax amount
+- `discount` (number) - Discount amount
+- `paymentMethod` (string: "cash", "card", "mobile", "other")
 - `status` (string: "pending", "completed", "cancelled", "refunded")
 - `notes` (string)
 
@@ -98,11 +100,12 @@ Authorization: Bearer <your_jwt_token>
 {
   "userId": 1,
   "businessId": 1,
+  "customerName": "John Doe",
+  "customerEmail": "john@example.com",
+  "subtotal": 1099.99,
+  "tax": 93.50,
+  "discount": 0,
   "totalAmount": 1193.49,
-  "customerId": 1,
-  "taxAmount": 93.50,
-  "discountAmount": 0,
-  "finalAmount": 1193.49,
   "paymentMethod": "card",
   "status": "completed",
   "notes": "Customer requested extra napkins"
@@ -133,7 +136,7 @@ Authorization: Bearer <your_jwt_token>
 - `userId` (integer) - User ID who created the sale (required by database schema)
 
 **Optional Fields:**
-- `customerName`, `customerEmail`, `subtotal`, `tax`, `discount`, `total`, `paymentMethod`, `status`
+- `customerName`, `customerEmail`, `subtotal`, `tax`, `discount`, `totalAmount`, `paymentMethod`, `status`
 
 **Request Body:**
 ```json
@@ -141,7 +144,7 @@ Authorization: Bearer <your_jwt_token>
   "userId": 1,
   "businessId": 1,
   "customerName": "John Doe",
-  "total": 1193.49,
+  "totalAmount": 1193.49,
   "orderItems": [
     {
       "itemId": 1,
@@ -189,7 +192,7 @@ Authorization: Bearer <your_jwt_token>
   {
     "id": 1,
     "customerName": "John Doe",
-    "total": 1193.49,
+    "totalAmount": 1193.49,
     "status": "completed",
     "createdAt": "2024-01-01T00:00:00.000Z"
   }
@@ -236,7 +239,7 @@ Authorization: Bearer <your_jwt_token>
 ```json
 {
   "customerName": "Jane Doe",
-  "total": 1299.99,
+  "totalAmount": 1299.99,
   "status": "completed"
 }
 ```
@@ -566,6 +569,311 @@ Authorization: Bearer <your_jwt_token>
 
 ---
 
+## Staff Messaging Endpoints
+
+### Get All Staff Messages
+**GET** `/staff-messages`
+
+**Query Parameters:**
+- `page` (optional, default: 1)
+- `limit` (optional, default: 10)
+- `messageType` (optional: "announcement", "inventory_alert", "promotion", "discount", "urgent", "general")
+- `recipientType` (optional: "all", "waitstaff", "kitchen", "managers", "specific_users")
+- `status` (optional: "sent", "read", "acknowledged", "expired")
+- `priority` (optional: "low", "normal", "high", "urgent")
+- `senderId` (optional: integer)
+
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "businessId": 1,
+    "senderId": 2,
+    "senderName": "Sofia Bianchi",
+    "messageType": "announcement",
+    "title": "New Menu Items Available",
+    "content": "We have added three new pasta dishes to our menu. Please familiarize yourself with the new items.",
+    "recipientType": "waitstaff",
+    "recipientIds": null,
+    "status": "sent",
+    "priority": "normal",
+    "expiresAt": null,
+    "readBy": null,
+    "acknowledgedBy": null,
+    "metadata": null,
+    "createdAt": "2025-01-01T10:00:00.000Z",
+    "updatedAt": "2025-01-01T10:00:00.000Z"
+  }
+]
+```
+
+### Get Staff Message by ID
+**GET** `/staff-messages/{id}`
+
+**Path Parameters:**
+- `id` (integer, required)
+
+**Response:**
+```json
+{
+  "id": 1,
+  "businessId": 1,
+  "senderId": 2,
+  "senderName": "Sofia Bianchi",
+  "messageType": "announcement",
+  "title": "New Menu Items Available",
+  "content": "We have added three new pasta dishes to our menu. Please familiarize yourself with the new items.",
+  "recipientType": "waitstaff",
+  "recipientIds": null,
+  "status": "sent",
+  "priority": "normal",
+  "expiresAt": null,
+  "readBy": null,
+  "acknowledgedBy": null,
+  "metadata": null,
+  "createdAt": "2025-01-01T10:00:00.000Z",
+  "updatedAt": "2025-01-01T10:00:00.000Z"
+}
+```
+
+### Create Staff Message
+**POST** `/staff-messages`
+
+**Required Fields:**
+- `title` (string) - Message title (max 200 characters)
+- `content` (string) - Message content
+- `messageType` (string) - "announcement", "inventory_alert", "promotion", "discount", "urgent", "general"
+- `recipientType` (string) - "all", "waitstaff", "kitchen", "managers", "specific_users"
+
+**Optional Fields:**
+- `recipientIds` (array of integers) - Required if recipientType is "specific_users"
+- `priority` (string) - "low", "normal", "high", "urgent" (default: "normal")
+- `expiresAt` (string) - ISO 8601 datetime string
+- `metadata` (object) - Additional data as JSON
+
+**Request Body:**
+```json
+{
+  "title": "New Menu Items Available",
+  "content": "We have added three new pasta dishes to our menu. Please familiarize yourself with the new items.",
+  "messageType": "announcement",
+  "recipientType": "waitstaff",
+  "priority": "normal",
+  "expiresAt": "2025-01-02T10:00:00.000Z",
+  "metadata": {
+    "menuItems": ["Pasta Carbonara", "Pasta Bolognese", "Pasta Alfredo"]
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Staff message created successfully",
+  "staffMessage": {
+    "id": 1,
+    "businessId": 1,
+    "senderId": 2,
+    "senderName": "Sofia Bianchi",
+    "messageType": "announcement",
+    "title": "New Menu Items Available",
+    "content": "We have added three new pasta dishes to our menu. Please familiarize yourself with the new items.",
+    "recipientType": "waitstaff",
+    "status": "sent",
+    "priority": "normal",
+    "createdAt": "2025-01-01T10:00:00.000Z"
+  }
+}
+```
+
+### Update Staff Message
+**PUT** `/staff-messages/{id}`
+
+**Path Parameters:**
+- `id` (integer, required)
+
+**Request Body:** (all fields optional)
+```json
+{
+  "title": "Updated Menu Items Available",
+  "content": "Updated content about new menu items.",
+  "priority": "high",
+  "expiresAt": "2025-01-03T10:00:00.000Z"
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Staff message updated successfully",
+  "staffMessage": {
+    "id": 1,
+    "title": "Updated Menu Items Available",
+    "content": "Updated content about new menu items.",
+    "priority": "high",
+    "updatedAt": "2025-01-01T11:00:00.000Z"
+  }
+}
+```
+
+### Delete Staff Message
+**DELETE** `/staff-messages/{id}`
+
+**Path Parameters:**
+- `id` (integer, required)
+
+**Response:**
+```json
+{
+  "message": "Staff message deleted successfully"
+}
+```
+
+### Mark Message as Read
+**POST** `/staff-messages/{id}/read`
+
+**Path Parameters:**
+- `id` (integer, required)
+
+**Response:**
+```json
+{
+  "message": "Message marked as read",
+  "staffMessage": {
+    "id": 1,
+    "status": "read",
+    "readBy": "[{\"userId\": 3, \"readAt\": \"2025-01-01T10:30:00.000Z\"}]",
+    "updatedAt": "2025-01-01T10:30:00.000Z"
+  }
+}
+```
+
+### Acknowledge Message
+**POST** `/staff-messages/{id}/acknowledge`
+
+**Path Parameters:**
+- `id` (integer, required)
+
+**Response:**
+```json
+{
+  "message": "Message acknowledged",
+  "staffMessage": {
+    "id": 1,
+    "status": "acknowledged",
+    "acknowledgedBy": "[{\"userId\": 3, \"acknowledgedAt\": \"2025-01-01T10:35:00.000Z\"}]",
+    "updatedAt": "2025-01-01T10:35:00.000Z"
+  }
+}
+```
+
+### Get Messages for Current User
+**GET** `/staff-messages/my-messages`
+
+**Query Parameters:**
+- `page` (optional, default: 1)
+- `limit` (optional, default: 10)
+- `status` (optional: "sent", "read", "acknowledged", "expired")
+- `unreadOnly` (optional: boolean) - Return only unread messages
+
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "senderName": "Sofia Bianchi",
+    "messageType": "announcement",
+    "title": "New Menu Items Available",
+    "content": "We have added three new pasta dishes to our menu.",
+    "recipientType": "waitstaff",
+    "status": "sent",
+    "priority": "normal",
+    "createdAt": "2025-01-01T10:00:00.000Z",
+    "isRead": false,
+    "isAcknowledged": false
+  }
+]
+```
+
+### Get Unread Message Count
+**GET** `/staff-messages/unread-count`
+
+**Response:**
+```json
+{
+  "unreadCount": 5,
+  "urgentCount": 2,
+  "highPriorityCount": 1
+}
+```
+
+### Get Staff Message Statistics
+**GET** `/staff-messages/stats`
+
+**Response:**
+```json
+{
+  "totalMessages": 25,
+  "readMessages": 20,
+  "acknowledgedMessages": 15,
+  "expiredMessages": 3,
+  "messagesByType": {
+    "announcement": 10,
+    "inventory_alert": 5,
+    "promotion": 3,
+    "urgent": 2,
+    "general": 5
+  },
+  "messagesByPriority": {
+    "low": 5,
+    "normal": 15,
+    "high": 3,
+    "urgent": 2
+  }
+}
+```
+
+### Send Message to Specific Users
+**POST** `/staff-messages/send-to-users`
+
+**Required Fields:**
+- `title` (string) - Message title
+- `content` (string) - Message content
+- `recipientIds` (array of integers) - Array of user IDs to send message to
+- `messageType` (string) - Message type
+
+**Optional Fields:**
+- `priority` (string) - Message priority
+- `expiresAt` (string) - Expiration date
+
+**Request Body:**
+```json
+{
+  "title": "Kitchen Staff Meeting",
+  "content": "Mandatory kitchen staff meeting at 3 PM today.",
+  "recipientIds": [5, 6, 7, 8],
+  "messageType": "urgent",
+  "priority": "high",
+  "expiresAt": "2025-01-01T15:00:00.000Z"
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Message sent to 4 users successfully",
+  "staffMessage": {
+    "id": 2,
+    "recipientType": "specific_users",
+    "recipientIds": "[5,6,7,8]",
+    "status": "sent"
+  }
+}
+```
+
+---
+
 ## Error Responses
 
 All endpoints return errors in this format:
@@ -578,6 +886,7 @@ All endpoints return errors in this format:
 Common HTTP Status Codes:
 - `400` - Bad Request (missing required fields)
 - `401` - Unauthorized (invalid or missing token)
+- `403` - Forbidden (insufficient permissions)
 - `404` - Not Found
 - `409` - Conflict (e.g., duplicate SKU/barcode)
 - `500` - Internal Server Error
@@ -592,3 +901,11 @@ Common HTTP Status Codes:
 4. **Auto-generation**: SKU and barcode are auto-generated if not provided for items
 5. **Split Billing**: Total payment amounts must equal the sale total amount
 6. **User ID**: Most endpoints require or expect userId in the payload for proper tracking
+7. **Staff Messaging**: 
+   - Messages are automatically scoped to the user's business
+   - Sender information is automatically populated from the authenticated user
+   - Read/acknowledge status is tracked per user
+   - Expired messages are automatically marked as expired
+   - Recipient types: "all", "waitstaff", "kitchen", "managers", "specific_users"
+   - Message types: "announcement", "inventory_alert", "promotion", "discount", "urgent", "general"
+   - Priorities: "low", "normal", "high", "urgent" 

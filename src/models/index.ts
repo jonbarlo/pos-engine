@@ -29,6 +29,7 @@ import { MenuItemModel } from './MenuItemModel';
 import { MenuCategoryModel } from './MenuCategoryModel';
 import { DeliveryModel } from './DeliveryModel';
 import { KitchenOrderModel } from './KitchenOrderModel';
+import { StaffMessageModel } from './StaffMessageModel';
 
 export const initializeAllModels = (): void => {
   const sequelize = getSequelize();
@@ -46,6 +47,8 @@ export const initializeAllModels = (): void => {
   initializeMenuCategoryModel(sequelize);
   initializeDeliveryModel(sequelize);
   initializeKitchenOrderModel(sequelize);
+  
+  // StaffMessageModel is already initialized via default export
   
   // Associations are set up separately for integration tests
   // and skipped for unit tests to avoid import issues
@@ -88,16 +91,16 @@ export const setupAssociations = (): void => {
     as: 'customers',
     onDelete: 'CASCADE'
   });
-  BusinessModel.hasMany(MenuItemModel, {
-    foreignKey: 'businessId',
-    as: 'menuItems',
-    onDelete: 'CASCADE'
-  });
-  BusinessModel.hasMany(MenuCategoryModel, {
-    foreignKey: 'businessId',
-    as: 'menuCategories',
-    onDelete: 'CASCADE'
-  });
+  // BusinessModel.hasMany(MenuItemModel, {
+  //   foreignKey: 'businessId',
+  //   as: 'menuItems',
+  //   onDelete: 'CASCADE'
+  // });
+  // BusinessModel.hasMany(MenuCategoryModel, {
+  //   foreignKey: 'businessId',
+  //   as: 'menuCategories',
+  //   onDelete: 'CASCADE'
+  // });
 
   // User associations
   UserModel.belongsTo(BusinessModel, {
@@ -267,6 +270,22 @@ export const setupAssociations = (): void => {
     foreignKey: 'chefId',
     as: 'chef'
   });
+
+  // Staff message associations
+  BusinessModel.hasMany(StaffMessageModel, {
+    foreignKey: 'businessId',
+    as: 'staffMessages',
+    onDelete: 'CASCADE'
+  });
+
+  StaffMessageModel.belongsTo(BusinessModel, {
+    foreignKey: 'businessId',
+    as: 'business'
+  });
+  StaffMessageModel.belongsTo(UserModel, {
+    foreignKey: 'senderId',
+    as: 'sender'
+  });
 };
 
 export { getSequelize };
@@ -286,7 +305,8 @@ export {
   MenuItemModel,
   MenuCategoryModel,
   DeliveryModel,
-  KitchenOrderModel
+  KitchenOrderModel,
+  StaffMessageModel
 };
 
 // Export enums

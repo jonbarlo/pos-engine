@@ -436,6 +436,7 @@ export function initializeMenuItemModel(sequelize: Sequelize): void {
     sequelize,
     tableName: 'menu_items',
     timestamps: true,
+    freezeTableName: true, // Prevent auto-table creation
     indexes: [
       {
         unique: true,

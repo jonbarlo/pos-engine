@@ -7,19 +7,37 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 import { getSequelize } from '../models/sequelize';
 import { QueryTypes } from 'sequelize';
 
-async function cleanupDatabase() {
+async function dropTables() {
   const sequelize = getSequelize();
   try {
     await sequelize.authenticate();
     console.log('✅ Connected to database');
 
-    // Get all tables in all schemas
+    // Drop all foreign key constraints first
+    const constraints = await sequelize.query(
+      `SELECT TABLE_SCHEMA, TABLE_NAME, CONSTRAINT_NAME
+       FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS
+       WHERE CONSTRAINT_TYPE = 'FOREIGN KEY'`,
+      { type: QueryTypes.SELECT }
+    ) as { TABLE_SCHEMA: string; TABLE_NAME: string; CONSTRAINT_NAME: string }[];
+
+    for (const { TABLE_SCHEMA, TABLE_NAME, CONSTRAINT_NAME } of constraints) {
+      const sql = `ALTER TABLE [${TABLE_SCHEMA}].[${TABLE_NAME}] DROP CONSTRAINT [${CONSTRAINT_NAME}]`;
+      try {
+        await sequelize.query(sql);
+        console.log(`🔓 Dropped constraint: ${CONSTRAINT_NAME} on ${TABLE_SCHEMA}.${TABLE_NAME}`);
+      } catch (err) {
+        console.error(`❌ Failed to drop constraint ${CONSTRAINT_NAME}:`, err);
+      }
+    }
+
+    // Get all tables
     const tables = (await sequelize.query(
       `SELECT TABLE_SCHEMA, TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'`,
       { type: QueryTypes.SELECT }
     )) as { TABLE_SCHEMA: string; TABLE_NAME: string }[];
 
-    // Drop all tables, handling foreign key constraints
+    // Drop all tables
     for (const { TABLE_SCHEMA, TABLE_NAME } of tables) {
       const fullName = `[${TABLE_SCHEMA}].[${TABLE_NAME}]`;
       try {
@@ -36,7 +54,7 @@ async function cleanupDatabase() {
       { type: QueryTypes.SELECT }
     )) as { TABLE_SCHEMA: string; TABLE_NAME: string }[];
     if (remaining.length === 0) {
-      console.log('🎉 Database cleanup complete! No tables remain.');
+      console.log('🎉 All tables dropped successfully!');
     } else {
       console.log('⚠️ Some tables could not be dropped:');
       for (const t of remaining) {
@@ -44,12 +62,12 @@ async function cleanupDatabase() {
       }
     }
   } catch (error) {
-    console.error('❌ Error during cleanup:', error);
+    console.error('❌ Error dropping tables:', error);
   } finally {
     await sequelize.close();
   }
 }
 
 if (require.main === module) {
-  cleanupDatabase();
+  dropTables();
 } 
