@@ -1,0 +1,65 @@
+### Test Sale Creation with Automatic Sale Number Generation
+
+# First, login to get a token
+POST http://localhost:3031/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "antonio@italiandelight.com",
+  "password": "Password123",
+  "businessSlug": "italian-delight"
+}
+
+###
+
+# Create a sale without providing saleNumber (should be auto-generated)
+POST http://localhost:3031/api/sales
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "userId": 1,
+  "businessId": 1,
+  "totalAmount": 25.99,
+  "paymentMethod": "card",
+  "status": "completed",
+  "customerName": "John Doe",
+  "customerEmail": "john@example.com"
+}
+
+###
+
+# Create a sale with items (should also auto-generate sale number)
+POST http://localhost:3031/api/sales/with-items
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "userId": 1,
+  "businessId": 1,
+  "totalAmount": 35.97,
+  "paymentMethod": "cash",
+  "status": "completed",
+  "customerName": "Jane Smith",
+  "customerEmail": "jane@example.com",
+  "orderItems": [
+    {
+      "itemId": 1,
+      "quantity": 2,
+      "unitPrice": 12.99
+    },
+    {
+      "itemId": 2,
+      "quantity": 1,
+      "unitPrice": 9.99
+    }
+  ]
+}
+
+###
+
+# Get all sales to see the generated sale numbers
+GET http://localhost:3031/api/sales
+Authorization: Bearer {{auth_token}}
+
+### 

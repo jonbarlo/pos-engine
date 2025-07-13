@@ -9,6 +9,7 @@ import { KitchenOrderModel } from '../models/KitchenOrderModel';
 import { getSaleRepository } from '../repositories/RepositoryFactory';
 import { logger } from '../utils/logger';
 import { v4 as uuidv4 } from 'uuid';
+import { generateSaleNumber } from '../utils/saleNumberGenerator';
 
 export interface SaleFilters {
   page?: number;
@@ -44,6 +45,12 @@ export class SaleService {
       if (existingSale) {
         logger(`DEBUG: Found existing sale with idempotencyKey ${saleData.idempotencyKey}, returning existing sale`);
         return existingSale.toJSON();
+      }
+
+      // Generate sale number if not provided
+      if (!saleData.saleNumber) {
+        saleData.saleNumber = await generateSaleNumber(saleData.businessId);
+        logger(`DEBUG: Generated sale number: ${saleData.saleNumber}`);
       }
       
       const saleRepository = getSaleRepository();
@@ -195,12 +202,18 @@ export class SaleService {
       saleData.idempotencyKey = uuidv4();
       logger(`DEBUG: Backend-generated idempotencyKey: ${saleData.idempotencyKey}`);
       // Check for idempotency - if idempotencyKey is provided, check for existing sale
-      const existingSale = await SaleModel.findOne({
-        where: { idempotencyKey: saleData.idempotencyKey }
-      });
-      if (existingSale) {
-        logger(`DEBUG: Found existing sale with idempotencyKey ${saleData.idempotencyKey}, returning existing sale`);
-        return existingSale.toJSON();
+        const existingSale = await SaleModel.findOne({
+          where: { idempotencyKey: saleData.idempotencyKey }
+        });
+        if (existingSale) {
+          logger(`DEBUG: Found existing sale with idempotencyKey ${saleData.idempotencyKey}, returning existing sale`);
+          return existingSale.toJSON();
+        }
+
+      // Generate sale number if not provided
+      if (!saleData.saleNumber) {
+        saleData.saleNumber = await generateSaleNumber(saleData.businessId);
+        logger(`DEBUG: Generated sale number: ${saleData.saleNumber}`);
       }
       const sequelize = SaleModel.sequelize || SaleItemModel.sequelize;
       if (!sequelize) {
@@ -256,12 +269,12 @@ export class SaleService {
 
         // Automatically create order and kitchen order for all sales with items
         // This follows POS industry standards where kitchen orders are created immediately when orders are placed
-        try {
-          await this.createOrderAndKitchenOrderFromSale(sale, orderItems);
+          try {
+            await this.createOrderAndKitchenOrderFromSale(sale, orderItems);
           logger(`DEBUG: Automatically created order and kitchen order for sale ${sale.id} (status: ${sale.status})`);
-        } catch (error) {
-          logger(`WARNING: Failed to create automatic order and kitchen order for sale ${sale.id}: ${error}`);
-          // Don't fail the sale creation if kitchen order creation fails
+          } catch (error) {
+            logger(`WARNING: Failed to create automatic order and kitchen order for sale ${sale.id}: ${error}`);
+            // Don't fail the sale creation if kitchen order creation fails
         }
 
         return sale.toJSON();
@@ -387,14 +400,14 @@ export class SaleService {
       const kitchenItems = await Promise.all(orderItems.map(async (item, index) => {
         const itemModel = await ItemModel.findByPk(item.itemId);
         return {
-          id: index + 1,
+        id: index + 1,
           itemName: itemModel?.name || `Item ${item.itemId}`,
-          quantity: item.quantity,
-          status: 'pending' as const,
-          specialInstructions: '',
-          modifications: [],
+        quantity: item.quantity,
+        status: 'pending' as const,
+        specialInstructions: '',
+        modifications: [],
           allergens: [],
-          preparationTime: 15 // Default preparation time
+        preparationTime: 15 // Default preparation time
         };
       }));
 

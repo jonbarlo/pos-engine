@@ -7,6 +7,7 @@ import { SaleStatus } from '../../models/SaleModel';
 import { OrderItemStatus } from '../../models/OrderItemModel';
 import { MessageType, MessageStatus, RecipientType } from '../../models/StaffMessageModel';
 import dotenv from 'dotenv';
+import bcrypt from 'bcrypt';
 
 dotenv.config();
 
@@ -91,26 +92,27 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     { businessSlug: 'italian-delight', name: 'Giuseppe Verdi', email: 'giuseppe@italiandelight.com', role: UserRole.WAITSTAFF, assignment: 'Section A' },
     { businessSlug: 'italian-delight', name: 'Maria Esposito', email: 'maria@italiandelight.com', role: UserRole.WAITSTAFF, assignment: 'Section B' },
     { businessSlug: 'italian-delight', name: 'Antonio Romano', email: 'antonio@italiandelight.com', role: UserRole.CASHIER, assignment: 'Front Counter' },
-    { businessSlug: 'italian-delight', name: 'Elena Conti', email: 'elena@italiandelight.com', role: UserRole.VIEWER, assignment: 'Reports Only' },
+    { businessSlug: 'italian-delight', name: 'Elena Conti', email: 'elena@italiandelight.com', role: UserRole.VIEWER, assignment: 'kitchen' },
     { businessSlug: 'italian-delight', name: 'Carlo Moretti', email: 'carlo@italiandelight.com', role: UserRole.ADMIN, assignment: 'System Admin' },
     // Sushi Master
     { businessSlug: 'sushi-master', name: 'Yuki Tanaka', email: 'yuki@sushimaster.com', role: UserRole.OWNER, assignment: 'Head Chef' },
     { businessSlug: 'sushi-master', name: 'Kenji Yamamoto', email: 'kenji@sushimaster.com', role: UserRole.MANAGER, assignment: 'Operations Manager' },
     { businessSlug: 'sushi-master', name: 'Aiko Sato', email: 'aiko@sushimaster.com', role: UserRole.WAITSTAFF, assignment: 'Main Floor' },
     { businessSlug: 'sushi-master', name: 'Hiroshi Nakamura', email: 'hiroshi@sushimaster.com', role: UserRole.CASHIER, assignment: 'Cash Register' },
-    { businessSlug: 'sushi-master', name: 'Mika Suzuki', email: 'mika@sushimaster.com', role: UserRole.VIEWER, assignment: 'Analytics' },
+    { businessSlug: 'sushi-master', name: 'Mika Suzuki', email: 'mika@sushimaster.com', role: UserRole.VIEWER, assignment: 'kitchen' },
     // Coffee Corner
     { businessSlug: 'coffee-corner', name: 'Sarah Johnson', email: 'sarah@coffeecorner.com', role: UserRole.OWNER, assignment: 'Owner' },
     { businessSlug: 'coffee-corner', name: 'Mike Chen', email: 'mike@coffeecorner.com', role: UserRole.MANAGER, assignment: 'Store Manager' },
     { businessSlug: 'coffee-corner', name: 'Emma Davis', email: 'emma@coffeecorner.com', role: UserRole.WAITSTAFF, assignment: 'Barista' },
     { businessSlug: 'coffee-corner', name: 'Alex Thompson', email: 'alex@coffeecorner.com', role: UserRole.CASHIER, assignment: 'Cashier' },
-    { businessSlug: 'coffee-corner', name: 'Lisa Wang', email: 'lisa@coffeecorner.com', role: UserRole.VIEWER, assignment: 'Reports' }
+    { businessSlug: 'coffee-corner', name: 'Lisa Wang', email: 'lisa@coffeecorner.com', role: UserRole.VIEWER, assignment: 'kitchen' }
   ];
+  const hashedPassword = await bcrypt.hash('Password123', 10);
   await queryInterface.bulkInsert('users', userData.map(u => ({
     businessId: businesses[u.businessSlug],
     name: u.name,
     email: u.email,
-    password: '$2b$10$hashedpassword123',
+    password: hashedPassword,
     role: u.role,
     isActive: true,
     assignment: u.assignment,
@@ -396,13 +398,18 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     userId: users[s.cashierEmail],
     saleNumber: s.saleNumber,
     status: s.status,
-    subtotal: s.subtotal,
-    taxAmount: s.taxAmount,
-    discountAmount: s.discountAmount,
     totalAmount: s.totalAmount,
     paymentMethod: s.paymentMethod,
-    customerId: customers[s.customerEmail],
+    customerName: s.customerEmail ? s.customerEmail.split('@')[0] : null,
+    customerEmail: s.customerEmail,
     idempotencyKey: uuidv4(),
+    payments: JSON.stringify([{
+      amount: s.totalAmount,
+      method: s.paymentMethod,
+      customerName: s.customerEmail ? s.customerEmail.split('@')[0] : null,
+      customerEmail: s.customerEmail,
+      paidAt: new Date()
+    }]),
     createdAt: new Date(),
     updatedAt: new Date()
   })));
@@ -426,15 +433,31 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     { saleNumber: 'SALE-CO-2024-001', itemSku: 'CO-CAP-001', quantity: 1, unitPrice: 4.99, totalPrice: 4.99 },
     { saleNumber: 'SALE-CO-2024-001', itemSku: 'CO-PAS-001', quantity: 1, unitPrice: 3.99, totalPrice: 3.99 }
   ];
-  await queryInterface.bulkInsert('sale_items', saleItemData.map(si => ({
-    saleId: sales[si.saleNumber],
-    itemId: items[si.itemSku],
-    quantity: si.quantity,
-    unitPrice: si.unitPrice,
-    totalPrice: si.totalPrice,
-    createdAt: new Date(),
-    updatedAt: new Date()
-  })));
+  await queryInterface.bulkInsert('sale_items', saleItemData.map(si => {
+    // Determine business ID based on sale number prefix
+    let businessId = 1; // Default
+    if (si.saleNumber.startsWith('SALE-IT-')) {
+      businessId = businesses['italian-delight'] || 1;
+    } else if (si.saleNumber.startsWith('SALE-SU-')) {
+      businessId = businesses['sushi-master'] || 1;
+    } else if (si.saleNumber.startsWith('SALE-CO-')) {
+      businessId = businesses['coffee-corner'] || 1;
+    }
+    
+    return {
+      businessId: businessId,
+      saleId: sales[si.saleNumber],
+      itemId: items[si.itemSku],
+      quantity: si.quantity,
+      unitPrice: si.unitPrice,
+      totalPrice: si.totalPrice,
+      discountAmount: 0.00,
+      finalPrice: si.totalPrice,
+      notes: null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+  }));
 
   // 10. Create Reservations
   const reservationData = [

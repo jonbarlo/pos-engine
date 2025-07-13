@@ -11,6 +11,7 @@ export interface SaleAttributes {
   id: number;
   businessId: number;
   userId: number;
+  saleNumber: string;
   totalAmount: number;
   paymentMethod?: string;
   status: SaleStatus;
@@ -35,6 +36,7 @@ export interface SaleCreationAttributes {
   id?: number;
   businessId: number;
   userId: number;
+  saleNumber?: string;
   totalAmount: number;
   paymentMethod?: string;
   status?: SaleStatus;
@@ -57,6 +59,7 @@ export class SaleModel extends Model<SaleAttributes, SaleCreationAttributes> imp
   public id!: number;
   public businessId!: number;
   public userId!: number;
+  public saleNumber!: string;
   public totalAmount!: number;
   public paymentMethod?: string;
   public status!: SaleStatus;
@@ -112,6 +115,14 @@ export const initializeSaleModel = (sequelize: Sequelize): void => {
         },
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
+      },
+      saleNumber: {
+        type: DataTypes.STRING(50),
+        allowNull: false,
+        unique: true,
+        validate: {
+          notEmpty: true
+        }
       },
       totalAmount: {
         type: DataTypes.DECIMAL(10, 2),
@@ -189,6 +200,10 @@ export const initializeSaleModel = (sequelize: Sequelize): void => {
         },
         {
           fields: ['createdAt']
+        },
+        {
+          fields: ['saleNumber'],
+          unique: true
         }
       ]
     }

@@ -50,6 +50,22 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       allowNull: false,
       defaultValue: 'pending'
     },
+    notes: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    modifications: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    estimatedReadyTime: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    actualReadyTime: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
     createdAt: {
       type: DataTypes.DATE,
       allowNull: false,
@@ -66,6 +82,8 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   await queryInterface.addIndex('order_items', ['orderId']);
   await queryInterface.addIndex('order_items', ['itemId']);
   await queryInterface.addIndex('order_items', ['status']);
+  await queryInterface.addIndex('order_items', ['orderId', 'status']);
+  await queryInterface.addIndex('order_items', ['createdAt']);
 }
 
 export async function down(queryInterface: QueryInterface): Promise<void> {

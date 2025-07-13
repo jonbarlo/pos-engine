@@ -7,6 +7,16 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       autoIncrement: true,
       primaryKey: true,
     },
+    businessId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'businesses',
+        key: 'id'
+      },
+      onUpdate: 'CASCADE',
+      onDelete: 'CASCADE'
+    },
     saleId: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -36,6 +46,20 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
     },
+    discountAmount: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0.00,
+    },
+    finalPrice: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0.00,
+    },
+    notes: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
     createdAt: {
       type: DataTypes.DATE,
       allowNull: false,
@@ -49,8 +73,11 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   });
 
   // Add indexes
+  await queryInterface.addIndex('sale_items', ['businessId']);
   await queryInterface.addIndex('sale_items', ['saleId']);
   await queryInterface.addIndex('sale_items', ['itemId']);
+  await queryInterface.addIndex('sale_items', ['discountAmount']);
+  await queryInterface.addIndex('sale_items', ['finalPrice']);
 }
 
 export async function down(queryInterface: QueryInterface): Promise<void> {

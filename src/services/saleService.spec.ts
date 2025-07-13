@@ -23,7 +23,7 @@ describe('SaleService', () => {
 
   it('should create a sale', async () => {
     const saleData = { userId: 1, businessId: 1, totalAmount: 100 } as SaleCreationAttributes;
-    const created = { id: 1, ...saleData, isActive: true } as any;
+    const created = { id: 1, saleNumber: 'SALE-BIZ-2024-001', ...saleData, isActive: true } as any;
     mockSaleRepository.create.mockResolvedValue(created);
     const result = await SaleService.createSale(saleData);
     expect(mockSaleRepository.create).toHaveBeenCalledWith(saleData);
@@ -31,7 +31,7 @@ describe('SaleService', () => {
   });
 
   it('should get sale by id with business id', async () => {
-    const sale = { id: 1, businessId: 1, userId: 1, isActive: true } as any;
+    const sale = { id: 1, businessId: 1, userId: 1, saleNumber: 'SALE-BIZ-2024-001', isActive: true } as any;
     mockSaleRepository.findById.mockResolvedValue(sale);
     const result = await SaleService.getSaleById(1, 1);
     expect(mockSaleRepository.findById).toHaveBeenCalledWith(1, 1);
@@ -39,7 +39,7 @@ describe('SaleService', () => {
   });
 
   it('should update a sale', async () => {
-    const updated = { id: 1, businessId: 1, userId: 1, isActive: true } as any;
+    const updated = { id: 1, businessId: 1, userId: 1, saleNumber: 'SALE-BIZ-2024-001', isActive: true } as any;
     mockSaleRepository.update.mockResolvedValue(updated);
     const result = await SaleService.updateSale(1, 1, { userId: 1 });
     expect(mockSaleRepository.update).toHaveBeenCalledWith(1, 1, { userId: 1 });
@@ -55,8 +55,8 @@ describe('SaleService', () => {
 
   it('should get sales by user', async () => {
     const sales = [
-      { id: 1, businessId: 1, userId: 1, isActive: true },
-      { id: 2, businessId: 1, userId: 1, isActive: true }
+      { id: 1, businessId: 1, userId: 1, saleNumber: 'SALE-BIZ-2024-001', isActive: true },
+      { id: 2, businessId: 1, userId: 1, saleNumber: 'SALE-BIZ-2024-002', isActive: true }
     ] as any[];
     mockSaleRepository.findAllByBusiness.mockResolvedValue(sales);
     const result = await SaleService.getSalesByUser(1, 1);
@@ -66,7 +66,7 @@ describe('SaleService', () => {
 
   it('should get sales by date range', async () => {
     const sales = [
-      { id: 1, businessId: 1, userId: 1, createdAt: new Date('2023-01-01'), isActive: true }
+      { id: 1, businessId: 1, userId: 1, saleNumber: 'SALE-BIZ-2024-001', createdAt: new Date('2023-01-01'), isActive: true }
     ] as any[];
     mockSaleRepository.findAllByBusiness.mockResolvedValue(sales);
     const startDate = new Date('2023-01-01');

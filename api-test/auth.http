@@ -1,0 +1,8 @@
+﻿  POST http://localhost:3031/api/auth/login
+  Content-Type: application/json
+
+  {
+    "email": "antonio@italiandelight.com",
+    "password": "Password123",
+    "businessSlug": "italian-delight"
+  }
