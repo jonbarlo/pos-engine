@@ -20,7 +20,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: 'items',
+        model: 'menu_items',
         key: 'id'
       },
     },

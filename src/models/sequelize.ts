@@ -55,7 +55,17 @@ const getSequelize = (): Sequelize => {
         port: dbConfig.port,
         storage: dbConfig.storage,
         logging: dbConfig.logging,
-        dialectOptions: dbConfig.dialectOptions
+        dialectOptions: dbConfig.dialectOptions,
+        pool: {
+          max: 20,
+          min: 0,
+          acquire: 60000,
+          idle: 10000
+        },
+        retry: {
+          max: 3,
+          timeout: 30000
+        }
       }
     );
   }

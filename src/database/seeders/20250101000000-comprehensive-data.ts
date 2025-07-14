@@ -133,20 +133,27 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
 
   console.log('Users object:', users);
 
-  // 3. Create Items
+  // 3. Create Items (Inventory)
   const itemData = [
     // Italian Delight Items
-    { businessSlug: 'italian-delight', name: 'Margherita Pizza', description: 'Fresh mozzarella, tomato sauce, basil', price: 18.99, cost: 8.50, stock: 50, sku: 'IT-PIZ-001', barcode: '123456789001', category: 'Pizza', unit: 'piece', minStock: 10, maxStock: 100 },
-    { businessSlug: 'italian-delight', name: 'Spaghetti Carbonara', description: 'Pasta with eggs, cheese, pancetta, black pepper', price: 16.99, cost: 7.20, stock: 30, sku: 'IT-PAS-001', barcode: '123456789002', category: 'Pasta', unit: 'piece', minStock: 5, maxStock: 80 },
-    { businessSlug: 'italian-delight', name: 'Tiramisu', description: 'Classic Italian dessert with coffee and mascarpone', price: 8.99, cost: 3.50, stock: 20, sku: 'IT-DES-001', barcode: '123456789003', category: 'Dessert', unit: 'piece', minStock: 5, maxStock: 50 },
+    { businessSlug: 'italian-delight', name: 'Margherita Pizza Base', description: 'Pizza dough, tomato sauce, mozzarella', price: 12.99, cost: 5.50, stock: 50, sku: 'IT-PIZ-001', barcode: '123456789001', category: 'Pizza', unit: 'piece', minStock: 10, maxStock: 100 },
+    { businessSlug: 'italian-delight', name: 'Spaghetti Pasta', description: 'Fresh spaghetti pasta', price: 8.99, cost: 3.20, stock: 30, sku: 'IT-PAS-001', barcode: '123456789002', category: 'Pasta', unit: 'piece', minStock: 5, maxStock: 80 },
+    { businessSlug: 'italian-delight', name: 'Tiramisu Mix', description: 'Mascarpone, coffee, ladyfingers', price: 6.99, cost: 2.50, stock: 20, sku: 'IT-DES-001', barcode: '123456789003', category: 'Dessert', unit: 'piece', minStock: 5, maxStock: 50 },
+    { businessSlug: 'italian-delight', name: 'Pepperoni Pizza Base', description: 'Pizza dough, tomato sauce, pepperoni', price: 14.99, cost: 6.50, stock: 40, sku: 'IT-PIZ-002', barcode: '123456789004', category: 'Pizza', unit: 'piece', minStock: 8, maxStock: 80 },
+    { businessSlug: 'italian-delight', name: 'Fettuccine Alfredo', description: 'Fresh fettuccine with alfredo sauce', price: 10.99, cost: 4.20, stock: 25, sku: 'IT-PAS-002', barcode: '123456789005', category: 'Pasta', unit: 'piece', minStock: 5, maxStock: 60 },
+    { businessSlug: 'italian-delight', name: 'Cannoli Shells', description: 'Crispy cannoli shells with filling', price: 5.99, cost: 2.00, stock: 35, sku: 'IT-DES-002', barcode: '123456789006', category: 'Dessert', unit: 'piece', minStock: 10, maxStock: 70 },
     // Sushi Master Items
-    { businessSlug: 'sushi-master', name: 'California Roll', description: 'Crab, avocado, cucumber', price: 12.99, cost: 5.80, stock: 40, sku: 'SU-ROL-001', barcode: '123456789004', category: 'Rolls', unit: 'piece', minStock: 10, maxStock: 100 },
-    { businessSlug: 'sushi-master', name: 'Salmon Nigiri', description: 'Fresh salmon over rice', price: 6.99, cost: 3.20, stock: 60, sku: 'SU-NIG-001', barcode: '123456789005', category: 'Nigiri', unit: 'piece', minStock: 15, maxStock: 120 },
-    { businessSlug: 'sushi-master', name: 'Miso Soup', description: 'Traditional Japanese soup', price: 4.99, cost: 1.80, stock: 80, sku: 'SU-SOU-001', barcode: '123456789006', category: 'Soup', unit: 'bowl', minStock: 20, maxStock: 150 },
+    { businessSlug: 'sushi-master', name: 'California Roll Mix', description: 'Crab, avocado, cucumber, rice', price: 8.99, cost: 3.80, stock: 40, sku: 'SU-ROL-001', barcode: '123456789007', category: 'Rolls', unit: 'piece', minStock: 10, maxStock: 100 },
+    { businessSlug: 'sushi-master', name: 'Salmon Sashimi', description: 'Fresh salmon for nigiri', price: 4.99, cost: 2.20, stock: 60, sku: 'SU-NIG-001', barcode: '123456789008', category: 'Nigiri', unit: 'piece', minStock: 15, maxStock: 120 },
+    { businessSlug: 'sushi-master', name: 'Miso Soup Base', description: 'Miso paste, dashi, tofu', price: 2.99, cost: 0.80, stock: 80, sku: 'SU-SOU-001', barcode: '123456789009', category: 'Soup', unit: 'bowl', minStock: 20, maxStock: 150 },
+    { businessSlug: 'sushi-master', name: 'Spicy Tuna Roll Mix', description: 'Tuna, spicy mayo, rice', price: 9.99, cost: 4.20, stock: 35, sku: 'SU-ROL-002', barcode: '123456789010', category: 'Rolls', unit: 'piece', minStock: 8, maxStock: 80 },
+    { businessSlug: 'sushi-master', name: 'Tuna Sashimi', description: 'Fresh tuna for nigiri', price: 5.99, cost: 2.80, stock: 45, sku: 'SU-NIG-002', barcode: '123456789011', category: 'Nigiri', unit: 'piece', minStock: 12, maxStock: 100 },
     // Coffee Corner Items
-    { businessSlug: 'coffee-corner', name: 'Espresso', description: 'Single shot of espresso', price: 3.50, cost: 1.20, stock: 200, sku: 'CO-ESP-001', barcode: '123456789007', category: 'Coffee', unit: 'shot', minStock: 50, maxStock: 500 },
-    { businessSlug: 'coffee-corner', name: 'Cappuccino', description: 'Espresso with steamed milk and foam', price: 4.99, cost: 1.80, stock: 150, sku: 'CO-CAP-001', barcode: '123456789008', category: 'Coffee', unit: 'cup', minStock: 30, maxStock: 300 },
-    { businessSlug: 'coffee-corner', name: 'Blueberry Muffin', description: 'Fresh baked blueberry muffin', price: 3.99, cost: 1.50, stock: 25, sku: 'CO-PAS-001', barcode: '123456789009', category: 'Pastry', unit: 'piece', minStock: 5, maxStock: 60 }
+    { businessSlug: 'coffee-corner', name: 'Espresso Beans', description: 'Premium espresso coffee beans', price: 2.50, cost: 0.80, stock: 200, sku: 'CO-ESP-001', barcode: '123456789012', category: 'Coffee', unit: 'shot', minStock: 50, maxStock: 500 },
+    { businessSlug: 'coffee-corner', name: 'Milk for Cappuccino', description: 'Fresh whole milk for cappuccino', price: 3.50, cost: 1.20, stock: 150, sku: 'CO-CAP-001', barcode: '123456789013', category: 'Coffee', unit: 'cup', minStock: 30, maxStock: 300 },
+    { businessSlug: 'coffee-corner', name: 'Blueberry Muffin Mix', description: 'Fresh baked blueberry muffin mix', price: 2.99, cost: 1.00, stock: 25, sku: 'CO-PAS-001', barcode: '123456789014', category: 'Pastry', unit: 'piece', minStock: 5, maxStock: 60 },
+    { businessSlug: 'coffee-corner', name: 'Chocolate Croissant Dough', description: 'Buttery croissant dough with chocolate', price: 3.50, cost: 1.30, stock: 30, sku: 'CO-PAS-002', barcode: '123456789015', category: 'Pastry', unit: 'piece', minStock: 8, maxStock: 70 },
+    { businessSlug: 'coffee-corner', name: 'Latte Milk', description: 'Steamed milk for lattes', price: 3.00, cost: 1.00, stock: 120, sku: 'CO-LAT-001', barcode: '123456789016', category: 'Coffee', unit: 'cup', minStock: 25, maxStock: 250 }
   ];
   await queryInterface.bulkInsert('items', itemData.map(i => ({
     businessId: businesses[i.businessSlug],
@@ -252,6 +259,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       businessSlug: 'italian-delight',
       serverEmail: 'giuseppe@italiandelight.com',
       customerEmail: 'john.smith@email.com',
+      tableKey: 'italian-delight-A2',
       orderNumber: 'IT-2024-001',
       status: OrderStatus.CONFIRMED,
       orderType: OrderType.DINE_IN,
@@ -264,9 +272,26 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       estimatedReadyTime: new Date(Date.now() + 30 * 60 * 1000)
     },
     {
+      businessSlug: 'italian-delight',
+      serverEmail: 'giuseppe@italiandelight.com',
+      customerEmail: 'maria.garcia@email.com',
+      tableKey: 'italian-delight-A1',
+      orderNumber: 'IT-2024-002',
+      status: OrderStatus.PENDING,
+      orderType: OrderType.DINE_IN,
+      subtotal: 20.99,
+      taxAmount: 1.86,
+      discountAmount: 0.00,
+      totalAmount: 22.85,
+      notes: 'Table A1 - First time customer',
+      specialInstructions: 'Well done pizza',
+      estimatedReadyTime: new Date(Date.now() + 25 * 60 * 1000)
+    },
+    {
       businessSlug: 'sushi-master',
       serverEmail: 'aiko@sushimaster.com',
       customerEmail: 'david.kim@email.com',
+      tableKey: 'sushi-master-S2',
       orderNumber: 'SU-2024-001',
       status: OrderStatus.IN_PROGRESS,
       orderType: OrderType.DINE_IN,
@@ -279,9 +304,27 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       estimatedReadyTime: new Date(Date.now() + 20 * 60 * 1000)
     },
     {
+      businessSlug: 'sushi-master',
+      serverEmail: 'aiko@sushimaster.com',
+      customerEmail: null,
+      tableKey: 'sushi-master-S1',
+      orderNumber: 'SU-2024-002',
+      status: OrderStatus.READY,
+      orderType: OrderType.DINE_IN,
+      subtotal: 12.99,
+      taxAmount: 1.20,
+      discountAmount: 0.00,
+      totalAmount: 14.19,
+      notes: 'Table S1 - Walk-in customer',
+      specialInstructions: 'No wasabi',
+      estimatedReadyTime: new Date(Date.now() + 15 * 60 * 1000),
+      actualReadyTime: new Date()
+    },
+    {
       businessSlug: 'coffee-corner',
       serverEmail: 'emma@coffeecorner.com',
       customerEmail: 'jennifer.lee@email.com',
+      tableKey: null,
       orderNumber: 'CO-2024-001',
       status: OrderStatus.READY,
       orderType: OrderType.TAKEAWAY,
@@ -292,15 +335,34 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       notes: 'Takeaway order',
       specialInstructions: 'Extra hot cappuccino',
       actualReadyTime: new Date()
+    },
+    {
+      businessSlug: 'coffee-corner',
+      serverEmail: 'sarah@coffeecorner.com',
+      customerEmail: null,
+      tableKey: 'coffee-corner-C1',
+      orderNumber: 'CO-2024-002',
+      status: OrderStatus.SERVED,
+      orderType: OrderType.DINE_IN,
+      subtotal: 11.99,
+      taxAmount: 1.11,
+      discountAmount: 0.00,
+      totalAmount: 13.10,
+      notes: 'Table C1 - Regular customer',
+      specialInstructions: 'Extra shot in latte',
+      estimatedReadyTime: new Date(Date.now() + 10 * 60 * 1000),
+      actualReadyTime: new Date()
     }
   ];
   await queryInterface.bulkInsert('orders', orderData.map(o => {
     const serverId = users[o.serverEmail];
-    const customerId = customers[o.customerEmail];
-    console.log(`Creating order ${o.orderNumber}: serverId=${serverId} (${o.serverEmail}), customerId=${customerId} (${o.customerEmail})`);
+    const customerId = o.customerEmail ? customers[o.customerEmail] : null;
+    const tableId = o.tableKey ? tables[o.tableKey] : null;
+    console.log(`Creating order ${o.orderNumber}: serverId=${serverId} (${o.serverEmail}), customerId=${customerId} (${o.customerEmail}), tableId=${tableId} (${o.tableKey})`);
     
     return {
       businessId: businesses[o.businessSlug],
+      tableId: tableId,
       serverId: serverId,
       customerId: customerId,
       orderNumber: o.orderNumber,
@@ -329,21 +391,170 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     orders[o.orderNumber] = order.id;
   }
 
-  // 7. Create Order Items
+  // 7. Create Menu Categories (moved up)
+  console.log('🔍 DEBUG: Creating menu categories...');
+  console.log('🔍 DEBUG: Available businesses:', businesses);
+  
+  const categoryData = [
+    { businessSlug: 'italian-delight', name: 'Pizza', description: 'Authentic Italian pizzas', displayOrder: 1 },
+    { businessSlug: 'italian-delight', name: 'Pasta', description: 'Fresh pasta dishes', displayOrder: 2 },
+    { businessSlug: 'italian-delight', name: 'Desserts', description: 'Traditional Italian desserts', displayOrder: 3 },
+    { businessSlug: 'italian-delight', name: 'Beverages', description: 'Wine, beer, and soft drinks', displayOrder: 4 },
+    { businessSlug: 'sushi-master', name: 'Rolls', description: 'Fresh sushi rolls', displayOrder: 1 },
+    { businessSlug: 'sushi-master', name: 'Nigiri', description: 'Fresh nigiri sushi', displayOrder: 2 },
+    { businessSlug: 'sushi-master', name: 'Soups', description: 'Traditional Japanese soups', displayOrder: 3 },
+    { businessSlug: 'sushi-master', name: 'Beverages', description: 'Sake, tea, and soft drinks', displayOrder: 4 },
+    { businessSlug: 'coffee-corner', name: 'Coffee', description: 'Artisanal coffee drinks', displayOrder: 1 },
+    { businessSlug: 'coffee-corner', name: 'Pastries', description: 'Fresh baked pastries', displayOrder: 2 },
+    { businessSlug: 'coffee-corner', name: 'Tea', description: 'Premium tea selection', displayOrder: 3 },
+    { businessSlug: 'coffee-corner', name: 'Smoothies', description: 'Fresh fruit smoothies', displayOrder: 4 }
+  ];
+  
+  console.log('🔍 DEBUG: Category data to insert:', categoryData);
+  
+  const categoriesToInsert = categoryData.map(c => {
+    const businessId = businesses[c.businessSlug];
+    console.log(`🔍 DEBUG: Category ${c.name}: businessId=${businessId}, businessSlug=${c.businessSlug}`);
+    
+    if (!businessId) {
+      throw new Error(`Business not found for slug: ${c.businessSlug}. Available businesses: ${JSON.stringify(businesses)}`);
+    }
+    
+    return {
+      businessId: businessId,
+      name: c.name,
+      description: c.description,
+      displayOrder: c.displayOrder,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+  });
+  
+  console.log('🔍 DEBUG: Final categories to insert:', JSON.stringify(categoriesToInsert, null, 2));
+  
+  await queryInterface.bulkInsert('menu_categories', categoriesToInsert);
+
+  // Query categories by business and name for IDs
+  console.log('🔍 DEBUG: Querying categories for IDs...');
+  const categories: { [key: string]: number } = {};
+  for (const c of categoryData) {
+    console.log(`🔍 DEBUG: Querying category: businessId=${businesses[c.businessSlug]}, name=${c.name}`);
+    const [category] = await queryInterface.sequelize.query(
+      'SELECT id FROM menu_categories WHERE businessId = ? AND name = ?',
+      { type: QueryTypes.SELECT, replacements: [businesses[c.businessSlug], c.name] }
+    ) as any[];
+    console.log(`🔍 DEBUG: Found category:`, category);
+    categories[`${c.businessSlug}-${c.name}`] = category.id;
+  }
+  
+  console.log('🔍 DEBUG: Final categories object:', categories);
+
+  // 8. Create Menu Items (moved up)
+  console.log('🔍 DEBUG: Creating menu items...');
+  console.log('🔍 DEBUG: Available categories:', categories);
+  
+  const menuItemData = [
+    // Italian Delight Menu Items
+    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Pizza', name: 'Margherita Pizza', description: 'Fresh mozzarella, tomato sauce, basil', price: 18.99, cost: 8.50, sku: 'IT-MI-PIZ-001', barcode: '123456789010', itemSku: 'IT-PIZ-001' },
+    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Pizza', name: 'Pepperoni Pizza', description: 'Classic pepperoni with mozzarella', price: 20.99, cost: 9.50, sku: 'IT-MI-PIZ-002', barcode: '123456789011', itemSku: 'IT-PIZ-002' },
+    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Pasta', name: 'Spaghetti Carbonara', description: 'Pasta with eggs, cheese, pancetta, black pepper', price: 16.99, cost: 7.20, sku: 'IT-MI-PAS-001', barcode: '123456789012', itemSku: 'IT-PAS-001' },
+    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Pasta', name: 'Fettuccine Alfredo', description: 'Creamy alfredo sauce with parmesan', price: 17.99, cost: 7.80, sku: 'IT-MI-PAS-002', barcode: '123456789013', itemSku: 'IT-PAS-002' },
+    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Desserts', name: 'Tiramisu', description: 'Classic Italian dessert with coffee and mascarpone', price: 8.99, cost: 3.50, sku: 'IT-MI-DES-001', barcode: '123456789014', itemSku: 'IT-DES-001' },
+    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Desserts', name: 'Cannoli', description: 'Crispy shells filled with sweet ricotta', price: 6.99, cost: 2.50, sku: 'IT-MI-DES-002', barcode: '123456789015', itemSku: 'IT-DES-002' },
+    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Beverages', name: 'House Red Wine', description: 'Glass of our signature red wine', price: 8.99, cost: 3.20, sku: 'IT-MI-BEV-001', barcode: '123456789016', itemSku: null },
+    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Beverages', name: 'Italian Soda', description: 'Refreshing Italian soda', price: 3.99, cost: 1.20, sku: 'IT-MI-BEV-002', barcode: '123456789017', itemSku: null },
+    
+    // Sushi Master Menu Items
+    { businessSlug: 'sushi-master', categoryKey: 'sushi-master-Rolls', name: 'California Roll', description: 'Crab, avocado, cucumber', price: 12.99, cost: 5.80, sku: 'SU-MI-ROL-001', barcode: '123456789020', itemSku: 'SU-ROL-001' },
+    { businessSlug: 'sushi-master', categoryKey: 'sushi-master-Rolls', name: 'Spicy Tuna Roll', description: 'Spicy tuna with cucumber', price: 14.99, cost: 6.50, sku: 'SU-MI-ROL-002', barcode: '123456789021', itemSku: 'SU-ROL-002' },
+    { businessSlug: 'sushi-master', categoryKey: 'sushi-master-Nigiri', name: 'Salmon Nigiri', description: 'Fresh salmon over rice', price: 6.99, cost: 3.20, sku: 'SU-MI-NIG-001', barcode: '123456789022', itemSku: 'SU-NIG-001' },
+    { businessSlug: 'sushi-master', categoryKey: 'sushi-master-Nigiri', name: 'Tuna Nigiri', description: 'Fresh tuna over rice', price: 7.99, cost: 3.80, sku: 'SU-MI-NIG-002', barcode: '123456789023', itemSku: 'SU-NIG-002' },
+    { businessSlug: 'sushi-master', categoryKey: 'sushi-master-Soups', name: 'Miso Soup', description: 'Traditional Japanese soup', price: 4.99, cost: 1.80, sku: 'SU-MI-SOU-001', barcode: '123456789024', itemSku: 'SU-SOU-001' },
+    { businessSlug: 'sushi-master', categoryKey: 'sushi-master-Beverages', name: 'Green Tea', description: 'Premium Japanese green tea', price: 2.99, cost: 0.80, sku: 'SU-MI-BEV-001', barcode: '123456789025', itemSku: null },
+    { businessSlug: 'sushi-master', categoryKey: 'sushi-master-Beverages', name: 'Sake', description: 'Premium sake', price: 12.99, cost: 5.20, sku: 'SU-MI-BEV-002', barcode: '123456789026', itemSku: null },
+    
+    // Coffee Corner Menu Items
+    { businessSlug: 'coffee-corner', categoryKey: 'coffee-corner-Coffee', name: 'Espresso', description: 'Single shot of espresso', price: 3.50, cost: 1.20, sku: 'CO-MI-COF-001', barcode: '123456789030', itemSku: 'CO-ESP-001' },
+    { businessSlug: 'coffee-corner', categoryKey: 'coffee-corner-Coffee', name: 'Cappuccino', description: 'Espresso with steamed milk and foam', price: 4.99, cost: 1.80, sku: 'CO-MI-COF-002', barcode: '123456789031', itemSku: 'CO-CAP-001' },
+    { businessSlug: 'coffee-corner', categoryKey: 'coffee-corner-Coffee', name: 'Latte', description: 'Espresso with steamed milk', price: 4.49, cost: 1.60, sku: 'CO-MI-COF-003', barcode: '123456789032', itemSku: 'CO-LAT-001' },
+    { businessSlug: 'coffee-corner', categoryKey: 'coffee-corner-Pastries', name: 'Blueberry Muffin', description: 'Fresh baked blueberry muffin', price: 3.99, cost: 1.50, sku: 'CO-MI-PAS-001', barcode: '123456789033', itemSku: 'CO-PAS-001' },
+    { businessSlug: 'coffee-corner', categoryKey: 'coffee-corner-Pastries', name: 'Chocolate Croissant', description: 'Buttery croissant with chocolate', price: 4.49, cost: 1.80, sku: 'CO-MI-PAS-002', barcode: '123456789034', itemSku: 'CO-PAS-002' },
+    { businessSlug: 'coffee-corner', categoryKey: 'coffee-corner-Tea', name: 'Earl Grey Tea', description: 'Classic Earl Grey tea', price: 3.99, cost: 1.20, sku: 'CO-MI-TEA-001', barcode: '123456789035', itemSku: null },
+    { businessSlug: 'coffee-corner', categoryKey: 'coffee-corner-Smoothies', name: 'Berry Blast Smoothie', description: 'Mixed berry smoothie', price: 5.99, cost: 2.20, sku: 'CO-MI-SMO-001', barcode: '123456789036', itemSku: null }
+  ];
+  
+  console.log('🔍 DEBUG: Menu item data to insert:', menuItemData);
+  
+  const menuItemsToInsert = menuItemData.map(mi => {
+    const categoryId = categories[mi.categoryKey];
+    const itemId = mi.itemSku ? items[mi.itemSku] : null;
+    console.log(`🔍 DEBUG: Menu item ${mi.name}: businessId=${businesses[mi.businessSlug]}, categoryId=${categoryId}, categoryKey=${mi.categoryKey}, itemId=${itemId}`);
+    
+    if (!categoryId) {
+      throw new Error(`Category not found for key: ${mi.categoryKey}. Available categories: ${JSON.stringify(categories)}`);
+    }
+    
+    return {
+      businessId: businesses[mi.businessSlug],
+      categoryId: categoryId,
+      itemId: itemId,
+      name: mi.name,
+      description: mi.description,
+      price: mi.price,
+      cost: mi.cost,
+      sku: mi.sku,
+      barcode: mi.barcode,
+      preparationTime: 15,
+      isAvailable: true,
+      isVegetarian: false,
+      isVegan: false,
+      isGlutenFree: false,
+      isSpicy: false,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+  });
+  
+  console.log('🔍 DEBUG: Final menu items to insert:', JSON.stringify(menuItemsToInsert, null, 2));
+  
+  await queryInterface.bulkInsert('menu_items', menuItemsToInsert);
+
+  // Query menu items by sku for IDs
+  const menuItems: { [key: string]: number } = {};
+  for (const mi of menuItemData) {
+    const [menuItem] = await queryInterface.sequelize.query(
+      'SELECT id FROM menu_items WHERE sku = ?',
+      { type: QueryTypes.SELECT, replacements: [mi.sku] }
+    ) as any[];
+    menuItems[mi.sku] = menuItem.id;
+  }
+
+  // 9. Create Order Items
   const orderItemData = [
-    { orderNumber: 'IT-2024-001', itemSku: 'IT-PIZ-001', itemName: 'Margherita Pizza', quantity: 1, unitPrice: 18.99, totalPrice: 18.99, specialInstructions: 'Extra cheese', status: OrderItemStatus.IN_PROGRESS },
-    { orderNumber: 'IT-2024-001', itemSku: 'IT-PAS-001', itemName: 'Spaghetti Carbonara', quantity: 1, unitPrice: 16.99, totalPrice: 16.99, specialInstructions: null, status: OrderItemStatus.IN_PROGRESS },
-    { orderNumber: 'SU-2024-001', itemSku: 'SU-ROL-001', itemName: 'California Roll', quantity: 1, unitPrice: 12.99, totalPrice: 12.99, specialInstructions: 'Extra wasabi', status: OrderItemStatus.READY },
-    { orderNumber: 'SU-2024-001', itemSku: 'SU-NIG-001', itemName: 'Salmon Nigiri', quantity: 2, unitPrice: 6.99, totalPrice: 13.98, specialInstructions: null, status: OrderItemStatus.READY },
-    { orderNumber: 'CO-2024-001', itemSku: 'CO-CAP-001', itemName: 'Cappuccino', quantity: 1, unitPrice: 4.99, totalPrice: 4.99, specialInstructions: 'Extra hot', status: OrderItemStatus.SERVED },
-    { orderNumber: 'CO-2024-001', itemSku: 'CO-PAS-001', itemName: 'Blueberry Muffin', quantity: 1, unitPrice: 3.99, totalPrice: 3.99, specialInstructions: null, status: OrderItemStatus.SERVED }
+    // Italian Delight Orders
+    { orderNumber: 'IT-2024-001', itemSku: 'IT-MI-PIZ-001', itemName: 'Margherita Pizza', quantity: 1, unitPrice: 18.99, totalPrice: 18.99, specialInstructions: 'Extra cheese', status: OrderItemStatus.IN_PROGRESS },
+    { orderNumber: 'IT-2024-001', itemSku: 'IT-MI-PAS-001', itemName: 'Spaghetti Carbonara', quantity: 1, unitPrice: 16.99, totalPrice: 16.99, specialInstructions: null, status: OrderItemStatus.IN_PROGRESS },
+    { orderNumber: 'IT-2024-002', itemSku: 'IT-MI-PIZ-002', itemName: 'Pepperoni Pizza', quantity: 1, unitPrice: 20.99, totalPrice: 20.99, specialInstructions: 'Well done', status: OrderItemStatus.PENDING },
+    
+    // Sushi Master Orders
+    { orderNumber: 'SU-2024-001', itemSku: 'SU-MI-ROL-001', itemName: 'California Roll', quantity: 1, unitPrice: 12.99, totalPrice: 12.99, specialInstructions: 'Extra wasabi', status: OrderItemStatus.READY },
+    { orderNumber: 'SU-2024-001', itemSku: 'SU-MI-NIG-001', itemName: 'Salmon Nigiri', quantity: 2, unitPrice: 6.99, totalPrice: 13.98, specialInstructions: null, status: OrderItemStatus.READY },
+    { orderNumber: 'SU-2024-002', itemSku: 'SU-MI-ROL-001', itemName: 'California Roll', quantity: 1, unitPrice: 12.99, totalPrice: 12.99, specialInstructions: 'No wasabi', status: OrderItemStatus.READY },
+    
+    // Coffee Corner Orders
+    { orderNumber: 'CO-2024-001', itemSku: 'CO-MI-COF-002', itemName: 'Cappuccino', quantity: 1, unitPrice: 4.99, totalPrice: 4.99, specialInstructions: 'Extra hot', status: OrderItemStatus.SERVED },
+    { orderNumber: 'CO-2024-001', itemSku: 'CO-MI-PAS-001', itemName: 'Blueberry Muffin', quantity: 1, unitPrice: 3.99, totalPrice: 3.99, specialInstructions: null, status: OrderItemStatus.SERVED },
+    { orderNumber: 'CO-2024-002', itemSku: 'CO-MI-COF-003', itemName: 'Latte', quantity: 1, unitPrice: 4.49, totalPrice: 4.49, specialInstructions: 'Extra shot', status: OrderItemStatus.SERVED },
+    { orderNumber: 'CO-2024-002', itemSku: 'CO-MI-PAS-002', itemName: 'Chocolate Croissant', quantity: 1, unitPrice: 4.49, totalPrice: 4.49, specialInstructions: null, status: OrderItemStatus.SERVED },
+    { orderNumber: 'CO-2024-002', itemSku: 'CO-MI-COF-001', itemName: 'Espresso', quantity: 1, unitPrice: 3.50, totalPrice: 3.50, specialInstructions: null, status: OrderItemStatus.SERVED }
   ];
   
   console.log('DEBUG: OrderItemStatus enum values:', Object.values(OrderItemStatus));
   console.log('DEBUG: Order item data statuses:', orderItemData.map(oi => oi.status));
   await queryInterface.bulkInsert('order_items', orderItemData.map(oi => ({
     orderId: orders[oi.orderNumber],
-    itemId: items[oi.itemSku],
+    itemId: menuItems[oi.itemSku],
     itemName: oi.itemName,
     quantity: oi.quantity,
     unitPrice: oi.unitPrice,
@@ -354,7 +565,34 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     updatedAt: new Date()
   })));
 
-  // 8. Create Sales
+  // Update table statuses to reflect current orders
+  console.log('🔍 DEBUG: Updating table statuses to reflect current orders...');
+  const tableUpdates = [
+    { tableKey: 'italian-delight-A2', orderNumber: 'IT-2024-001', serverEmail: 'giuseppe@italiandelight.com' },
+    { tableKey: 'italian-delight-A1', orderNumber: 'IT-2024-002', serverEmail: 'giuseppe@italiandelight.com' },
+    { tableKey: 'sushi-master-S2', orderNumber: 'SU-2024-001', serverEmail: 'aiko@sushimaster.com' },
+    { tableKey: 'sushi-master-S1', orderNumber: 'SU-2024-002', serverEmail: 'aiko@sushimaster.com' },
+    { tableKey: 'coffee-corner-C1', orderNumber: 'CO-2024-002', serverEmail: 'sarah@coffeecorner.com' }
+  ];
+
+  for (const update of tableUpdates) {
+    const tableId = tables[update.tableKey];
+    const orderId = orders[update.orderNumber];
+    const serverId = users[update.serverEmail];
+    
+    if (tableId && orderId && serverId) {
+      await queryInterface.sequelize.query(
+        'UPDATE restaurant_tables SET status = ?, currentOrderId = ?, serverId = ? WHERE id = ?',
+        { 
+          replacements: [TableStatus.OCCUPIED, orderId, serverId, tableId],
+          type: QueryTypes.UPDATE 
+        }
+      );
+      console.log(`🔍 DEBUG: Updated table ${update.tableKey} with order ${update.orderNumber}`);
+    }
+  }
+
+  // 10. Create Sales
   const saleData = [
     {
       businessSlug: 'italian-delight',
@@ -424,7 +662,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     sales[s.saleNumber] = sale.id;
   }
 
-  // 9. Create Sale Items
+  // 11. Create Sale Items
   const saleItemData = [
     { saleNumber: 'SALE-IT-2024-001', itemSku: 'IT-PIZ-001', quantity: 1, unitPrice: 18.99, totalPrice: 18.99 },
     { saleNumber: 'SALE-IT-2024-001', itemSku: 'IT-PAS-001', quantity: 1, unitPrice: 16.99, totalPrice: 16.99 },
@@ -459,7 +697,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     };
   }));
 
-  // 10. Create Reservations
+  // 12. Create Reservations
   const reservationData = [
     {
       businessSlug: 'italian-delight',
@@ -501,7 +739,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     updatedAt: new Date()
   })));
 
-  // 11. Create Kitchen Orders
+  // 13. Create Kitchen Orders
   const kitchenOrderData = [
     {
       businessSlug: 'italian-delight',
@@ -555,7 +793,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     updatedAt: new Date()
   })));
 
-  // 12. Create Deliveries
+  // 14. Create Deliveries
   const deliveryData = [
     {
       businessSlug: 'italian-delight',
@@ -587,7 +825,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     updatedAt: new Date()
   })));
 
-  // 13. Create Staff Messages
+  // 15. Create Staff Messages
   const messageData = [
     {
       businessSlug: 'italian-delight',
@@ -637,100 +875,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     updatedAt: new Date()
   })));
 
-  // 14. Create Menu Categories
-  console.log('🔍 DEBUG: Creating menu categories...');
-  console.log('🔍 DEBUG: Available businesses:', businesses);
-  
-  const categoryData = [
-    { businessSlug: 'italian-delight', name: 'Pizza', description: 'Authentic Italian pizzas', displayOrder: 1 },
-    { businessSlug: 'italian-delight', name: 'Pasta', description: 'Fresh pasta dishes', displayOrder: 2 },
-    { businessSlug: 'sushi-master', name: 'Rolls', description: 'Fresh sushi rolls', displayOrder: 1 },
-    { businessSlug: 'coffee-corner', name: 'Coffee', description: 'Artisanal coffee drinks', displayOrder: 1 }
-  ];
-  
-  console.log('🔍 DEBUG: Category data to insert:', categoryData);
-  
-  const categoriesToInsert = categoryData.map(c => {
-    const businessId = businesses[c.businessSlug];
-    console.log(`🔍 DEBUG: Category ${c.name}: businessId=${businessId}, businessSlug=${c.businessSlug}`);
-    
-    if (!businessId) {
-      throw new Error(`Business not found for slug: ${c.businessSlug}. Available businesses: ${JSON.stringify(businesses)}`);
-    }
-    
-    return {
-      businessId: businessId,
-      name: c.name,
-      description: c.description,
-      displayOrder: c.displayOrder,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-  });
-  
-  console.log('🔍 DEBUG: Final categories to insert:', JSON.stringify(categoriesToInsert, null, 2));
-  
-  await queryInterface.bulkInsert('menu_categories', categoriesToInsert);
 
-  // Query categories by business and name for IDs
-  console.log('🔍 DEBUG: Querying categories for IDs...');
-  const categories: { [key: string]: number } = {};
-  for (const c of categoryData) {
-    console.log(`🔍 DEBUG: Querying category: businessId=${businesses[c.businessSlug]}, name=${c.name}`);
-    const [category] = await queryInterface.sequelize.query(
-      'SELECT id FROM menu_categories WHERE businessId = ? AND name = ?',
-      { type: QueryTypes.SELECT, replacements: [businesses[c.businessSlug], c.name] }
-    ) as any[];
-    console.log(`🔍 DEBUG: Found category:`, category);
-    categories[`${c.businessSlug}-${c.name}`] = category.id;
-  }
-  
-  console.log('🔍 DEBUG: Final categories object:', categories);
-
-  // 15. Create Menu Items
-  console.log('🔍 DEBUG: Creating menu items...');
-  console.log('🔍 DEBUG: Available categories:', categories);
-  
-  const menuItemData = [
-    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Pizza', name: 'Margherita Pizza', description: 'Fresh mozzarella, tomato sauce, basil', price: 18.99, cost: 8.50, sku: 'MI-PIZ-001', barcode: '123456789010' },
-    { businessSlug: 'sushi-master', categoryKey: 'sushi-master-Rolls', name: 'California Roll', description: 'Crab, avocado, cucumber', price: 12.99, cost: 5.80, sku: 'MI-ROL-001', barcode: '123456789011' },
-    { businessSlug: 'coffee-corner', categoryKey: 'coffee-corner-Coffee', name: 'Cappuccino', description: 'Espresso with steamed milk and foam', price: 4.99, cost: 1.80, sku: 'MI-COF-001', barcode: '123456789012' }
-  ];
-  
-  console.log('🔍 DEBUG: Menu item data to insert:', menuItemData);
-  
-  const menuItemsToInsert = menuItemData.map(mi => {
-    const categoryId = categories[mi.categoryKey];
-    console.log(`🔍 DEBUG: Menu item ${mi.name}: businessId=${businesses[mi.businessSlug]}, categoryId=${categoryId}, categoryKey=${mi.categoryKey}`);
-    
-    if (!categoryId) {
-      throw new Error(`Category not found for key: ${mi.categoryKey}. Available categories: ${JSON.stringify(categories)}`);
-    }
-    
-    return {
-      businessId: businesses[mi.businessSlug],
-      categoryId: categoryId,
-      name: mi.name,
-      description: mi.description,
-      price: mi.price,
-      cost: mi.cost,
-      sku: mi.sku,
-      barcode: mi.barcode,
-      preparationTime: 15,
-      isAvailable: true,
-      isVegetarian: false,
-      isVegan: false,
-      isGlutenFree: false,
-      isSpicy: false,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-  });
-  
-  console.log('🔍 DEBUG: Final menu items to insert:', JSON.stringify(menuItemsToInsert, null, 2));
-  
-  await queryInterface.bulkInsert('menu_items', menuItemsToInsert);
 }
 
 export async function down(queryInterface: QueryInterface): Promise<void> {

@@ -1513,6 +1513,130 @@ router.get('/stats/overview', authenticateToken, async (req: AuthRequest, res): 
 
 /**
  * @swagger
+ * /api/orders/table/{tableId}:
+ *   get:
+ *     summary: Get all orders for a specific table
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: tableId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Table ID
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [pending, confirmed, in_progress, ready, served, completed, cancelled]
+ *         description: Filter by order status
+ *       - in: query
+ *         name: includeItems
+ *         schema:
+ *           type: boolean
+ *           default: true
+ *         description: Include order items in response
+ *     responses:
+ *       200:
+ *         description: Table orders retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Order'
+ *       404:
+ *         description: Table not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get('/table/:tableId', authenticateToken, async (req: AuthRequest, res): Promise<void> => {
+  try {
+    const businessId = req.user?.businessId;
+    if (!businessId) {
+      res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+      return;
+    }
+
+    const tableId = parseInt(req.params.tableId || '0');
+    const status = req.query.status as string;
+    const includeItems = req.query.includeItems !== 'false';
+
+    // Verify table exists and belongs to business
+    const table = await TableModel.findOne({
+      where: { id: tableId, businessId }
+    });
+
+    if (!table) {
+      res.status(404).json({
+        success: false,
+        message: 'Table not found'
+      });
+      return;
+    }
+
+    const whereClause: any = { 
+      businessId, 
+      tableId,
+      orderType: OrderType.DINE_IN
+    };
+
+    if (status) {
+      whereClause.status = status;
+    }
+
+    const includeOptions = includeItems ? [{
+      model: OrderItemModel,
+      as: 'orderItems',
+      include: [{
+        model: MenuItemModel,
+        as: 'menuItem',
+        attributes: ['id', 'name', 'description', 'price', 'sku']
+      }]
+    }] : [];
+
+    const orders = await OrderModel.findAll({
+      where: whereClause,
+      include: includeOptions,
+      order: [['createdAt', 'DESC']]
+    });
+
+    logger(`Found ${orders.length} orders for table ${tableId} in business ${businessId}`);
+
+    res.json({
+      success: true,
+      data: orders
+    });
+  } catch (error) {
+    logger(`Error getting table orders: ${error}`);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get table orders'
+    });
+  }
+});
+
+/**
+ * @swagger
  * /api/orders/{id}/complete:
  *   post:
  *     summary: Complete an order and update table status

@@ -23,6 +23,14 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
         key: 'id'
       },
     },
+    itemId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'items',
+        key: 'id'
+      },
+    },
     name: {
       type: DataTypes.STRING(100),
       allowNull: false,

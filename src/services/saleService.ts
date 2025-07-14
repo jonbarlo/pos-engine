@@ -2,6 +2,7 @@ import { Model, QueryTypes } from 'sequelize';
 import { SaleModel, SaleAttributes, SaleCreationAttributes } from '../models/SaleModel';
 import { SaleItemModel } from '../models/SaleItemModel';
 import { ItemModel } from '../models/ItemModel';
+import { MenuItemModel } from '../models/MenuItemModel';
 import { UserModel } from '../models/UserModel';
 import { OrderModel, OrderStatus, OrderType } from '../models/OrderModel';
 import { OrderItemModel } from '../models/OrderItemModel';
@@ -250,15 +251,21 @@ export class SaleService {
         await Promise.all(saleItemPromises);
         logger(`DEBUG: All sale items created successfully`);
 
-        // Update item stock
+        // Update item stock - now using menu item's associated inventory item
         const stockUpdatePromises = orderItems.map(async item => {
-          const itemModel = await ItemModel.findByPk(item.itemId);
-          if (itemModel) {
-            const newStock = Math.max(0, itemModel.stock - item.quantity);
-            await itemModel.update({ stock: newStock }, { transaction });
-            logger(`DEBUG: Updated stock for item ${item.itemId} to ${newStock}`);
+          // First, get the menu item to find its associated inventory item
+          const menuItem = await MenuItemModel.findByPk(item.itemId);
+          if (menuItem && menuItem.itemId) {
+            const itemModel = await ItemModel.findByPk(menuItem.itemId);
+            if (itemModel) {
+              const newStock = Math.max(0, itemModel.stock - item.quantity);
+              await itemModel.update({ stock: newStock }, { transaction });
+              logger(`DEBUG: Updated stock for inventory item ${menuItem.itemId} (from menu item ${item.itemId}) to ${newStock}`);
+            } else {
+              logger(`WARNING: Inventory item ${menuItem.itemId} not found for stock update`);
+            }
           } else {
-            logger(`WARNING: Item ${item.itemId} not found for stock update`);
+            logger(`WARNING: Menu item ${item.itemId} not found or has no associated inventory item`);
           }
         });
 
@@ -376,9 +383,23 @@ export class SaleService {
 
       logger(`DEBUG: Created order ${order.id} from sale ${sale.id}`);
 
+      // Fetch all menu items at once to reduce database calls
+      const itemIds = orderItems.map(item => item.itemId);
+      logger(`DEBUG: Fetching menu items with IDs: ${itemIds.join(', ')}`);
+      
+      const allMenuItems = await MenuItemModel.findAll({
+        where: { id: itemIds },
+        transaction
+      });
+      
+      logger(`DEBUG: Found ${allMenuItems.length} menu items out of ${itemIds.length} requested`);
+      
+      // Create a map for quick lookup
+      const itemMap = new Map(allMenuItems.map(item => [item.id, item]));
+
       // Create order items
       for (const item of orderItems) {
-        const itemModel = await ItemModel.findByPk(item.itemId);
+        const itemModel = itemMap.get(item.itemId);
         if (itemModel) {
           await OrderItemModel.create({
             orderId: order.id,
@@ -395,19 +416,19 @@ export class SaleService {
       logger(`DEBUG: Created order items for order ${order.id}`);
 
       // Create kitchen order with actual item names
-      const kitchenItems = await Promise.all(orderItems.map(async (item, index) => {
-        const itemModel = await ItemModel.findByPk(item.itemId);
+      const kitchenItems = orderItems.map((item, index) => {
+        const itemModel = itemMap.get(item.itemId);
         return {
-        id: index + 1,
+          id: index + 1,
           itemName: itemModel?.name || `Item ${item.itemId}`,
-        quantity: item.quantity,
-        status: 'pending' as const,
-        specialInstructions: '',
-        modifications: [],
+          quantity: item.quantity,
+          status: 'pending' as const,
+          specialInstructions: '',
+          modifications: [],
           allergens: [],
-        preparationTime: 15 // Default preparation time
+          preparationTime: 15 // Default preparation time
         };
-      }));
+      });
 
       const kitchenOrder = await KitchenOrderModel.create({
         businessId: sale.businessId,
@@ -468,9 +489,22 @@ export class SaleService {
 
       logger(`DEBUG: Created order ${order.id} from sale ${sale.id} (recovery mode)`);
 
+      // Fetch all menu items at once to reduce database calls
+      const itemIds = orderItems.map(item => item.itemId);
+      logger(`DEBUG: Fetching menu items with IDs: ${itemIds.join(', ')} (recovery mode)`);
+      
+      const allMenuItems = await MenuItemModel.findAll({
+        where: { id: itemIds }
+      });
+      
+      logger(`DEBUG: Found ${allMenuItems.length} menu items out of ${itemIds.length} requested (recovery mode)`);
+      
+      // Create a map for quick lookup
+      const itemMap = new Map(allMenuItems.map(item => [item.id, item]));
+
       // Create order items
       for (const item of orderItems) {
-        const itemModel = await ItemModel.findByPk(item.itemId);
+        const itemModel = itemMap.get(item.itemId);
         if (itemModel) {
           await OrderItemModel.create({
             orderId: order.id,
@@ -487,19 +521,19 @@ export class SaleService {
       logger(`DEBUG: Created order items for order ${order.id} (recovery mode)`);
 
       // Create kitchen order with actual item names
-      const kitchenItems = await Promise.all(orderItems.map(async (item, index) => {
-        const itemModel = await ItemModel.findByPk(item.itemId);
+      const kitchenItems = orderItems.map((item, index) => {
+        const itemModel = itemMap.get(item.itemId);
         return {
-        id: index + 1,
+          id: index + 1,
           itemName: itemModel?.name || `Item ${item.itemId}`,
-        quantity: item.quantity,
-        status: 'pending' as const,
-        specialInstructions: '',
-        modifications: [],
+          quantity: item.quantity,
+          status: 'pending' as const,
+          specialInstructions: '',
+          modifications: [],
           allergens: [],
-        preparationTime: 15 // Default preparation time
+          preparationTime: 15 // Default preparation time
         };
-      }));
+      });
 
       const kitchenOrder = await KitchenOrderModel.create({
         businessId: sale.businessId,

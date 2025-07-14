@@ -4,6 +4,7 @@ export interface MenuItemAttributes {
   id: number;
   businessId: number;
   categoryId: number;
+  itemId?: number;
   name: string;
   description?: string;
   price: number;
@@ -42,6 +43,7 @@ export class MenuItemModel extends Model<MenuItemAttributes, MenuItemCreationAtt
   public id!: number;
   public businessId!: number;
   public categoryId!: number;
+  public itemId?: number;
   public name!: string;
   public description?: string;
   public price!: number;
@@ -88,6 +90,14 @@ export class MenuItemModel extends Model<MenuItemAttributes, MenuItemCreationAtt
         key: 'id',
       },
       onDelete: 'CASCADE',
+    },
+    itemId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'items',
+        key: 'id',
+      },
     },
     name: {
       type: DataTypes.STRING(100),

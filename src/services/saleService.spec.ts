@@ -5,6 +5,7 @@ import { OrderModel } from '../models/OrderModel';
 import { OrderItemModel } from '../models/OrderItemModel';
 import { KitchenOrderModel } from '../models/KitchenOrderModel';
 import { ItemModel } from '../models/ItemModel';
+import { MenuItemModel } from '../models/MenuItemModel';
 import { UserModel } from '../models/UserModel';
 import { BusinessModel } from '../models/BusinessModel';
 
@@ -15,6 +16,7 @@ jest.mock('../models/OrderModel');
 jest.mock('../models/OrderItemModel');
 jest.mock('../models/KitchenOrderModel');
 jest.mock('../models/ItemModel');
+jest.mock('../models/MenuItemModel');
 jest.mock('../models/UserModel');
 jest.mock('../models/BusinessModel');
 jest.mock('../utils/logger');
@@ -59,6 +61,11 @@ describe('SaleService', () => {
       // Mock successful item stock update
       const mockItem = { update: jest.fn() };
       (ItemModel.findByPk as jest.Mock).mockResolvedValue(mockItem);
+      
+      // Mock MenuItemModel.findAll for the optimized code
+      (MenuItemModel.findAll as jest.Mock).mockResolvedValue([
+        { id: 1, name: 'Test Item' }
+      ]);
 
       // Mock order creation to fail
       (OrderModel.create as jest.Mock).mockRejectedValue(new Error('Order creation failed'));
@@ -120,6 +127,11 @@ describe('SaleService', () => {
       // Mock successful item stock update
       const mockItem = { update: jest.fn() };
       (ItemModel.findByPk as jest.Mock).mockResolvedValue(mockItem);
+      
+      // Mock MenuItemModel.findAll for the optimized code
+      (MenuItemModel.findAll as jest.Mock).mockResolvedValue([
+        { id: 1, name: 'Test Item' }
+      ]);
 
       // Mock successful order creation
       const mockOrder = { id: 1, orderNumber: 'ORD-123' };
@@ -138,6 +150,11 @@ describe('SaleService', () => {
       // Mock successful kitchen order creation
       const mockKitchenOrder = { id: 1 };
       (KitchenOrderModel.create as jest.Mock).mockResolvedValue(mockKitchenOrder);
+      
+      // Mock MenuItemModel.findAll for the optimized code
+      (MenuItemModel.findAll as jest.Mock).mockResolvedValue([
+        { id: 1, name: 'Test Item' }
+      ]);
 
       const saleData = {
         businessId: 1,
@@ -205,6 +222,11 @@ describe('SaleService', () => {
       // Mock successful kitchen order creation
       const mockKitchenOrder = { id: 1 };
       (KitchenOrderModel.create as jest.Mock).mockResolvedValue(mockKitchenOrder);
+      
+      // Mock MenuItemModel.findAll for the optimized code
+      (MenuItemModel.findAll as jest.Mock).mockResolvedValue([
+        { id: 1, name: 'Test Item' }
+      ]);
 
       const result = await SaleService.createMissingOrdersForSales(1);
 

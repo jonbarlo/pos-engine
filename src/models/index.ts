@@ -166,10 +166,6 @@ export const setupAssociations = (): void => {
     foreignKey: 'orderId',
     as: 'order'
   });
-  OrderItemModel.belongsTo(ItemModel, {
-    foreignKey: 'itemId',
-    as: 'item'
-  });
   OrderItemModel.belongsTo(MenuItemModel, {
     foreignKey: 'itemId',
     as: 'menuItem'

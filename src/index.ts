@@ -611,7 +611,7 @@ async function startServer() {
     const saleRoutes = (await import('./routes/sales')).default;
     const orderRoutes = (await import('./routes/orders')).default;
     const customerRoutes = (await import('./routes/customers')).default;
-    // const menuRoutes = (await import('./routes/menuRoutes')).default;
+    const menuRoutes = (await import('./routes/menuRoutes')).default;
     const tableRoutes = (await import('./routes/tables')).default;
     const reservationRoutes = (await import('./routes/reservations')).default;
     const deliveryRoutes = (await import('./routes/deliveries')).default;
@@ -626,7 +626,7 @@ async function startServer() {
     app.use('/api/sales', saleRoutes);
     app.use('/api/orders', orderRoutes);
     app.use('/api/customers', customerRoutes);
-    // app.use('/api/menu', menuRoutes);
+    app.use('/api/menu', menuRoutes);
     app.use('/api/tables', tableRoutes);
     app.use('/api/reservations', reservationRoutes);
     app.use('/api/deliveries', deliveryRoutes);
@@ -637,6 +637,71 @@ async function startServer() {
     // Mobile app compatibility routes
     // Alias for /api/messages to redirect to staff-messages
     app.use('/api/messages', staffMessagesRoutes);
+    
+    // Alias for /api/menu-items to redirect to menu/items
+    app.get('/api/menu-items', async (req, res) => {
+      try {
+        // Import the menu items route handler dynamically
+        const { authenticateToken } = await import('./middleware/auth');
+        const { isRestaurantBusiness } = await import('./utils/businessTypeCheck');
+        const { MenuItemModel } = await import('./models');
+        
+        // Apply authentication middleware
+        authenticateToken(req, res, async () => {
+          try {
+            const businessId = parseInt(req.query.businessId as string);
+            if (!businessId) {
+              res.status(400).json({ success: false, message: 'Business ID is required' });
+              return;
+            }
+
+            // Check if business is restaurant type
+            if (!(await isRestaurantBusiness(businessId))) {
+              res.status(403).json({ success: false, message: 'Menu management is only available for restaurant businesses' });
+              return;
+            }
+
+            const whereClause: any = { businessId };
+            
+            // Apply filters
+            if (req.query.categoryId) {
+              whereClause.categoryId = parseInt(req.query.categoryId as string);
+            }
+            if (req.query.isAvailable !== undefined) {
+              whereClause.isAvailable = req.query.isAvailable === 'true';
+            }
+            if (req.query.available !== undefined) {
+              whereClause.isAvailable = req.query.available === 'true';
+            }
+            if (req.query.vegetarian !== undefined) {
+              whereClause.isVegetarian = req.query.vegetarian === 'true';
+            }
+            if (req.query.vegan !== undefined) {
+              whereClause.isVegan = req.query.vegan === 'true';
+            }
+            if (req.query.glutenFree !== undefined) {
+              whereClause.isGlutenFree = req.query.glutenFree === 'true';
+            }
+            if (req.query.spicy !== undefined) {
+              whereClause.isSpicy = req.query.spicy === 'true';
+            }
+
+            const items = await MenuItemModel.findAll({
+              where: whereClause,
+              order: [['categoryId', 'ASC'], ['name', 'ASC']]
+            });
+
+            res.json({ success: true, data: items });
+          } catch (error) {
+            console.error('Error fetching menu items:', error);
+            res.status(500).json({ success: false, message: 'Internal server error' });
+          }
+        });
+      } catch (error) {
+        console.error('Error in menu-items alias:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+      }
+    });
     
     // Promotions endpoint (filtered staff messages)
     app.get('/api/promotions', async (req, res) => {
