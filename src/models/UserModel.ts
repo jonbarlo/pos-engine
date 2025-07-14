@@ -4,9 +4,17 @@ export enum UserRole {
   ADMIN = 'admin',
   OWNER = 'owner',
   MANAGER = 'manager',
-  WAITSTAFF = 'waitstaff',
+  WAIT_STAFF = 'wait_staff',
   CASHIER = 'cashier',
+  KITCHEN_STAFF = 'kitchen_staff',
   VIEWER = 'viewer'
+}
+
+export enum KitchenAssignment {
+  KITCHEN_READ = 'kitchen_read',
+  KITCHEN_WRITE = 'kitchen_write',
+  KITCHEN_MANAGER = 'kitchen_manager',
+  NONE = 'none'
 }
 
 export interface UserAttributes {
@@ -17,14 +25,14 @@ export interface UserAttributes {
   password: string;
   role: UserRole;
   isActive: boolean;
-  assignment?: string | null;
+  assignment?: KitchenAssignment | null;
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface UserCreationAttributes extends Omit<UserAttributes, 'id' | 'isActive' | 'createdAt' | 'updatedAt'> {
   isActive?: boolean;
-  assignment?: string | null;
+  assignment?: KitchenAssignment | null;
 }
 
 export class UserModel extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
@@ -35,7 +43,7 @@ export class UserModel extends Model<UserAttributes, UserCreationAttributes> imp
   public password!: string;
   public role!: UserRole;
   public isActive!: boolean;
-  public assignment!: string | null;
+  public assignment!: KitchenAssignment | null;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 
@@ -103,9 +111,12 @@ export const initializeUserModel = (sequelize: Sequelize): void => {
         defaultValue: true
       },
       assignment: {
-        type: DataTypes.STRING(50),
+        type: DataTypes.ENUM(...Object.values(KitchenAssignment)),
         allowNull: true,
-        defaultValue: null
+        defaultValue: KitchenAssignment.NONE,
+        validate: {
+          isIn: [Object.values(KitchenAssignment)]
+        }
       },
       createdAt: {
         type: DataTypes.DATE,
@@ -132,6 +143,9 @@ export const initializeUserModel = (sequelize: Sequelize): void => {
         },
         {
           fields: ['role']
+        },
+        {
+          fields: ['assignment']
         },
         {
           fields: ['isActive']

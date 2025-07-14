@@ -28,14 +28,6 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       type: DataTypes.STRING(100),
       allowNull: false
     },
-    recipientId: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      references: {
-        model: 'users',
-        key: 'id'
-      },
-    },
     messageType: {
       type: DataTypes.ENUM('announcement', 'inventory_alert', 'promotion', 'discount', 'urgent', 'general', 'order_update', 'kitchen_alert', 'staff_notice', 'emergency', 'maintenance', 'training'),
       allowNull: false,
@@ -54,23 +46,39 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       allowNull: false,
       defaultValue: 'all'
     },
-    priority: {
-      type: DataTypes.ENUM('low', 'normal', 'high', 'urgent'),
-      allowNull: false,
-      defaultValue: 'normal'
+    recipientIds: {
+      type: DataTypes.TEXT,
+      allowNull: true
     },
     status: {
       type: DataTypes.ENUM('sent', 'read', 'acknowledged', 'expired'),
       allowNull: false,
       defaultValue: 'sent'
     },
+    priority: {
+      type: DataTypes.ENUM('low', 'normal', 'high', 'urgent'),
+      allowNull: false,
+      defaultValue: 'normal'
+    },
+    readBy: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    readAt: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
     isRead: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: false
     },
-    readAt: {
-      type: DataTypes.DATE,
+    acknowledgedBy: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    metadata: {
+      type: DataTypes.TEXT,
       allowNull: true
     },
     expiresAt: {
@@ -92,12 +100,13 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   // Add indexes
   await queryInterface.addIndex('staff_messages', ['businessId']);
   await queryInterface.addIndex('staff_messages', ['senderId']);
-  await queryInterface.addIndex('staff_messages', ['recipientId']);
+
   await queryInterface.addIndex('staff_messages', ['messageType']);
   await queryInterface.addIndex('staff_messages', ['priority']);
   await queryInterface.addIndex('staff_messages', ['status']);
   await queryInterface.addIndex('staff_messages', ['isRead']);
   await queryInterface.addIndex('staff_messages', ['createdAt']);
+  await queryInterface.addIndex('staff_messages', ['expiresAt']);
 }
 
 export async function down(queryInterface: QueryInterface): Promise<void> {

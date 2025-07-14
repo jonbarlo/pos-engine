@@ -183,7 +183,8 @@ export class AuthService {
                 userId: user.id,
                 businessId: user.businessId,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                assignment: user.assignment
             },
             JWT_SECRET,
             { expiresIn: '24h' }

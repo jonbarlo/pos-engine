@@ -1,6 +1,6 @@
 import { QueryInterface, QueryTypes } from 'sequelize';
 import { v4 as uuidv4 } from 'uuid';
-import { UserRole } from '../../models/UserModel';
+import { UserRole, KitchenAssignment } from '../../models/UserModel';
 import { OrderStatus, OrderType } from '../../models/OrderModel';
 import { TableStatus } from '../../models/TableModel';
 import { SaleStatus } from '../../models/SaleModel';
@@ -87,25 +87,25 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   // 2. Create Users
   const userData = [
     // Italian Delight
-    { businessSlug: 'italian-delight', name: 'Marco Rossi', email: 'marco@italiandelight.com', role: UserRole.OWNER, assignment: 'Kitchen Manager' },
-    { businessSlug: 'italian-delight', name: 'Sofia Bianchi', email: 'sofia@italiandelight.com', role: UserRole.MANAGER, assignment: 'Floor Manager' },
-    { businessSlug: 'italian-delight', name: 'Giuseppe Verdi', email: 'giuseppe@italiandelight.com', role: UserRole.WAITSTAFF, assignment: 'Section A' },
-    { businessSlug: 'italian-delight', name: 'Maria Esposito', email: 'maria@italiandelight.com', role: UserRole.WAITSTAFF, assignment: 'Section B' },
-    { businessSlug: 'italian-delight', name: 'Antonio Romano', email: 'antonio@italiandelight.com', role: UserRole.CASHIER, assignment: 'Front Counter' },
-    { businessSlug: 'italian-delight', name: 'Elena Conti', email: 'elena@italiandelight.com', role: UserRole.VIEWER, assignment: 'kitchen' },
-    { businessSlug: 'italian-delight', name: 'Carlo Moretti', email: 'carlo@italiandelight.com', role: UserRole.ADMIN, assignment: 'System Admin' },
+    { businessSlug: 'italian-delight', name: 'Marco Rossi', email: 'marco@italiandelight.com', role: UserRole.OWNER, assignment: KitchenAssignment.KITCHEN_MANAGER },
+    { businessSlug: 'italian-delight', name: 'Sofia Bianchi', email: 'sofia@italiandelight.com', role: UserRole.MANAGER, assignment: KitchenAssignment.NONE },
+    { businessSlug: 'italian-delight', name: 'Giuseppe Verdi', email: 'giuseppe@italiandelight.com', role: UserRole.WAIT_STAFF, assignment: KitchenAssignment.NONE },
+    { businessSlug: 'italian-delight', name: 'Maria Esposito', email: 'maria@italiandelight.com', role: UserRole.WAIT_STAFF, assignment: KitchenAssignment.NONE },
+    { businessSlug: 'italian-delight', name: 'Antonio Romano', email: 'antonio@italiandelight.com', role: UserRole.CASHIER, assignment: KitchenAssignment.NONE },
+    { businessSlug: 'italian-delight', name: 'Elena Conti', email: 'elena@italiandelight.com', role: UserRole.VIEWER, assignment: KitchenAssignment.KITCHEN_READ },
+    { businessSlug: 'italian-delight', name: 'Carlo Moretti', email: 'carlo@italiandelight.com', role: UserRole.ADMIN, assignment: KitchenAssignment.NONE },
     // Sushi Master
-    { businessSlug: 'sushi-master', name: 'Yuki Tanaka', email: 'yuki@sushimaster.com', role: UserRole.OWNER, assignment: 'Head Chef' },
-    { businessSlug: 'sushi-master', name: 'Kenji Yamamoto', email: 'kenji@sushimaster.com', role: UserRole.MANAGER, assignment: 'Operations Manager' },
-    { businessSlug: 'sushi-master', name: 'Aiko Sato', email: 'aiko@sushimaster.com', role: UserRole.WAITSTAFF, assignment: 'Main Floor' },
-    { businessSlug: 'sushi-master', name: 'Hiroshi Nakamura', email: 'hiroshi@sushimaster.com', role: UserRole.CASHIER, assignment: 'Cash Register' },
-    { businessSlug: 'sushi-master', name: 'Mika Suzuki', email: 'mika@sushimaster.com', role: UserRole.VIEWER, assignment: 'kitchen' },
+    { businessSlug: 'sushi-master', name: 'Yuki Tanaka', email: 'yuki@sushimaster.com', role: UserRole.OWNER, assignment: KitchenAssignment.KITCHEN_MANAGER },
+    { businessSlug: 'sushi-master', name: 'Kenji Yamamoto', email: 'kenji@sushimaster.com', role: UserRole.MANAGER, assignment: KitchenAssignment.NONE },
+    { businessSlug: 'sushi-master', name: 'Aiko Sato', email: 'aiko@sushimaster.com', role: UserRole.WAIT_STAFF, assignment: KitchenAssignment.NONE },
+    { businessSlug: 'sushi-master', name: 'Hiroshi Nakamura', email: 'hiroshi@sushimaster.com', role: UserRole.CASHIER, assignment: KitchenAssignment.NONE },
+    { businessSlug: 'sushi-master', name: 'Mika Suzuki', email: 'mika@sushimaster.com', role: UserRole.VIEWER, assignment: KitchenAssignment.KITCHEN_READ },
     // Coffee Corner
-    { businessSlug: 'coffee-corner', name: 'Sarah Johnson', email: 'sarah@coffeecorner.com', role: UserRole.OWNER, assignment: 'Owner' },
-    { businessSlug: 'coffee-corner', name: 'Mike Chen', email: 'mike@coffeecorner.com', role: UserRole.MANAGER, assignment: 'Store Manager' },
-    { businessSlug: 'coffee-corner', name: 'Emma Davis', email: 'emma@coffeecorner.com', role: UserRole.WAITSTAFF, assignment: 'Barista' },
-    { businessSlug: 'coffee-corner', name: 'Alex Thompson', email: 'alex@coffeecorner.com', role: UserRole.CASHIER, assignment: 'Cashier' },
-    { businessSlug: 'coffee-corner', name: 'Lisa Wang', email: 'lisa@coffeecorner.com', role: UserRole.VIEWER, assignment: 'kitchen' }
+    { businessSlug: 'coffee-corner', name: 'Sarah Johnson', email: 'sarah@coffeecorner.com', role: UserRole.OWNER, assignment: KitchenAssignment.NONE },
+    { businessSlug: 'coffee-corner', name: 'Mike Chen', email: 'mike@coffeecorner.com', role: UserRole.MANAGER, assignment: KitchenAssignment.NONE },
+    { businessSlug: 'coffee-corner', name: 'Emma Davis', email: 'emma@coffeecorner.com', role: UserRole.WAIT_STAFF, assignment: KitchenAssignment.NONE },
+    { businessSlug: 'coffee-corner', name: 'Alex Thompson', email: 'alex@coffeecorner.com', role: UserRole.CASHIER, assignment: KitchenAssignment.NONE },
+    { businessSlug: 'coffee-corner', name: 'Lisa Wang', email: 'lisa@coffeecorner.com', role: UserRole.VIEWER, assignment: KitchenAssignment.KITCHEN_READ }
   ];
   const hashedPassword = await bcrypt.hash('Password123', 10);
   await queryInterface.bulkInsert('users', userData.map(u => ({

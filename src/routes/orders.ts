@@ -7,7 +7,8 @@ import {
   BusinessModel, 
   OrderItemModel 
 } from '../models';
-import { OrderStatus } from '../models/OrderModel';
+import { OrderStatus, OrderType } from '../models/OrderModel';
+import { TableStatus } from '../models/TableModel';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { logger } from '../utils/logger';
 import { Op } from 'sequelize';
@@ -538,6 +539,22 @@ router.post('/', authenticateToken, async (req: AuthRequest, res): Promise<void>
       } as any);
     }
 
+    // Update table status to occupied if this is a dine-in order with tableId
+    if (orderType === OrderType.DINE_IN && tableId) {
+      const table = await TableModel.findOne({
+        where: { id: tableId, businessId }
+      });
+      
+      if (table) {
+        await table.update({
+          status: TableStatus.OCCUPIED,
+          currentOrderId: order.id,
+          serverId: req.user?.userId || 1
+        });
+        logger(`Updated table ${tableId} status to occupied for order ${order.orderNumber}`);
+      }
+    }
+
     logger(`Created order ${order.orderNumber} for business ${businessId}, type: ${orderType}`);
 
     // Reload order with items
@@ -567,6 +584,233 @@ router.post('/', authenticateToken, async (req: AuthRequest, res): Promise<void>
     res.status(500).json({
       success: false,
       message: 'Failed to create order'
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/orders/table:
+ *   post:
+ *     summary: Create a new order for a specific table
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - tableId
+ *               - items
+ *             properties:
+ *               tableId:
+ *                 type: integer
+ *                 description: Table ID for the order
+ *               customerId:
+ *                 type: integer
+ *                 description: Optional customer ID
+ *               items:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     itemId:
+ *                       type: integer
+ *                       description: Menu item ID
+ *                     quantity:
+ *                       type: integer
+ *                       description: Quantity ordered
+ *                     notes:
+ *                       type: string
+ *                       description: Item-specific notes
+ *               notes:
+ *                 type: string
+ *                 description: General order notes
+ *     responses:
+ *       201:
+ *         description: Order created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/Order'
+ *                 message:
+ *                   type: string
+ *                   example: Order created successfully
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.post('/table', authenticateToken, async (req: AuthRequest, res): Promise<void> => {
+  try {
+    const businessId = req.user?.businessId;
+    if (!businessId) {
+      res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+      return;
+    }
+
+    const {
+      tableId,
+      customerId,
+      items,
+      notes
+    } = req.body;
+
+    if (!tableId || !items || !Array.isArray(items) || items.length === 0) {
+      res.status(400).json({
+        success: false,
+        message: 'tableId and items are required'
+      });
+      return;
+    }
+
+    // Validate table exists and belongs to business
+    const table = await TableModel.findOne({
+      where: { id: tableId, businessId }
+    });
+
+    if (!table) {
+      res.status(400).json({
+        success: false,
+        message: 'Invalid table ID'
+      });
+      return;
+    }
+
+    // Validate items
+    for (const item of items) {
+      if (!item.itemId || !item.quantity) {
+        res.status(400).json({
+          success: false,
+          message: 'Each item must have itemId and quantity'
+        });
+        return;
+      }
+    }
+
+    // Calculate totals
+    let subtotal = 0;
+    const orderItems = [];
+
+    for (const item of items) {
+      const menuItem = await MenuItemModel.findByPk(item.itemId);
+      if (!menuItem || menuItem.businessId !== businessId) {
+        res.status(400).json({
+          success: false,
+          message: `Invalid menu item: ${item.itemId}`
+        });
+        return;
+      }
+
+      const itemTotal = menuItem.price * item.quantity;
+      subtotal += itemTotal;
+
+      orderItems.push({
+        itemId: item.itemId,
+        itemName: menuItem.name,
+        quantity: item.quantity,
+        unitPrice: menuItem.price,
+        totalPrice: itemTotal,
+        notes: item.notes
+      });
+    }
+
+    // Get business tax rate
+    const business = await BusinessModel.findByPk(businessId);
+    const taxRate = business?.taxRate || 0;
+    const taxAmount = subtotal * (taxRate / 100);
+    const totalAmount = subtotal + taxAmount;
+
+    // Generate order number
+    const timestamp = Date.now();
+    const random = Math.floor(Math.random() * 1000);
+    const orderNumber = `ORD-${timestamp}-${random}`;
+
+    // Create order
+    const order = await OrderModel.create({
+      businessId,
+      serverId: req.user?.userId || 1, // Use current user as server
+      customerId,
+      tableId,
+      orderNumber,
+      orderType: OrderType.DINE_IN,
+      status: OrderStatus.PENDING,
+      subtotal,
+      taxAmount,
+      discountAmount: 0,
+      totalAmount,
+      notes
+    });
+
+    // Create order items
+    for (const item of orderItems) {
+      await OrderItemModel.create({
+        orderId: order.id,
+        itemId: item.itemId,
+        itemName: item.itemName,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        totalPrice: item.totalPrice,
+        notes: item.notes
+      } as any);
+    }
+
+    // Update table status to occupied and link the order
+    await table.update({
+      status: TableStatus.OCCUPIED,
+      currentOrderId: order.id,
+      serverId: req.user?.userId || 1
+    });
+
+    logger(`Created table order ${order.orderNumber} for table ${tableId} in business ${businessId} - Table status updated to occupied`);
+
+    // Reload order with items
+    const createdOrder = await OrderModel.findByPk(order.id, {
+      include: [
+        {
+          model: OrderItemModel,
+          as: 'orderItems',
+          include: [
+            {
+              model: MenuItemModel,
+              as: 'menuItem',
+              attributes: ['id', 'name', 'description', 'price']
+            }
+          ]
+        }
+      ]
+    });
+
+    res.status(201).json({
+      success: true,
+      data: createdOrder,
+      message: 'Table order created successfully'
+    });
+  } catch (error) {
+    logger(`Error creating table order: ${error}`);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create table order'
     });
   }
 });
@@ -666,6 +910,33 @@ router.patch('/:id/status', authenticateToken, async (req: AuthRequest, res): Pr
     }
 
     await order.update({ status });
+
+    // Update table status based on order status for dine-in orders
+    if (order.tableId && order.orderType === OrderType.DINE_IN) {
+      const table = await TableModel.findOne({
+        where: { id: order.tableId, businessId }
+      });
+
+      if (table) {
+        if (status === OrderStatus.COMPLETED || status === OrderStatus.CANCELLED) {
+          // Free up the table
+          await table.update({
+            status: TableStatus.AVAILABLE,
+            currentOrderId: null,
+            serverId: null
+          });
+          logger(`Order ${id} ${status} - Table ${order.tableId} status updated to available`);
+        } else if (status === OrderStatus.PENDING || status === OrderStatus.CONFIRMED) {
+          // Ensure table is marked as occupied
+          await table.update({
+            status: TableStatus.OCCUPIED,
+            currentOrderId: order.id,
+            serverId: req.user?.userId || 1
+          });
+          logger(`Order ${id} ${status} - Table ${order.tableId} status updated to occupied`);
+        }
+      }
+    }
 
     logger(`Updated order ${id} status to: ${status}`);
 
@@ -1236,6 +1507,117 @@ router.get('/stats/overview', authenticateToken, async (req: AuthRequest, res): 
     res.status(500).json({
       success: false,
       message: 'Failed to get order statistics'
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/orders/{id}/complete:
+ *   post:
+ *     summary: Complete an order and update table status
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Order ID
+ *     responses:
+ *       200:
+ *         description: Order completed and table status updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Order completed successfully
+ *       404:
+ *         description: Order not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.post('/:id/complete', authenticateToken, async (req: AuthRequest, res): Promise<void> => {
+  try {
+    const businessId = req.user?.businessId;
+    if (!businessId) {
+      res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+      return;
+    }
+
+    const { id } = req.params;
+
+    const order = await OrderModel.findOne({
+      where: { id, businessId }
+    });
+
+    if (!order) {
+      res.status(404).json({
+        success: false,
+        message: 'Order not found'
+      });
+      return;
+    }
+
+    if (order.status === OrderStatus.COMPLETED) {
+      res.status(400).json({
+        success: false,
+        message: 'Order is already completed'
+      });
+      return;
+    }
+
+    // Complete the order
+    await order.update({ 
+      status: OrderStatus.COMPLETED,
+      actualReadyTime: new Date()
+    });
+
+    // If this is a table order, update table status
+    if (order.tableId && order.orderType === OrderType.DINE_IN) {
+      const table = await TableModel.findOne({
+        where: { id: order.tableId, businessId }
+      });
+
+      if (table) {
+        await table.update({
+          status: TableStatus.AVAILABLE,
+          currentOrderId: null,
+          serverId: null
+        });
+
+        logger(`Order ${id} completed - Table ${order.tableId} status updated to available`);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'Order completed successfully'
+    });
+  } catch (error) {
+    logger(`Error completing order: ${error}`);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to complete order'
     });
   }
 });

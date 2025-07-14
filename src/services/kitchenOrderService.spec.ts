@@ -1,7 +1,7 @@
 import { KitchenOrderService } from './kitchenOrderService';
 import { KitchenOrderModel } from '../models/KitchenOrderModel';
 import { OrderModel, OrderType, OrderStatus } from '../models/OrderModel';
-import { UserModel, UserRole } from '../models/UserModel';
+import { UserModel, UserRole, KitchenAssignment } from '../models/UserModel';
 import { BusinessModel } from '../models/BusinessModel';
 import { ItemModel } from '../models/ItemModel';
 
@@ -32,7 +32,7 @@ describe('KitchenOrderService', () => {
       password: 'password123',
       role: UserRole.MANAGER,
       businessId: testBusiness.id,
-      assignment: 'kitchen'
+      assignment: KitchenAssignment.KITCHEN_WRITE
     });
 
     // Create test item

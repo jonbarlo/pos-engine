@@ -292,30 +292,19 @@ export class KitchenOrderController {
         return;
       }
 
-      if (!['pending', 'preparing', 'ready', 'served'].includes(status)) {
-        res.status(400).json({ success: false, message: 'Invalid status' });
-        return;
-      }
-
-      logger(`API endpoint PUT /kitchen/orders/${orderId}/items/${itemId}/status was called with status: ${status}`);
+      logger(`API endpoint PUT /kitchen/orders/${orderId}/items/${itemId}/status was called`);
       
-      const updatedOrder = await KitchenOrderService.updateItemStatus(
-        orderIdNum, 
-        businessId, 
-        itemIdNum, 
-        status,
-        assignedTo
-      );
+      const updatedItem = await KitchenOrderService.updateItemStatus(orderIdNum, itemIdNum, businessId, status, assignedTo);
       
-      if (!updatedOrder) {
-        res.status(404).json({ success: false, message: 'Kitchen order not found' });
+      if (!updatedItem) {
+        res.status(404).json({ success: false, message: 'Kitchen order or item not found' });
         return;
       }
 
       res.json({
         success: true,
-        data: updatedOrder,
-        message: `Item status updated to ${status}`
+        data: updatedItem,
+        message: 'Item status updated successfully'
       });
     } catch (error) {
       logger(`Error updating item status: ${error}`);
@@ -348,11 +337,11 @@ export class KitchenOrderController {
 
       const { assignedTo } = req.body;
       if (!assignedTo) {
-        res.status(400).json({ success: false, message: 'Assigned user ID is required' });
+        res.status(400).json({ success: false, message: 'AssignedTo user ID is required' });
         return;
       }
 
-      logger(`API endpoint PUT /kitchen/orders/${id}/assign was called with assignedTo: ${assignedTo}`);
+      logger(`API endpoint PUT /kitchen/orders/${id}/assign was called`);
       
       const updatedOrder = await KitchenOrderService.assignOrder(orderId, businessId, assignedTo);
       

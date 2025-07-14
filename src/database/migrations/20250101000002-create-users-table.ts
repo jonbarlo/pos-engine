@@ -30,7 +30,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       allowNull: false,
     },
     role: {
-      type: DataTypes.ENUM('admin', 'owner', 'manager', 'waitstaff', 'cashier', 'viewer'),
+      type: DataTypes.ENUM('admin', 'owner', 'manager', 'wait_staff', 'cashier', 'kitchen_staff', 'viewer'),
       allowNull: false,
       defaultValue: 'viewer',
     },
@@ -40,9 +40,9 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       defaultValue: true,
     },
     assignment: {
-      type: DataTypes.STRING(50),
+      type: DataTypes.ENUM('kitchen_read', 'kitchen_write', 'kitchen_manager', 'none'),
       allowNull: true,
-      defaultValue: null,
+      defaultValue: 'none',
     },
     createdAt: {
       type: DataTypes.DATE,
@@ -60,6 +60,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   await queryInterface.addIndex('users', ['email'], { unique: true });
   await queryInterface.addIndex('users', ['businessId']);
   await queryInterface.addIndex('users', ['role']);
+  await queryInterface.addIndex('users', ['assignment']);
   await queryInterface.addIndex('users', ['isActive']);
 }
 

@@ -80,9 +80,9 @@ export class StaffMessageRepository implements IStaffMessageRepository {
       };
 
       // Add role-based filtering
-      if (userRole === 'waitstaff') {
+      if (userRole === 'wait_staff') {
         where[Op.or].push({ recipientType: RecipientType.WAITSTAFF });
-      } else if (userRole === 'kitchen' || userRole === 'chef') {
+      } else if (userRole === 'kitchen_staff' || userRole === 'chef') {
         where[Op.or].push({ recipientType: RecipientType.KITCHEN });
       } else if (userRole === 'manager' || userRole === 'admin') {
         where[Op.or].push({ recipientType: RecipientType.MANAGERS });
@@ -161,8 +161,11 @@ export class StaffMessageRepository implements IStaffMessageRepository {
       const readBy = message.readBy || [];
       if (!readBy.includes(userId)) {
         readBy.push(userId);
+        const now = new Date();
         await message.update({ 
           readBy,
+          readAt: now,
+          isRead: true,
           status: readBy.length > 0 ? MessageStatus.READ : MessageStatus.SENT
         });
       }
@@ -223,12 +226,12 @@ export class StaffMessageRepository implements IStaffMessageRepository {
       };
 
       // Add role-based filtering
-      if (userRole === 'waitstaff') {
+      if (userRole === 'wait_staff') {
         where[Op.or] = [
           { recipientType: RecipientType.ALL },
           { recipientType: RecipientType.WAITSTAFF }
         ];
-      } else if (userRole === 'kitchen' || userRole === 'chef') {
+      } else if (userRole === 'kitchen_staff' || userRole === 'chef') {
         where[Op.or] = [
           { recipientType: RecipientType.ALL },
           { recipientType: RecipientType.KITCHEN }

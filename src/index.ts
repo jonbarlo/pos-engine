@@ -634,6 +634,37 @@ async function startServer() {
     app.use('/api/sales', splitBillingRoutes);
     app.use('/api/staff-messages', staffMessagesRoutes);
 
+    // Mobile app compatibility routes
+    // Alias for /api/messages to redirect to staff-messages
+    app.use('/api/messages', staffMessagesRoutes);
+    
+    // Promotions endpoint (filtered staff messages)
+    app.get('/api/promotions', async (req, res) => {
+      try {
+        // Import the staff message controller and auth middleware dynamically
+        const { getStaffMessages } = await import('./controllers/staffMessageController');
+        const { authenticateToken } = await import('./middleware/auth');
+        
+        // Apply authentication middleware
+        authenticateToken(req, res, async () => {
+          try {
+            // Add promotion filter to query
+            req.query.messageType = 'promotion';
+            req.query.isActive = 'true';
+            
+            // Call the staff messages controller
+            await getStaffMessages(req, res);
+          } catch (error) {
+            logger(`Error in promotions endpoint: ${error}`);
+            res.status(500).json({ error: 'Internal server error' });
+          }
+        });
+      } catch (error) {
+        logger(`Error in promotions endpoint: ${error}`);
+        res.status(500).json({ error: 'Internal server error' });
+      }
+    });
+
     logger('Routes registered successfully.');
 
     // Error handling middleware (must be last)

@@ -19,6 +19,7 @@ describe('StaffMessageService', () => {
     recipientType: RecipientType.ALL,
     status: MessageStatus.SENT,
     priority: 'normal',
+    isRead: false,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -39,6 +40,7 @@ describe('StaffMessageService', () => {
       recipientType: RecipientType.ALL,
       status: MessageStatus.SENT,
       priority: 'normal',
+      isRead: false,
     };
     const result = await StaffMessageService.createMessage(data);
     expect(result).toEqual(baseMessage);
@@ -61,9 +63,9 @@ describe('StaffMessageService', () => {
 
   it('gets messages for user', async () => {
     mockRepo.findByRecipient.mockResolvedValue([baseMessage]);
-    const result = await StaffMessageService.getMessagesForUser(1, 1, 'waitstaff');
+    const result = await StaffMessageService.getMessagesForUser(1, 1, 'wait_staff');
     expect(result).toEqual([baseMessage]);
-    expect(mockRepo.findByRecipient).toHaveBeenCalledWith(1, 1, 'waitstaff');
+    expect(mockRepo.findByRecipient).toHaveBeenCalledWith(1, 1, 'wait_staff');
   });
 
   it('updates a message', async () => {
@@ -96,16 +98,16 @@ describe('StaffMessageService', () => {
 
   it('gets unread count', async () => {
     mockRepo.getUnreadCount.mockResolvedValue(3);
-    const result = await StaffMessageService.getUnreadCount(1, 1, 'waitstaff');
+    const result = await StaffMessageService.getUnreadCount(1, 1, 'wait_staff');
     expect(result).toBe(3);
-    expect(mockRepo.getUnreadCount).toHaveBeenCalledWith(1, 1, 'waitstaff');
+    expect(mockRepo.getUnreadCount).toHaveBeenCalledWith(1, 1, 'wait_staff');
   });
 
   it('gets active messages', async () => {
     mockRepo.getActiveMessages.mockResolvedValue([baseMessage]);
-    const result = await StaffMessageService.getActiveMessages(1, 'waitstaff');
+    const result = await StaffMessageService.getActiveMessages(1, 'wait_staff');
     expect(result).toEqual([baseMessage]);
-    expect(mockRepo.getActiveMessages).toHaveBeenCalledWith(1, 'waitstaff');
+    expect(mockRepo.getActiveMessages).toHaveBeenCalledWith(1, 'wait_staff');
   });
 
   it('expires messages', async () => {

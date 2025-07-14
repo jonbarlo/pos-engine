@@ -49,6 +49,8 @@ export interface StaffMessageAttributes {
   priority: 'low' | 'normal' | 'high' | 'urgent';
   expiresAt?: Date;
   readBy?: number[]; // Array of user IDs who have read the message
+  readAt?: Date; // When the message was first read
+  isRead: boolean; // Whether the message has been read
   acknowledgedBy?: number[]; // Array of user IDs who have acknowledged
   metadata?: any; // For additional data like discount codes, promotion details, etc.
   createdAt: Date;
@@ -73,6 +75,8 @@ export class StaffMessageModel extends Model<StaffMessageAttributes, StaffMessag
   public priority!: 'low' | 'normal' | 'high' | 'urgent';
   public expiresAt?: Date;
   public readBy?: number[];
+  public readAt?: Date;
+  public isRead!: boolean;
   public acknowledgedBy?: number[];
   public metadata?: any;
   public readonly createdAt!: Date;
@@ -160,6 +164,15 @@ StaffMessageModel.init(
         this.setDataValue('readBy', JSON.stringify(value));
       },
     } as any,
+    readAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    isRead: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
     acknowledgedBy: {
       type: DataTypes.TEXT,
       allowNull: true,
