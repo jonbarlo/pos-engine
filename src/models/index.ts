@@ -13,6 +13,8 @@ import { initializeMenuItemModel } from './MenuItemModel';
 import { initializeMenuCategoryModel } from './MenuCategoryModel';
 import { initializeDeliveryModel } from './DeliveryModel';
 import { initializeKitchenOrderModel } from './KitchenOrderModel';
+import { FloorPlanModel } from './FloorPlanModel';
+import { TablePositionModel } from './TablePositionModel';
 
 // Import models for associations
 import { BusinessModel } from './BusinessModel';
@@ -48,6 +50,7 @@ export const initializeAllModels = (): void => {
   initializeDeliveryModel(sequelize);
   initializeKitchenOrderModel(sequelize);
   
+  // Floor plan models are already initialized via default export
   // StaffMessageModel is already initialized via default export
   
   // Associations are set up separately for integration tests
@@ -288,6 +291,39 @@ export const setupAssociations = (): void => {
     foreignKey: 'senderId',
     as: 'sender'
   });
+
+  // Floor plan associations
+  BusinessModel.hasMany(FloorPlanModel, {
+    foreignKey: 'businessId',
+    as: 'floorPlans',
+    onDelete: 'CASCADE'
+  });
+
+  FloorPlanModel.belongsTo(BusinessModel, {
+    foreignKey: 'businessId',
+    as: 'floorPlanBusiness'
+  });
+
+  FloorPlanModel.hasMany(TablePositionModel, {
+    foreignKey: 'floorPlanId',
+    as: 'tablePositions',
+    onDelete: 'CASCADE'
+  });
+
+  TablePositionModel.belongsTo(FloorPlanModel, {
+    foreignKey: 'floorPlanId',
+    as: 'floorPlan'
+  });
+
+  TablePositionModel.belongsTo(TableModel, {
+    foreignKey: 'tableId',
+    as: 'table'
+  });
+
+  TableModel.hasMany(TablePositionModel, {
+    foreignKey: 'tableId',
+    as: 'tablePositions'
+  });
 };
 
 export { getSequelize };
@@ -308,7 +344,9 @@ export {
   MenuCategoryModel,
   DeliveryModel,
   KitchenOrderModel,
-  StaffMessageModel
+  StaffMessageModel,
+  FloorPlanModel,
+  TablePositionModel
 };
 
 // Export enums

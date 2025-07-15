@@ -764,6 +764,7 @@ async function startServer() {
     const kitchenRoutes = (await import('./routes/kitchen')).default;
     const splitBillingRoutes = (await import('./routes/splitBilling')).default;
     const staffMessagesRoutes = (await import('./routes/staffMessages')).default;
+    const floorPlanRoutes = (await import('./routes/floorPlans')).default;
     // API routes
     app.use('/api/auth', authRoutes);
     app.use('/api/businesses', businessRoutes);
@@ -780,6 +781,7 @@ async function startServer() {
     app.use('/api/kitchen', kitchenRoutes);
     app.use('/api/sales', splitBillingRoutes);
     app.use('/api/staff-messages', staffMessagesRoutes);
+    app.use('/api/floor-plans', floorPlanRoutes);
 
     // Mobile app compatibility routes
     // Alias for /api/messages to redirect to staff-messages

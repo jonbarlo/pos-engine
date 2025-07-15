@@ -1906,6 +1906,534 @@ Authorization: Bearer <your_jwt_token>
 
 ---
 
+## Sales Analytics Endpoints
+
+### Get Item Performance Analytics
+**GET** `/sales/analytics/items`
+
+**Query Parameters:**
+- `startDate` (optional) - Start date in YYYY-MM-DD format
+- `endDate` (optional) - End date in YYYY-MM-DD format
+- `category` (optional) - Filter by item category
+- `limit` (optional, default: 10) - Number of items to return
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "period": {
+      "startDate": "2025-01-01",
+      "endDate": "2025-01-31"
+    },
+    "items": [
+      {
+        "itemId": 1,
+        "itemName": "Margherita Pizza",
+        "category": "Pizza",
+        "totalQuantity": 45,
+        "totalRevenue": 854.55,
+        "totalCost": 382.50,
+        "profitMargin": 55.2,
+        "averageOrderValue": 18.99,
+        "growthRate": 12.5,
+        "rank": 1
+      }
+    ],
+    "summary": {
+      "totalItems": 25,
+      "totalRevenue": 12500.00,
+      "totalCost": 5625.00,
+      "averageProfitMargin": 55.0
+    }
+  }
+}
+```
+
+### Get Revenue Trends Analytics
+**GET** `/sales/analytics/revenue`
+
+**Query Parameters:**
+- `startDate` (optional) - Start date in YYYY-MM-DD format
+- `endDate` (optional) - End date in YYYY-MM-DD format
+- `groupBy` (optional, default: "day") - Grouping: "day", "week", "month"
+- `includeProjections` (optional, default: false) - Include future projections
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "period": {
+      "startDate": "2025-01-01",
+      "endDate": "2025-01-31"
+    },
+    "trends": [
+      {
+        "date": "2025-01-01",
+        "revenue": 1250.00,
+        "orders": 45,
+        "averageOrderValue": 27.78,
+        "growthRate": 0.0
+      }
+    ],
+    "summary": {
+      "totalRevenue": 37500.00,
+      "totalOrders": 1350,
+      "averageOrderValue": 27.78,
+      "growthRate": 15.2,
+      "projectedRevenue": 43200.00
+    }
+  }
+}
+```
+
+### Get Staff Performance Analytics
+**GET** `/sales/analytics/staff`
+
+**Query Parameters:**
+- `startDate` (optional) - Start date in YYYY-MM-DD format
+- `endDate` (optional) - End date in YYYY-MM-DD format
+- `role` (optional) - Filter by staff role
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "period": {
+      "startDate": "2025-01-01",
+      "endDate": "2025-01-31"
+    },
+    "staff": [
+      {
+        "userId": 1,
+        "userName": "Maria Esposito",
+        "role": "cashier",
+        "totalSales": 12500.00,
+        "totalOrders": 450,
+        "averageOrderValue": 27.78,
+        "customerSatisfaction": 4.8,
+        "efficiency": 95.2
+      }
+    ],
+    "summary": {
+      "totalStaff": 8,
+      "totalRevenue": 37500.00,
+      "averageEfficiency": 92.5
+    }
+  }
+}
+```
+
+### Get Customer Analytics
+**GET** `/sales/analytics/customers`
+
+**Query Parameters:**
+- `startDate` (optional) - Start date in YYYY-MM-DD format
+- `endDate` (optional) - End date in YYYY-MM-DD format
+- `customerType` (optional) - Filter by customer type: "new", "returning", "loyal"
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "period": {
+      "startDate": "2025-01-01",
+      "endDate": "2025-01-31"
+    },
+    "customers": [
+      {
+        "customerId": 1,
+        "customerName": "John Smith",
+        "totalSpent": 1250.00,
+        "totalOrders": 25,
+        "averageOrderValue": 50.00,
+        "lastVisit": "2025-01-30",
+        "loyaltyPoints": 1250,
+        "customerType": "loyal"
+      }
+    ],
+    "summary": {
+      "totalCustomers": 150,
+      "newCustomers": 25,
+      "returningCustomers": 100,
+      "loyalCustomers": 25,
+      "averageCustomerValue": 250.00
+    }
+  }
+}
+```
+
+### Get Inventory Performance Analytics
+**GET** `/sales/analytics/inventory`
+
+**Query Parameters:**
+- `category` (optional) - Filter by item category
+- `stockLevel` (optional) - Filter by stock level: "low", "normal", "high"
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "inventory": [
+      {
+        "itemId": 1,
+        "itemName": "Margherita Pizza Base",
+        "category": "Pizza",
+        "currentStock": 15,
+        "minStock": 10,
+        "maxStock": 100,
+        "stockLevel": "normal",
+        "turnoverRate": 3.2,
+        "daysUntilStockout": 12,
+        "reorderRecommendation": "order_soon"
+      }
+    ],
+    "alerts": [
+      {
+        "type": "low_stock",
+        "itemId": 5,
+        "itemName": "Pepperoni",
+        "currentStock": 3,
+        "minStock": 10
+      }
+    ],
+    "summary": {
+      "totalItems": 50,
+      "lowStockItems": 5,
+      "outOfStockItems": 0,
+      "averageTurnoverRate": 2.8
+    }
+  }
+}
+```
+
+---
+
+## Sales with Items Endpoint
+
+### Get Sale with Complete Item Details
+**GET** `/sales/{id}/with-items`
+
+**Path Parameters:**
+- `id` (integer, required) - Sale ID
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "saleNumber": "SALE-2024-001",
+    "status": "completed",
+    "totalAmount": 39.17,
+    "paymentMethod": "credit_card",
+    "customerName": "John Smith",
+    "customerEmail": "john.smith@email.com",
+    "notes": "Table A2 - Window seat",
+    "payments": [
+      {
+        "amount": 39.17,
+        "method": "credit_card",
+        "customerName": "John Smith",
+        "customerEmail": "john.smith@email.com",
+        "paidAt": "2025-01-01T12:00:00.000Z"
+      }
+    ],
+    "items": [
+      {
+        "id": 1,
+        "itemId": 1,
+        "itemName": "Margherita Pizza",
+        "itemSku": "IT-PIZ-001",
+        "itemBarcode": "123456789001",
+        "itemCategory": "Pizza",
+        "quantity": 1,
+        "unitPrice": 18.99,
+        "totalPrice": 18.99,
+        "discountAmount": 0.00,
+        "finalPrice": 18.99,
+        "notes": "Extra cheese"
+      }
+    ],
+    "createdAt": "2025-01-01T12:00:00.000Z",
+    "updatedAt": "2025-01-01T12:00:00.000Z"
+  }
+}
+```
+
+---
+
+## Floor Plan Management Endpoints
+
+### Get All Floor Plans
+**GET** `/floor-plans`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "name": "Main Dining Room",
+      "width": 1200,
+      "height": 800,
+      "backgroundImage": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&h=800&fit=crop",
+      "isActive": true,
+      "tableCount": 12,
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z"
+    }
+  ]
+}
+```
+
+### Get Floor Plan by ID
+**GET** `/floor-plans/{id}`
+
+**Path Parameters:**
+- `id` (integer, required) - Floor plan ID
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "name": "Main Dining Room",
+    "width": 1200,
+    "height": 800,
+    "backgroundImage": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&h=800&fit=crop",
+    "isActive": true,
+    "tables": [
+      {
+        "id": 1,
+        "tableNumber": "A1",
+        "capacity": 4,
+        "status": "available",
+        "section": "Main Floor",
+        "position": {
+          "x": 150,
+          "y": 200,
+          "rotation": 0,
+          "width": 80,
+          "height": 60
+        }
+      }
+    ],
+    "createdAt": "2025-01-01T00:00:00.000Z",
+    "updatedAt": "2025-01-01T00:00:00.000Z"
+  }
+}
+```
+
+### Create Floor Plan
+**POST** `/floor-plans`
+
+**Required Fields:**
+- `name` (string) - Floor plan name
+- `width` (integer) - Floor plan width in pixels
+- `height` (integer) - Floor plan height in pixels
+
+**Optional Fields:**
+- `backgroundImage` (string) - Background image URL
+- `isActive` (boolean) - Whether floor plan is active
+
+**Request Body:**
+```json
+{
+  "name": "New Floor Plan",
+  "width": 1000,
+  "height": 700,
+  "backgroundImage": "https://example.com/background.jpg",
+  "isActive": true
+}
+```
+
+### Update Floor Plan
+**PUT** `/floor-plans/{id}`
+
+**Path Parameters:**
+- `id` (integer, required) - Floor plan ID
+
+### Delete Floor Plan
+**DELETE** `/floor-plans/{id}`
+
+**Path Parameters:**
+- `id` (integer, required) - Floor plan ID
+
+---
+
+## Table Position Management Endpoints
+
+### Get Table Positions for Floor Plan
+**GET** `/floor-plans/{floorPlanId}/table-positions`
+
+**Path Parameters:**
+- `floorPlanId` (integer, required) - Floor plan ID
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "tableId": 1,
+      "tableNumber": "A1",
+      "tableCapacity": 4,
+      "tableStatus": "available",
+      "tableSection": "Main Floor",
+      "x": 150,
+      "y": 200,
+      "rotation": 0,
+      "width": 80,
+      "height": 60,
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z"
+    }
+  ]
+}
+```
+
+### Create Table Position
+**POST** `/floor-plans/{floorPlanId}/table-positions`
+
+**Path Parameters:**
+- `floorPlanId` (integer, required) - Floor plan ID
+
+**Required Fields:**
+- `tableId` (integer) - Table ID
+- `x` (integer) - X coordinate
+- `y` (integer) - Y coordinate
+
+**Optional Fields:**
+- `rotation` (integer, default: 0) - Rotation in degrees
+- `width` (integer, default: 80) - Width in pixels
+- `height` (integer, default: 60) - Height in pixels
+
+**Request Body:**
+```json
+{
+  "tableId": 1,
+  "x": 150,
+  "y": 200,
+  "rotation": 0,
+  "width": 80,
+  "height": 60
+}
+```
+
+### Update Table Position
+**PUT** `/floor-plans/{floorPlanId}/table-positions/{positionId}`
+
+**Path Parameters:**
+- `floorPlanId` (integer, required) - Floor plan ID
+- `positionId` (integer, required) - Table position ID
+
+### Delete Table Position
+**DELETE** `/floor-plans/{floorPlanId}/table-positions/{positionId}`
+
+**Path Parameters:**
+- `floorPlanId` (integer, required) - Floor plan ID
+- `positionId` (integer, required) - Table position ID
+
+---
+
+## Table Management Endpoints
+
+### Get All Tables
+**GET** `/tables`
+
+**Query Parameters:**
+- `status` (optional) - Filter by table status
+- `section` (optional) - Filter by table section
+- `capacity` (optional) - Filter by minimum capacity
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "tableNumber": "A1",
+      "capacity": 4,
+      "status": "available",
+      "section": "Main Floor",
+      "isActive": true,
+      "currentOrder": null,
+      "server": null,
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z"
+    }
+  ]
+}
+```
+
+### Get Table by ID
+**GET** `/tables/{id}`
+
+**Path Parameters:**
+- `id` (integer, required) - Table ID
+
+### Create Table
+**POST** `/tables`
+
+**Required Fields:**
+- `tableNumber` (string) - Table number/identifier
+- `capacity` (integer) - Table capacity
+- `section` (string) - Table section
+
+**Optional Fields:**
+- `status` (string) - Table status
+- `isActive` (boolean) - Whether table is active
+
+**Request Body:**
+```json
+{
+  "tableNumber": "B1",
+  "capacity": 6,
+  "section": "Patio",
+  "status": "available",
+  "isActive": true
+}
+```
+
+### Update Table
+**PUT** `/tables/{id}`
+
+**Path Parameters:**
+- `id` (integer, required) - Table ID
+
+### Delete Table
+**DELETE** `/tables/{id}`
+
+**Path Parameters:**
+- `id` (integer, required) - Table ID
+
+### Update Table Status
+**PATCH** `/tables/{id}/status`
+
+**Path Parameters:**
+- `id` (integer, required) - Table ID
+
+**Required Fields:**
+- `status` (string) - New table status
+
+**Request Body:**
+```json
+{
+  "status": "occupied"
+}
+```
+
+---
+
 ## Error Responses
 
 All endpoints return errors in this format:
@@ -1960,4 +2488,29 @@ Common HTTP Status Codes:
 12. **Required Fields**: 
     - Sales endpoints require `userId` and `businessId` (not `customerName`)
     - Sales with items require `unitPrice` for each item
-    - All timestamps include both `createdAt` and `updatedAt` 
+    - All timestamps include both `createdAt` and `updatedAt`
+13. **Sales Analytics**:
+    - All analytics endpoints support date filtering with `startDate` and `endDate` parameters
+    - Date format: YYYY-MM-DD
+    - Analytics are business-scoped and require appropriate permissions
+    - Item performance includes profit margins, growth rates, and rankings
+    - Revenue trends support daily, weekly, and monthly grouping
+    - Staff performance includes efficiency metrics and customer satisfaction
+    - Customer analytics categorize customers as new, returning, or loyal
+    - Inventory analytics provide stock alerts and reorder recommendations
+14. **Sales with Items**:
+    - `/sales/{id}/with-items` returns complete sale details including all items
+    - Includes item SKU, barcode, category, and pricing information
+    - Perfect for mobile apps requiring detailed sale information
+    - Business-scoped for security
+15. **Floor Plan Management**:
+    - Floor plans have dimensions (width/height) for visual representation
+    - Table positions include x/y coordinates, rotation, and size
+    - Background images can be set for visual floor plan representation
+    - Tables can be positioned on multiple floor plans
+    - Floor plans are business-scoped
+16. **Table Management**:
+    - Tables have status tracking (available, occupied, reserved, cleaning, out_of_service)
+    - Tables can be assigned to sections (Main Floor, Patio, etc.)
+    - Table positions are managed separately from table definitions
+    - Table status updates automatically with order lifecycle 

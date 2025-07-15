@@ -1,0 +1,78 @@
+### Sales Analytics API Tests
+### Test the new reporting endpoints
+
+### 1. Get Item Performance Analytics
+GET http://localhost:3031/api/sales/analytics/items?limit=5
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+###
+
+### 2. Get Item Analytics with Date Range
+GET http://localhost:3031/api/sales/analytics/items?startDate=2024-01-01&endDate=2024-01-31&limit=10
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+###
+
+### 3. Get Revenue Analytics (Monthly)
+GET http://localhost:3031/api/sales/analytics/revenue?period=monthly
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+###
+
+### 4. Get Revenue Analytics (Daily)
+GET http://localhost:3031/api/sales/analytics/revenue?period=daily&startDate=2024-01-15&endDate=2024-01-21
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+###
+
+### 5. Get Staff Performance Analytics
+GET http://localhost:3031/api/sales/analytics/staff
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+###
+
+### 6. Get Staff Analytics with Date Range
+GET http://localhost:3031/api/sales/analytics/staff?startDate=2024-01-01&endDate=2024-01-31
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+###
+
+### 7. Get Customer Analytics
+GET http://localhost:3031/api/sales/analytics/customers?limit=10
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+###
+
+### 8. Get Customer Analytics with Date Range
+GET http://localhost:3031/api/sales/analytics/customers?startDate=2024-01-01&endDate=2024-01-31&limit=5
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+###
+
+### 9. Get Inventory Performance Analytics
+GET http://localhost:3031/api/sales/analytics/inventory
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+###
+
+### 10. Test Analytics with Different Business (should be empty)
+GET http://localhost:3031/api/sales/analytics/items
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+###
+
+### 11. Test Analytics without Authentication (should fail)
+GET http://localhost:3031/api/sales/analytics/items
+Content-Type: application/json
+
+### 
