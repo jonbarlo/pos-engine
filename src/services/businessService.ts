@@ -220,4 +220,28 @@ export class BusinessService {
       throw error;
     }
   }
+
+  // Get public business information by slug (no authentication required)
+  static async getPublicBusinessBySlug(slug: string): Promise<BusinessAttributes | null> {
+    try {
+      logger(`Getting public business info by slug: ${slug}`);
+      
+      const business = await BusinessModel.findOne({
+        where: { 
+          slug: slug,
+          isActive: true 
+        },
+        attributes: [
+          'id', 'name', 'slug', 'description', 'logo', 'primaryColor', 
+          'secondaryColor', 'address', 'phone', 'email', 'website', 
+          'taxRate', 'currency', 'timezone', 'type', 'isActive'
+        ]
+      });
+
+      return business;
+    } catch (error) {
+      logger(`Error getting public business by slug: ${error}`);
+      throw error;
+    }
+  }
 } 

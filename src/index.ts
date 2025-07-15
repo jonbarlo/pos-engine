@@ -751,6 +751,7 @@ async function startServer() {
     // Import routes AFTER models are initialized
     const authRoutes = (await import('./routes/auth')).default;
     const businessRoutes = (await import('./routes/businesses')).default;
+    const publicBusinessRoutes = (await import('./routes/publicBusinesses')).default;
     const userRoutes = (await import('./routes/users')).default;
     const itemRoutes = (await import('./routes/items')).default;
     const saleRoutes = (await import('./routes/sales')).default;
@@ -766,6 +767,7 @@ async function startServer() {
     // API routes
     app.use('/api/auth', authRoutes);
     app.use('/api/businesses', businessRoutes);
+    app.use('/api/public/businesses', publicBusinessRoutes);
     app.use('/api/users', userRoutes);
     app.use('/api/items', itemRoutes);
     app.use('/api/sales', saleRoutes);

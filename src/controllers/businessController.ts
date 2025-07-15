@@ -366,4 +366,42 @@ export class BusinessController {
             res.status(500).json({ error: 'Internal server error' });
         }
     };
+
+    // Get public business information by slug (no authentication required)
+    public static getPublicBusinessBySlug: RequestHandler = async (req: Request, res: Response) => {
+        try {
+            const { slug } = req.params;
+
+            if (!slug) {
+                res.status(400).json({
+                    success: false,
+                    error: 'Business slug is required'
+                });
+                return;
+            }
+
+            logger(`Public API endpoint /public/businesses/slug/${slug} was called...`);
+            const business = await BusinessService.getPublicBusinessBySlug(slug);
+
+            if (!business) {
+                res.status(404).json({
+                    success: false,
+                    error: 'Business not found'
+                });
+                return;
+            }
+
+            res.status(200).json({
+                success: true,
+                data: business
+            });
+
+        } catch (error) {
+            logger(`Error retrieving public business info: ${error}`);
+            res.status(500).json({
+                success: false,
+                error: 'Internal server error'
+            });
+        }
+    };
 } 
