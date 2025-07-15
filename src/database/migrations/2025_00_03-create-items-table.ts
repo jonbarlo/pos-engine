@@ -94,6 +94,11 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   await queryInterface.addIndex('items', ['businessId', 'isActive']);
   await queryInterface.addIndex('items', ['sku'], { unique: true });
   await queryInterface.addIndex('items', ['barcode'], { unique: true });
+  
+  // Add composite indexes for analytics performance
+  await queryInterface.addIndex('items', ['businessId', 'category', 'isActive'], {
+    name: 'items_businessId_category_isActive_idx',
+  });
 }
 
 export async function down(queryInterface: QueryInterface): Promise<void> {

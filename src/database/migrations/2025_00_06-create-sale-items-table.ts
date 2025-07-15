@@ -78,6 +78,11 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   await queryInterface.addIndex('sale_items', ['itemId']);
   await queryInterface.addIndex('sale_items', ['discountAmount']);
   await queryInterface.addIndex('sale_items', ['finalPrice']);
+  
+  // Add composite indexes for analytics performance
+  await queryInterface.addIndex('sale_items', ['saleId', 'itemId'], {
+    name: 'sale_items_saleId_itemId_idx',
+  });
 }
 
 export async function down(queryInterface: QueryInterface): Promise<void> {

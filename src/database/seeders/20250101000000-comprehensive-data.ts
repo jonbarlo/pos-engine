@@ -139,24 +139,24 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   // 3. Create Items (Inventory)
   const itemData = [
     // Italian Delight Items
-    { businessSlug: 'italian-delight', name: 'Margherita Pizza Base', description: 'Pizza dough, tomato sauce, mozzarella', price: 12.99, cost: 5.50, stock: getRandomStock(), sku: 'IT-PIZ-001', barcode: '123456789001', category: 'Pizza', unit: 'piece', minStock: 10, maxStock: 100 },
-    { businessSlug: 'italian-delight', name: 'Spaghetti Pasta', description: 'Fresh spaghetti pasta', price: 8.99, cost: 3.20, stock: getRandomStock(), sku: 'IT-PAS-001', barcode: '123456789002', category: 'Pasta', unit: 'piece', minStock: 5, maxStock: 80 },
-    { businessSlug: 'italian-delight', name: 'Tiramisu Mix', description: 'Mascarpone, coffee, ladyfingers', price: 6.99, cost: 2.50, stock: getRandomStock(), sku: 'IT-DES-001', barcode: '123456789003', category: 'Dessert', unit: 'piece', minStock: 5, maxStock: 50 },
-    { businessSlug: 'italian-delight', name: 'Pepperoni Pizza Base', description: 'Pizza dough, tomato sauce, pepperoni', price: 14.99, cost: 6.50, stock: getRandomStock(), sku: 'IT-PIZ-002', barcode: '123456789004', category: 'Pizza', unit: 'piece', minStock: 8, maxStock: 80 },
-    { businessSlug: 'italian-delight', name: 'Fettuccine Alfredo', description: 'Fresh fettuccine with alfredo sauce', price: 10.99, cost: 4.20, stock: getRandomStock(), sku: 'IT-PAS-002', barcode: '123456789005', category: 'Pasta', unit: 'piece', minStock: 5, maxStock: 60 },
-    { businessSlug: 'italian-delight', name: 'Cannoli Shells', description: 'Crispy cannoli shells with filling', price: 5.99, cost: 2.00, stock: getRandomStock(), sku: 'IT-DES-002', barcode: '123456789006', category: 'Dessert', unit: 'piece', minStock: 10, maxStock: 70 },
+    { businessSlug: 'italian-delight', name: 'Margherita Pizza Base', description: 'Pizza dough, tomato sauce, mozzarella', price: 12.99, cost: 5.50, stock: getRandomStock(), sku: 'IT-PIZ-001', barcode: '123456789001', category: 'Pizza', unit: 'piece', minStock: 10, maxStock: 100, imageUrl: 'https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=400&h=300&fit=crop&crop=center' },
+    { businessSlug: 'italian-delight', name: 'Spaghetti Pasta', description: 'Fresh spaghetti pasta', price: 8.99, cost: 3.20, stock: getRandomStock(), sku: 'IT-PAS-001', barcode: '123456789002', category: 'Pasta', unit: 'piece', minStock: 5, maxStock: 80, imageUrl: 'https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=400&h=300&fit=crop&crop=center' },
+    { businessSlug: 'italian-delight', name: 'Tiramisu Mix', description: 'Mascarpone, coffee, ladyfingers', price: 6.99, cost: 2.50, stock: getRandomStock(), sku: 'IT-DES-001', barcode: '123456789003', category: 'Dessert', unit: 'piece', minStock: 5, maxStock: 50, imageUrl: 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=400&h=300&fit=crop&crop=center' },
+    { businessSlug: 'italian-delight', name: 'Pepperoni Pizza Base', description: 'Pizza dough, tomato sauce, pepperoni', price: 14.99, cost: 6.50, stock: getRandomStock(), sku: 'IT-PIZ-002', barcode: '123456789004', category: 'Pizza', unit: 'piece', minStock: 8, maxStock: 80, imageUrl: 'https://images.unsplash.com/photo-1628840042765-356cda07504e?w=400&h=300&fit=crop&crop=center' },
+    { businessSlug: 'italian-delight', name: 'Fettuccine Alfredo', description: 'Fresh fettuccine with alfredo sauce', price: 10.99, cost: 4.20, stock: getRandomStock(), sku: 'IT-PAS-002', barcode: '123456789005', category: 'Pasta', unit: 'piece', minStock: 5, maxStock: 60, imageUrl: 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=400&h=300&fit=crop&crop=center' },
+    { businessSlug: 'italian-delight', name: 'Cannoli Shells', description: 'Crispy cannoli shells with filling', price: 5.99, cost: 2.00, stock: getRandomStock(), sku: 'IT-DES-002', barcode: '123456789006', category: 'Dessert', unit: 'piece', minStock: 10, maxStock: 70, imageUrl: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=400&h=300&fit=crop&crop=center' },
     // Sushi Master Items
-    { businessSlug: 'sushi-master', name: 'California Roll Mix', description: 'Crab, avocado, cucumber, rice', price: 8.99, cost: 3.80, stock: getRandomStock(), sku: 'SU-ROL-001', barcode: '123456789007', category: 'Rolls', unit: 'piece', minStock: 10, maxStock: 100 },
-    { businessSlug: 'sushi-master', name: 'Salmon Sashimi', description: 'Fresh salmon for nigiri', price: 4.99, cost: 2.20, stock: getRandomStock(), sku: 'SU-NIG-001', barcode: '123456789008', category: 'Nigiri', unit: 'piece', minStock: 15, maxStock: 120 },
-    { businessSlug: 'sushi-master', name: 'Miso Soup Base', description: 'Miso paste, dashi, tofu', price: 2.99, cost: 0.80, stock: getRandomStock(), sku: 'SU-SOU-001', barcode: '123456789009', category: 'Soup', unit: 'bowl', minStock: 20, maxStock: 150 },
-    { businessSlug: 'sushi-master', name: 'Spicy Tuna Roll Mix', description: 'Tuna, spicy mayo, rice', price: 9.99, cost: 4.20, stock: getRandomStock(), sku: 'SU-ROL-002', barcode: '123456789010', category: 'Rolls', unit: 'piece', minStock: 8, maxStock: 80 },
-    { businessSlug: 'sushi-master', name: 'Tuna Sashimi', description: 'Fresh tuna for nigiri', price: 5.99, cost: 2.80, stock: getRandomStock(), sku: 'SU-NIG-002', barcode: '123456789011', category: 'Nigiri', unit: 'piece', minStock: 12, maxStock: 100 },
+    { businessSlug: 'sushi-master', name: 'California Roll Mix', description: 'Crab, avocado, cucumber, rice', price: 8.99, cost: 3.80, stock: getRandomStock(), sku: 'SU-ROL-001', barcode: '123456789007', category: 'Rolls', unit: 'piece', minStock: 10, maxStock: 100, imageUrl: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=300&fit=crop&crop=center' },
+    { businessSlug: 'sushi-master', name: 'Salmon Sashimi', description: 'Fresh salmon for nigiri', price: 4.99, cost: 2.20, stock: getRandomStock(), sku: 'SU-NIG-001', barcode: '123456789008', category: 'Nigiri', unit: 'piece', minStock: 15, maxStock: 120, imageUrl: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=300&fit=crop&crop=center' },
+    { businessSlug: 'sushi-master', name: 'Miso Soup Base', description: 'Miso paste, dashi, tofu', price: 2.99, cost: 0.80, stock: getRandomStock(), sku: 'SU-SOU-001', barcode: '123456789009', category: 'Soup', unit: 'bowl', minStock: 20, maxStock: 150, imageUrl: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400&h=300&fit=crop&crop=center' },
+    { businessSlug: 'sushi-master', name: 'Spicy Tuna Roll Mix', description: 'Tuna, spicy mayo, rice', price: 9.99, cost: 4.20, stock: getRandomStock(), sku: 'SU-ROL-002', barcode: '123456789010', category: 'Rolls', unit: 'piece', minStock: 8, maxStock: 80, imageUrl: 'https://images.unsplash.com/photo-1553621042-f6e147245754?w=400&h=300&fit=crop&crop=center' },
+    { businessSlug: 'sushi-master', name: 'Tuna Sashimi', description: 'Fresh tuna for nigiri', price: 5.99, cost: 2.80, stock: getRandomStock(), sku: 'SU-NIG-002', barcode: '123456789011', category: 'Nigiri', unit: 'piece', minStock: 12, maxStock: 100, imageUrl: 'https://images.unsplash.com/photo-1553621042-f6e147245754?w=400&h=300&fit=crop&crop=center' },
     // Coffee Corner Items
-    { businessSlug: 'coffee-corner', name: 'Espresso Beans', description: 'Premium espresso coffee beans', price: 2.50, cost: 0.80, stock: getRandomStock(), sku: 'CO-ESP-001', barcode: '123456789012', category: 'Coffee', unit: 'shot', minStock: 50, maxStock: 500 },
-    { businessSlug: 'coffee-corner', name: 'Milk for Cappuccino', description: 'Fresh whole milk for cappuccino', price: 3.50, cost: 1.20, stock: getRandomStock(), sku: 'CO-CAP-001', barcode: '123456789013', category: 'Coffee', unit: 'cup', minStock: 30, maxStock: 300 },
-    { businessSlug: 'coffee-corner', name: 'Blueberry Muffin Mix', description: 'Fresh baked blueberry muffin mix', price: 2.99, cost: 1.00, stock: getRandomStock(), sku: 'CO-PAS-001', barcode: '123456789014', category: 'Pastry', unit: 'piece', minStock: 5, maxStock: 60 },
-    { businessSlug: 'coffee-corner', name: 'Chocolate Croissant Dough', description: 'Buttery croissant dough with chocolate', price: 3.50, cost: 1.30, stock: getRandomStock(), sku: 'CO-PAS-002', barcode: '123456789015', category: 'Pastry', unit: 'piece', minStock: 8, maxStock: 70 },
-    { businessSlug: 'coffee-corner', name: 'Latte Milk', description: 'Steamed milk for lattes', price: 3.00, cost: 1.00, stock: getRandomStock(), sku: 'CO-LAT-001', barcode: '123456789016', category: 'Coffee', unit: 'cup', minStock: 25, maxStock: 250 }
+    { businessSlug: 'coffee-corner', name: 'Espresso Beans', description: 'Premium espresso coffee beans', price: 2.50, cost: 0.80, stock: getRandomStock(), sku: 'CO-ESP-001', barcode: '123456789012', category: 'Coffee', unit: 'shot', minStock: 50, maxStock: 500, imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=300&fit=crop&crop=center' },
+    { businessSlug: 'coffee-corner', name: 'Milk for Cappuccino', description: 'Fresh whole milk for cappuccino', price: 3.50, cost: 1.20, stock: getRandomStock(), sku: 'CO-CAP-001', barcode: '123456789013', category: 'Coffee', unit: 'cup', minStock: 30, maxStock: 300, imageUrl: 'https://images.unsplash.com/photo-1534778101976-62847782c06b?w=400&h=300&fit=crop&crop=center' },
+    { businessSlug: 'coffee-corner', name: 'Blueberry Muffin Mix', description: 'Fresh baked blueberry muffin mix', price: 2.99, cost: 1.00, stock: getRandomStock(), sku: 'CO-PAS-001', barcode: '123456789014', category: 'Pastry', unit: 'piece', minStock: 5, maxStock: 60, imageUrl: 'https://images.unsplash.com/photo-1607958996338-0106d5c0c1e1?w=400&h=300&fit=crop&crop=center' },
+    { businessSlug: 'coffee-corner', name: 'Chocolate Croissant Dough', description: 'Buttery croissant dough with chocolate', price: 3.50, cost: 1.30, stock: getRandomStock(), sku: 'CO-PAS-002', barcode: '123456789015', category: 'Pastry', unit: 'piece', minStock: 8, maxStock: 70, imageUrl: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=400&h=300&fit=crop&crop=center' },
+    { businessSlug: 'coffee-corner', name: 'Latte Milk', description: 'Steamed milk for lattes', price: 3.00, cost: 1.00, stock: getRandomStock(), sku: 'CO-LAT-001', barcode: '123456789016', category: 'Coffee', unit: 'cup', minStock: 25, maxStock: 250, imageUrl: 'https://images.unsplash.com/photo-1541167760496-1628856ab772?w=400&h=300&fit=crop&crop=center' }
   ];
   await queryInterface.bulkInsert('items', itemData.map(i => ({
     businessId: businesses[i.businessSlug],
@@ -171,6 +171,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     unit: i.unit,
     minStock: i.minStock,
     maxStock: i.maxStock,
+    imageUrl: i.imageUrl,
     isActive: true,
     createdAt: new Date(),
     updatedAt: new Date()
@@ -220,12 +221,242 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     tables[`${t.businessSlug}-${t.tableNumber}`] = table.id;
   }
 
+  // 4.5. Create Floor Plans
+  const floorPlanData = [
+    // Italian Delight Floor Plans
+    {
+      businessSlug: 'italian-delight',
+      name: 'Main Dining Room',
+      width: 1200,
+      height: 800,
+      backgroundImage: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&h=800&fit=crop',
+      isActive: true
+    },
+    {
+      businessSlug: 'italian-delight',
+      name: 'Patio Area',
+      width: 800,
+      height: 600,
+      backgroundImage: 'https://images.unsplash.com/photo-1551632436-cbf8dd35adfa?w=800&h=600&fit=crop',
+      isActive: true
+    },
+    {
+      businessSlug: 'italian-delight',
+      name: 'Private Dining',
+      width: 600,
+      height: 500,
+      backgroundImage: 'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=600&h=500&fit=crop',
+      isActive: true
+    },
+    // Sushi Master Floor Plans
+    {
+      businessSlug: 'sushi-master',
+      name: 'Main Floor',
+      width: 1000,
+      height: 700,
+      backgroundImage: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=1000&h=700&fit=crop',
+      isActive: true
+    },
+    {
+      businessSlug: 'sushi-master',
+      name: 'Sushi Bar',
+      width: 800,
+      height: 400,
+      backgroundImage: 'https://images.unsplash.com/photo-1553621042-f6e147245754?w=800&h=400&fit=crop',
+      isActive: true
+    },
+    {
+      businessSlug: 'sushi-master',
+      name: 'Outdoor Terrace',
+      width: 900,
+      height: 600,
+      backgroundImage: 'https://images.unsplash.com/photo-1551632436-cbf8dd35adfa?w=900&h=600&fit=crop',
+      isActive: true
+    },
+    // Coffee Corner Floor Plans
+    {
+      businessSlug: 'coffee-corner',
+      name: 'Indoor Seating',
+      width: 700,
+      height: 500,
+      backgroundImage: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=700&h=500&fit=crop',
+      isActive: true
+    },
+    {
+      businessSlug: 'coffee-corner',
+      name: 'Outdoor Patio',
+      width: 600,
+      height: 400,
+      backgroundImage: 'https://images.unsplash.com/photo-1551632436-cbf8dd35adfa?w=600&h=400&fit=crop',
+      isActive: true
+    }
+  ];
+  await queryInterface.bulkInsert('floor_plans', floorPlanData.map(fp => ({
+    businessId: businesses[fp.businessSlug],
+    name: fp.name,
+    width: fp.width,
+    height: fp.height,
+    backgroundImage: fp.backgroundImage,
+    isActive: fp.isActive,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  })));
+
+  // Query floor plans by business and name for IDs
+  const floorPlans: { [key: string]: number } = {};
+  for (const fp of floorPlanData) {
+    const [floorPlan] = await queryInterface.sequelize.query(
+      'SELECT id FROM floor_plans WHERE businessId = ? AND name = ?',
+      { type: QueryTypes.SELECT, replacements: [businesses[fp.businessSlug], fp.name] }
+    ) as any[];
+    floorPlans[`${fp.businessSlug}-${fp.name}`] = floorPlan.id;
+  }
+
+  // 4.6. Create Table Positions on Floor Plans
+  const tablePositionData = [
+    // Italian Delight - Main Dining Room
+    { floorPlanKey: 'italian-delight-Main Dining Room', tableKey: 'italian-delight-A1', x: 150, y: 200, rotation: 0, width: 80, height: 60 },
+    { floorPlanKey: 'italian-delight-Main Dining Room', tableKey: 'italian-delight-A2', x: 350, y: 200, rotation: 0, width: 100, height: 80 },
+    
+    // Italian Delight - Patio Area
+    { floorPlanKey: 'italian-delight-Patio Area', tableKey: 'italian-delight-B1', x: 200, y: 150, rotation: 45, width: 70, height: 50 },
+    
+    // Sushi Master - Main Floor
+    { floorPlanKey: 'sushi-master-Main Floor', tableKey: 'sushi-master-S1', x: 200, y: 250, rotation: 0, width: 80, height: 60 },
+    
+    // Sushi Master - Sushi Bar
+    { floorPlanKey: 'sushi-master-Sushi Bar', tableKey: 'sushi-master-S2', x: 100, y: 100, rotation: 0, width: 120, height: 60 },
+    
+    // Coffee Corner - Indoor Seating
+    { floorPlanKey: 'coffee-corner-Indoor Seating', tableKey: 'coffee-corner-C1', x: 150, y: 200, rotation: 0, width: 60, height: 40 },
+    
+    // Coffee Corner - Outdoor Patio
+    { floorPlanKey: 'coffee-corner-Outdoor Patio', tableKey: 'coffee-corner-C2', x: 200, y: 150, rotation: 0, width: 80, height: 60 }
+  ];
+  await queryInterface.bulkInsert('table_positions', tablePositionData.map(tp => ({
+    floorPlanId: floorPlans[tp.floorPlanKey],
+    tableId: tables[tp.tableKey],
+    x: tp.x,
+    y: tp.y,
+    rotation: tp.rotation,
+    width: tp.width,
+    height: tp.height,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  })));
+
+  // 4.7. Add More Tables for Better Floor Plan Visualization
+  const additionalTableData = [
+    // Italian Delight - Additional Tables
+    { businessSlug: 'italian-delight', tableNumber: 'A3', capacity: 4, status: TableStatus.AVAILABLE, section: 'Main Floor' },
+    { businessSlug: 'italian-delight', tableNumber: 'A4', capacity: 6, status: TableStatus.AVAILABLE, section: 'Main Floor' },
+    { businessSlug: 'italian-delight', tableNumber: 'A5', capacity: 2, status: TableStatus.AVAILABLE, section: 'Main Floor' },
+    { businessSlug: 'italian-delight', tableNumber: 'B2', capacity: 4, status: TableStatus.AVAILABLE, section: 'Patio' },
+    { businessSlug: 'italian-delight', tableNumber: 'B3', capacity: 6, status: TableStatus.AVAILABLE, section: 'Patio' },
+    { businessSlug: 'italian-delight', tableNumber: 'P1', capacity: 8, status: TableStatus.AVAILABLE, section: 'Private Dining' },
+    { businessSlug: 'italian-delight', tableNumber: 'P2', capacity: 10, status: TableStatus.AVAILABLE, section: 'Private Dining' },
+    
+    // Sushi Master - Additional Tables
+    { businessSlug: 'sushi-master', tableNumber: 'S3', capacity: 4, status: TableStatus.AVAILABLE, section: 'Main Floor' },
+    { businessSlug: 'sushi-master', tableNumber: 'S4', capacity: 6, status: TableStatus.AVAILABLE, section: 'Main Floor' },
+    { businessSlug: 'sushi-master', tableNumber: 'S5', capacity: 2, status: TableStatus.AVAILABLE, section: 'Main Floor' },
+    { businessSlug: 'sushi-master', tableNumber: 'B1', capacity: 4, status: TableStatus.AVAILABLE, section: 'Sushi Bar' },
+    { businessSlug: 'sushi-master', tableNumber: 'B2', capacity: 6, status: TableStatus.AVAILABLE, section: 'Sushi Bar' },
+    { businessSlug: 'sushi-master', tableNumber: 'T1', capacity: 4, status: TableStatus.AVAILABLE, section: 'Outdoor Terrace' },
+    { businessSlug: 'sushi-master', tableNumber: 'T2', capacity: 6, status: TableStatus.AVAILABLE, section: 'Outdoor Terrace' },
+    { businessSlug: 'sushi-master', tableNumber: 'T3', capacity: 8, status: TableStatus.AVAILABLE, section: 'Outdoor Terrace' },
+    
+    // Coffee Corner - Additional Tables
+    { businessSlug: 'coffee-corner', tableNumber: 'C3', capacity: 2, status: TableStatus.AVAILABLE, section: 'Indoor' },
+    { businessSlug: 'coffee-corner', tableNumber: 'C4', capacity: 4, status: TableStatus.AVAILABLE, section: 'Indoor' },
+    { businessSlug: 'coffee-corner', tableNumber: 'C5', capacity: 6, status: TableStatus.AVAILABLE, section: 'Indoor' },
+    { businessSlug: 'coffee-corner', tableNumber: 'O1', capacity: 2, status: TableStatus.AVAILABLE, section: 'Outdoor' },
+    { businessSlug: 'coffee-corner', tableNumber: 'O2', capacity: 4, status: TableStatus.AVAILABLE, section: 'Outdoor' },
+    { businessSlug: 'coffee-corner', tableNumber: 'O3', capacity: 6, status: TableStatus.AVAILABLE, section: 'Outdoor' }
+  ];
+  await queryInterface.bulkInsert('restaurant_tables', additionalTableData.map(t => ({
+    businessId: businesses[t.businessSlug],
+    tableNumber: t.tableNumber,
+    capacity: t.capacity,
+    status: t.status,
+    section: t.section,
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  })));
+
+  // Query additional tables by business and table number for IDs
+  for (const t of additionalTableData) {
+    const [table] = await queryInterface.sequelize.query(
+      'SELECT id FROM restaurant_tables WHERE businessId = ? AND tableNumber = ?',
+      { type: QueryTypes.SELECT, replacements: [businesses[t.businessSlug], t.tableNumber] }
+    ) as any[];
+    tables[`${t.businessSlug}-${t.tableNumber}`] = table.id;
+  }
+
+  // 4.8. Create Additional Table Positions for Better Floor Plan Layout
+  const additionalTablePositionData = [
+    // Italian Delight - Main Dining Room (additional tables)
+    { floorPlanKey: 'italian-delight-Main Dining Room', tableKey: 'italian-delight-A3', x: 550, y: 200, rotation: 0, width: 80, height: 60 },
+    { floorPlanKey: 'italian-delight-Main Dining Room', tableKey: 'italian-delight-A4', x: 750, y: 200, rotation: 0, width: 100, height: 80 },
+    { floorPlanKey: 'italian-delight-Main Dining Room', tableKey: 'italian-delight-A5', x: 950, y: 200, rotation: 0, width: 60, height: 40 },
+    
+    // Italian Delight - Patio Area (additional tables)
+    { floorPlanKey: 'italian-delight-Patio Area', tableKey: 'italian-delight-B2', x: 400, y: 150, rotation: 45, width: 80, height: 60 },
+    { floorPlanKey: 'italian-delight-Patio Area', tableKey: 'italian-delight-B3', x: 600, y: 150, rotation: 45, width: 100, height: 80 },
+    
+    // Italian Delight - Private Dining
+    { floorPlanKey: 'italian-delight-Private Dining', tableKey: 'italian-delight-P1', x: 150, y: 150, rotation: 0, width: 120, height: 80 },
+    { floorPlanKey: 'italian-delight-Private Dining', tableKey: 'italian-delight-P2', x: 350, y: 150, rotation: 0, width: 140, height: 100 },
+    
+    // Sushi Master - Main Floor (additional tables)
+    { floorPlanKey: 'sushi-master-Main Floor', tableKey: 'sushi-master-S3', x: 400, y: 250, rotation: 0, width: 80, height: 60 },
+    { floorPlanKey: 'sushi-master-Main Floor', tableKey: 'sushi-master-S4', x: 600, y: 250, rotation: 0, width: 100, height: 80 },
+    { floorPlanKey: 'sushi-master-Main Floor', tableKey: 'sushi-master-S5', x: 800, y: 250, rotation: 0, width: 60, height: 40 },
+    
+    // Sushi Master - Sushi Bar (additional tables)
+    { floorPlanKey: 'sushi-master-Sushi Bar', tableKey: 'sushi-master-B1', x: 300, y: 100, rotation: 0, width: 80, height: 60 },
+    { floorPlanKey: 'sushi-master-Sushi Bar', tableKey: 'sushi-master-B2', x: 500, y: 100, rotation: 0, width: 100, height: 80 },
+    
+    // Sushi Master - Outdoor Terrace
+    { floorPlanKey: 'sushi-master-Outdoor Terrace', tableKey: 'sushi-master-T1', x: 150, y: 200, rotation: 0, width: 80, height: 60 },
+    { floorPlanKey: 'sushi-master-Outdoor Terrace', tableKey: 'sushi-master-T2', x: 350, y: 200, rotation: 0, width: 100, height: 80 },
+    { floorPlanKey: 'sushi-master-Outdoor Terrace', tableKey: 'sushi-master-T3', x: 550, y: 200, rotation: 0, width: 120, height: 80 },
+    
+    // Coffee Corner - Indoor Seating (additional tables)
+    { floorPlanKey: 'coffee-corner-Indoor Seating', tableKey: 'coffee-corner-C3', x: 300, y: 200, rotation: 0, width: 60, height: 40 },
+    { floorPlanKey: 'coffee-corner-Indoor Seating', tableKey: 'coffee-corner-C4', x: 450, y: 200, rotation: 0, width: 80, height: 60 },
+    { floorPlanKey: 'coffee-corner-Indoor Seating', tableKey: 'coffee-corner-C5', x: 600, y: 200, rotation: 0, width: 100, height: 80 },
+    
+    // Coffee Corner - Outdoor Patio (additional tables)
+    { floorPlanKey: 'coffee-corner-Outdoor Patio', tableKey: 'coffee-corner-O1', x: 100, y: 150, rotation: 0, width: 60, height: 40 },
+    { floorPlanKey: 'coffee-corner-Outdoor Patio', tableKey: 'coffee-corner-O2', x: 250, y: 150, rotation: 0, width: 80, height: 60 },
+    { floorPlanKey: 'coffee-corner-Outdoor Patio', tableKey: 'coffee-corner-O3', x: 400, y: 150, rotation: 0, width: 100, height: 80 }
+  ];
+  await queryInterface.bulkInsert('table_positions', additionalTablePositionData.map(tp => ({
+    floorPlanId: floorPlans[tp.floorPlanKey],
+    tableId: tables[tp.tableKey],
+    x: tp.x,
+    y: tp.y,
+    rotation: tp.rotation,
+    width: tp.width,
+    height: tp.height,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  })));
+
   // 5. Create Customers
   const customerData = [
     { businessSlug: 'italian-delight', name: 'John Smith', email: 'john.smith@email.com', phone: '+1-555-0101', address: '123 Oak Street, Downtown, NY 10001', loyaltyPoints: 150 },
     { businessSlug: 'italian-delight', name: 'Maria Garcia', email: 'maria.garcia@email.com', phone: '+1-555-0102', address: '456 Pine Avenue, Midtown, NY 10002', loyaltyPoints: 75 },
+    { businessSlug: 'italian-delight', name: 'Robert Johnson', email: 'robert.johnson@email.com', phone: '+1-555-0103', address: '789 Elm Street, Uptown, NY 10003', loyaltyPoints: 200 },
+    { businessSlug: 'italian-delight', name: 'Lisa Davis', email: 'lisa.davis@email.com', phone: '+1-555-0104', address: '321 Maple Avenue, Brooklyn, NY 10004', loyaltyPoints: 125 },
     { businessSlug: 'sushi-master', name: 'David Kim', email: 'david.kim@email.com', phone: '+1-555-0201', address: '789 Beach Road, Ocean City, CA 90211', loyaltyPoints: 200 },
-    { businessSlug: 'coffee-corner', name: 'Jennifer Lee', email: 'jennifer.lee@email.com', phone: '+1-555-0301', address: '321 Coffee Lane, Brew Town, WA 98102', loyaltyPoints: 300 }
+    { businessSlug: 'sushi-master', name: 'Sarah Chen', email: 'sarah.chen@email.com', phone: '+1-555-0202', address: '456 Sunset Blvd, Venice, CA 90212', loyaltyPoints: 150 },
+    { businessSlug: 'sushi-master', name: 'Michael Wong', email: 'michael.wong@email.com', phone: '+1-555-0203', address: '123 Pacific Coast Hwy, Malibu, CA 90213', loyaltyPoints: 300 },
+    { businessSlug: 'coffee-corner', name: 'Jennifer Lee', email: 'jennifer.lee@email.com', phone: '+1-555-0301', address: '321 Coffee Lane, Brew Town, WA 98102', loyaltyPoints: 300 },
+    { businessSlug: 'coffee-corner', name: 'Alex Thompson', email: 'alex.thompson@email.com', phone: '+1-555-0302', address: '654 Tea Street, Seattle, WA 98103', loyaltyPoints: 100 },
+    { businessSlug: 'coffee-corner', name: 'Emily Wilson', email: 'emily.wilson@email.com', phone: '+1-555-0303', address: '987 Brewery Road, Portland, OR 97201', loyaltyPoints: 250 }
   ];
   await queryInterface.bulkInsert('customers', customerData.map(c => ({
     businessId: businesses[c.businessSlug],
@@ -608,7 +839,60 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       taxAmount: 3.19,
       discountAmount: 0.00,
       totalAmount: 39.17,
-      paymentMethod: 'credit_card'
+      paymentMethod: 'credit_card',
+      createdAt: new Date('2025-07-10T12:30:00Z')
+    },
+    {
+      businessSlug: 'italian-delight',
+      cashierEmail: 'antonio@italiandelight.com',
+      customerEmail: 'john.smith@email.com',
+      saleNumber: 'SALE-IT-2024-002',
+      status: SaleStatus.COMPLETED,
+      subtotal: 42.50,
+      taxAmount: 3.77,
+      discountAmount: 5.00,
+      totalAmount: 41.27,
+      paymentMethod: 'cash',
+      createdAt: new Date('2025-07-12T18:45:00Z')
+    },
+    {
+      businessSlug: 'italian-delight',
+      cashierEmail: 'antonio@italiandelight.com',
+      customerEmail: 'maria.garcia@email.com',
+      saleNumber: 'SALE-IT-2024-003',
+      status: SaleStatus.COMPLETED,
+      subtotal: 28.99,
+      taxAmount: 2.57,
+      discountAmount: 0.00,
+      totalAmount: 31.56,
+      paymentMethod: 'debit_card',
+      createdAt: new Date('2025-07-13T19:15:00Z')
+    },
+    {
+      businessSlug: 'italian-delight',
+      cashierEmail: 'antonio@italiandelight.com',
+      customerEmail: 'maria.garcia@email.com',
+      saleNumber: 'SALE-IT-2024-004',
+      status: SaleStatus.COMPLETED,
+      subtotal: 55.75,
+      taxAmount: 4.95,
+      discountAmount: 0.00,
+      totalAmount: 60.70,
+      paymentMethod: 'credit_card',
+      createdAt: new Date('2025-07-14T20:30:00Z')
+    },
+    {
+      businessSlug: 'italian-delight',
+      cashierEmail: 'antonio@italiandelight.com',
+      customerEmail: null,
+      saleNumber: 'SALE-IT-2024-005',
+      status: SaleStatus.COMPLETED,
+      subtotal: 15.99,
+      taxAmount: 1.42,
+      discountAmount: 0.00,
+      totalAmount: 17.41,
+      paymentMethod: 'cash',
+      createdAt: new Date('2025-07-15T11:20:00Z')
     },
     {
       businessSlug: 'sushi-master',
@@ -620,7 +904,34 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       taxAmount: 2.31,
       discountAmount: 0.00,
       totalAmount: 27.28,
-      paymentMethod: 'cash'
+      paymentMethod: 'cash',
+      createdAt: new Date('2025-07-11T13:45:00Z')
+    },
+    {
+      businessSlug: 'sushi-master',
+      cashierEmail: 'hiroshi@sushimaster.com',
+      customerEmail: 'david.kim@email.com',
+      saleNumber: 'SALE-SU-2024-002',
+      status: SaleStatus.COMPLETED,
+      subtotal: 38.50,
+      taxAmount: 3.56,
+      discountAmount: 0.00,
+      totalAmount: 42.06,
+      paymentMethod: 'credit_card',
+      createdAt: new Date('2025-07-13T21:00:00Z')
+    },
+    {
+      businessSlug: 'sushi-master',
+      cashierEmail: 'hiroshi@sushimaster.com',
+      customerEmail: null,
+      saleNumber: 'SALE-SU-2024-003',
+      status: SaleStatus.COMPLETED,
+      subtotal: 18.99,
+      taxAmount: 1.76,
+      discountAmount: 0.00,
+      totalAmount: 20.75,
+      paymentMethod: 'debit_card',
+      createdAt: new Date('2025-07-14T14:30:00Z')
     },
     {
       businessSlug: 'coffee-corner',
@@ -632,7 +943,125 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       taxAmount: 0.86,
       discountAmount: 0.00,
       totalAmount: 9.35,
-      paymentMethod: 'debit_card'
+      paymentMethod: 'debit_card',
+      createdAt: new Date('2025-07-10T08:15:00Z')
+    },
+    {
+      businessSlug: 'coffee-corner',
+      cashierEmail: 'alex@coffeecorner.com',
+      customerEmail: 'jennifer.lee@email.com',
+      saleNumber: 'SALE-CO-2024-002',
+      status: SaleStatus.COMPLETED,
+      subtotal: 12.75,
+      taxAmount: 1.29,
+      discountAmount: 0.00,
+      totalAmount: 14.04,
+      paymentMethod: 'credit_card',
+      createdAt: new Date('2025-07-12T09:30:00Z')
+    },
+    {
+      businessSlug: 'coffee-corner',
+      cashierEmail: 'alex@coffeecorner.com',
+      customerEmail: 'jennifer.lee@email.com',
+      saleNumber: 'SALE-CO-2024-003',
+      status: SaleStatus.COMPLETED,
+      subtotal: 6.99,
+      taxAmount: 0.71,
+      discountAmount: 0.00,
+      totalAmount: 7.70,
+      paymentMethod: 'cash',
+      createdAt: new Date('2025-07-14T10:45:00Z')
+    },
+    {
+      businessSlug: 'coffee-corner',
+      cashierEmail: 'alex@coffeecorner.com',
+      customerEmail: null,
+      saleNumber: 'SALE-CO-2024-004',
+      status: SaleStatus.COMPLETED,
+      subtotal: 4.50,
+      taxAmount: 0.45,
+      discountAmount: 0.00,
+      totalAmount: 4.95,
+      paymentMethod: 'cash',
+      createdAt: new Date('2025-07-15T07:20:00Z')
+    },
+    {
+      businessSlug: 'italian-delight',
+      cashierEmail: 'antonio@italiandelight.com',
+      customerEmail: 'robert.johnson@email.com',
+      saleNumber: 'SALE-IT-2024-006',
+      status: SaleStatus.COMPLETED,
+      subtotal: 65.25,
+      taxAmount: 5.79,
+      discountAmount: 10.00,
+      totalAmount: 61.04,
+      paymentMethod: 'credit_card',
+      createdAt: new Date('2025-07-14T21:15:00Z')
+    },
+    {
+      businessSlug: 'italian-delight',
+      cashierEmail: 'antonio@italiandelight.com',
+      customerEmail: 'lisa.davis@email.com',
+      saleNumber: 'SALE-IT-2024-007',
+      status: SaleStatus.COMPLETED,
+      subtotal: 32.50,
+      taxAmount: 2.88,
+      discountAmount: 0.00,
+      totalAmount: 35.38,
+      paymentMethod: 'debit_card',
+      createdAt: new Date('2025-07-13T20:45:00Z')
+    },
+    {
+      businessSlug: 'sushi-master',
+      cashierEmail: 'hiroshi@sushimaster.com',
+      customerEmail: 'sarah.chen@email.com',
+      saleNumber: 'SALE-SU-2024-004',
+      status: SaleStatus.COMPLETED,
+      subtotal: 45.75,
+      taxAmount: 4.23,
+      discountAmount: 0.00,
+      totalAmount: 49.98,
+      paymentMethod: 'credit_card',
+      createdAt: new Date('2025-07-12T19:30:00Z')
+    },
+    {
+      businessSlug: 'sushi-master',
+      cashierEmail: 'hiroshi@sushimaster.com',
+      customerEmail: 'michael.wong@email.com',
+      saleNumber: 'SALE-SU-2024-005',
+      status: SaleStatus.COMPLETED,
+      subtotal: 78.99,
+      taxAmount: 7.31,
+      discountAmount: 15.00,
+      totalAmount: 71.30,
+      paymentMethod: 'credit_card',
+      createdAt: new Date('2025-07-11T20:00:00Z')
+    },
+    {
+      businessSlug: 'coffee-corner',
+      cashierEmail: 'alex@coffeecorner.com',
+      customerEmail: 'alex.thompson@email.com',
+      saleNumber: 'SALE-CO-2024-005',
+      status: SaleStatus.COMPLETED,
+      subtotal: 18.75,
+      taxAmount: 1.89,
+      discountAmount: 0.00,
+      totalAmount: 20.64,
+      paymentMethod: 'debit_card',
+      createdAt: new Date('2025-07-13T08:45:00Z')
+    },
+    {
+      businessSlug: 'coffee-corner',
+      cashierEmail: 'alex@coffeecorner.com',
+      customerEmail: 'emily.wilson@email.com',
+      saleNumber: 'SALE-CO-2024-006',
+      status: SaleStatus.COMPLETED,
+      subtotal: 22.50,
+      taxAmount: 2.27,
+      discountAmount: 5.00,
+      totalAmount: 19.77,
+      paymentMethod: 'credit_card',
+      createdAt: new Date('2025-07-14T09:15:00Z')
     }
   ];
   await queryInterface.bulkInsert('sales', saleData.map(s => ({
@@ -642,6 +1071,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     status: s.status,
     totalAmount: s.totalAmount,
     paymentMethod: s.paymentMethod,
+    customerId: s.customerEmail ? customers[s.customerEmail] : null,
     customerName: s.customerEmail ? s.customerEmail.split('@')[0] : null,
     customerEmail: s.customerEmail,
     idempotencyKey: uuidv4(),
@@ -650,10 +1080,10 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       method: s.paymentMethod,
       customerName: s.customerEmail ? s.customerEmail.split('@')[0] : null,
       customerEmail: s.customerEmail,
-      paidAt: new Date()
+      paidAt: s.createdAt || new Date()
     }]),
-    createdAt: new Date(),
-    updatedAt: new Date()
+    createdAt: s.createdAt || new Date(),
+    updatedAt: s.createdAt || new Date()
   })));
 
   // Query sales by sale number for IDs
@@ -666,14 +1096,60 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     sales[s.saleNumber] = sale.id;
   }
 
-  // 11. Create Sale Items
+  // 11. Create Sale Items with comprehensive data
   const saleItemData = [
+    // Italian Delight Sales
     { saleNumber: 'SALE-IT-2024-001', itemSku: 'IT-PIZ-001', quantity: 1, unitPrice: 18.99, totalPrice: 18.99 },
     { saleNumber: 'SALE-IT-2024-001', itemSku: 'IT-PAS-001', quantity: 1, unitPrice: 16.99, totalPrice: 16.99 },
+    { saleNumber: 'SALE-IT-2024-002', itemSku: 'IT-PIZ-002', quantity: 1, unitPrice: 20.99, totalPrice: 20.99 },
+    { saleNumber: 'SALE-IT-2024-002', itemSku: 'IT-PAS-002', quantity: 1, unitPrice: 17.99, totalPrice: 17.99 },
+    { saleNumber: 'SALE-IT-2024-002', itemSku: 'IT-DES-001', quantity: 1, unitPrice: 8.99, totalPrice: 8.99 },
+    { saleNumber: 'SALE-IT-2024-003', itemSku: 'IT-PIZ-001', quantity: 1, unitPrice: 18.99, totalPrice: 18.99 },
+    { saleNumber: 'SALE-IT-2024-003', itemSku: 'IT-DES-002', quantity: 1, unitPrice: 6.99, totalPrice: 6.99 },
+    { saleNumber: 'SALE-IT-2024-004', itemSku: 'IT-PIZ-002', quantity: 1, unitPrice: 20.99, totalPrice: 20.99 },
+    { saleNumber: 'SALE-IT-2024-004', itemSku: 'IT-PAS-001', quantity: 1, unitPrice: 16.99, totalPrice: 16.99 },
+    { saleNumber: 'SALE-IT-2024-004', itemSku: 'IT-DES-001', quantity: 1, unitPrice: 8.99, totalPrice: 8.99 },
+    { saleNumber: 'SALE-IT-2024-005', itemSku: 'IT-PAS-002', quantity: 1, unitPrice: 17.99, totalPrice: 17.99 },
+    
+    // Sushi Master Sales
     { saleNumber: 'SALE-SU-2024-001', itemSku: 'SU-ROL-001', quantity: 1, unitPrice: 12.99, totalPrice: 12.99 },
     { saleNumber: 'SALE-SU-2024-001', itemSku: 'SU-NIG-001', quantity: 2, unitPrice: 6.99, totalPrice: 13.98 },
+    { saleNumber: 'SALE-SU-2024-002', itemSku: 'SU-ROL-002', quantity: 1, unitPrice: 14.99, totalPrice: 14.99 },
+    { saleNumber: 'SALE-SU-2024-002', itemSku: 'SU-NIG-002', quantity: 2, unitPrice: 7.99, totalPrice: 15.98 },
+    { saleNumber: 'SALE-SU-2024-002', itemSku: 'SU-SOU-001', quantity: 1, unitPrice: 4.99, totalPrice: 4.99 },
+    { saleNumber: 'SALE-SU-2024-003', itemSku: 'SU-ROL-001', quantity: 1, unitPrice: 12.99, totalPrice: 12.99 },
+    { saleNumber: 'SALE-SU-2024-003', itemSku: 'SU-NIG-001', quantity: 1, unitPrice: 6.99, totalPrice: 6.99 },
+    
+    // Coffee Corner Sales
     { saleNumber: 'SALE-CO-2024-001', itemSku: 'CO-CAP-001', quantity: 1, unitPrice: 4.99, totalPrice: 4.99 },
-    { saleNumber: 'SALE-CO-2024-001', itemSku: 'CO-PAS-001', quantity: 1, unitPrice: 3.99, totalPrice: 3.99 }
+    { saleNumber: 'SALE-CO-2024-001', itemSku: 'CO-PAS-001', quantity: 1, unitPrice: 3.99, totalPrice: 3.99 },
+    { saleNumber: 'SALE-CO-2024-002', itemSku: 'CO-LAT-001', quantity: 1, unitPrice: 4.49, totalPrice: 4.49 },
+    { saleNumber: 'SALE-CO-2024-002', itemSku: 'CO-PAS-002', quantity: 1, unitPrice: 4.49, totalPrice: 4.49 },
+    { saleNumber: 'SALE-CO-2024-002', itemSku: 'CO-ESP-001', quantity: 1, unitPrice: 3.50, totalPrice: 3.50 },
+    { saleNumber: 'SALE-CO-2024-003', itemSku: 'CO-ESP-001', quantity: 1, unitPrice: 3.50, totalPrice: 3.50 },
+    { saleNumber: 'SALE-CO-2024-003', itemSku: 'CO-PAS-001', quantity: 1, unitPrice: 3.99, totalPrice: 3.99 },
+    { saleNumber: 'SALE-CO-2024-004', itemSku: 'CO-ESP-001', quantity: 1, unitPrice: 3.50, totalPrice: 3.50 },
+    
+    // Additional sales for new customers
+    { saleNumber: 'SALE-IT-2024-006', itemSku: 'IT-PIZ-001', quantity: 2, unitPrice: 18.99, totalPrice: 37.98 },
+    { saleNumber: 'SALE-IT-2024-006', itemSku: 'IT-PAS-002', quantity: 1, unitPrice: 17.99, totalPrice: 17.99 },
+    { saleNumber: 'SALE-IT-2024-006', itemSku: 'IT-DES-001', quantity: 1, unitPrice: 8.99, totalPrice: 8.99 },
+    { saleNumber: 'SALE-IT-2024-007', itemSku: 'IT-PIZ-002', quantity: 1, unitPrice: 20.99, totalPrice: 20.99 },
+    { saleNumber: 'SALE-IT-2024-007', itemSku: 'IT-DES-002', quantity: 1, unitPrice: 6.99, totalPrice: 6.99 },
+    { saleNumber: 'SALE-SU-2024-004', itemSku: 'SU-ROL-002', quantity: 1, unitPrice: 14.99, totalPrice: 14.99 },
+    { saleNumber: 'SALE-SU-2024-004', itemSku: 'SU-NIG-002', quantity: 3, unitPrice: 7.99, totalPrice: 23.97 },
+    { saleNumber: 'SALE-SU-2024-004', itemSku: 'SU-SOU-001', quantity: 1, unitPrice: 4.99, totalPrice: 4.99 },
+    { saleNumber: 'SALE-SU-2024-005', itemSku: 'SU-ROL-001', quantity: 2, unitPrice: 12.99, totalPrice: 25.98 },
+    { saleNumber: 'SALE-SU-2024-005', itemSku: 'SU-ROL-002', quantity: 1, unitPrice: 14.99, totalPrice: 14.99 },
+    { saleNumber: 'SALE-SU-2024-005', itemSku: 'SU-NIG-001', quantity: 3, unitPrice: 6.99, totalPrice: 20.97 },
+    { saleNumber: 'SALE-SU-2024-005', itemSku: 'SU-NIG-002', quantity: 2, unitPrice: 7.99, totalPrice: 15.98 },
+    { saleNumber: 'SALE-CO-2024-005', itemSku: 'CO-CAP-001', quantity: 1, unitPrice: 4.99, totalPrice: 4.99 },
+    { saleNumber: 'SALE-CO-2024-005', itemSku: 'CO-LAT-001', quantity: 1, unitPrice: 4.49, totalPrice: 4.49 },
+    { saleNumber: 'SALE-CO-2024-005', itemSku: 'CO-PAS-001', quantity: 1, unitPrice: 3.99, totalPrice: 3.99 },
+    { saleNumber: 'SALE-CO-2024-005', itemSku: 'CO-PAS-002', quantity: 1, unitPrice: 4.49, totalPrice: 4.49 },
+    { saleNumber: 'SALE-CO-2024-006', itemSku: 'CO-LAT-001', quantity: 2, unitPrice: 4.49, totalPrice: 8.98 },
+    { saleNumber: 'SALE-CO-2024-006', itemSku: 'CO-PAS-002', quantity: 1, unitPrice: 4.49, totalPrice: 4.49 },
+    { saleNumber: 'SALE-CO-2024-006', itemSku: 'CO-ESP-001', quantity: 2, unitPrice: 3.50, totalPrice: 7.00 }
   ];
   await queryInterface.bulkInsert('sale_items', saleItemData.map(si => {
     // Determine business ID based on sale number prefix
@@ -884,16 +1360,18 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
 
 export async function down(queryInterface: QueryInterface): Promise<void> {
   // Delete in reverse order to handle foreign key constraints
-  await queryInterface.bulkDelete('menu_items', {});
-  await queryInterface.bulkDelete('menu_categories', {});
-  await queryInterface.bulkDelete('staff_messages', {});
-  await queryInterface.bulkDelete('deliveries', {});
-  await queryInterface.bulkDelete('kitchen_orders', {});
-  await queryInterface.bulkDelete('reservations', {});
+  await queryInterface.bulkDelete('table_positions', {});
+  await queryInterface.bulkDelete('floor_plans', {});
   await queryInterface.bulkDelete('sale_items', {});
   await queryInterface.bulkDelete('sales', {});
   await queryInterface.bulkDelete('order_items', {});
+  await queryInterface.bulkDelete('deliveries', {});
   await queryInterface.bulkDelete('orders', {});
+  await queryInterface.bulkDelete('kitchen_orders', {});
+  await queryInterface.bulkDelete('reservations', {});
+  await queryInterface.bulkDelete('menu_items', {});
+  await queryInterface.bulkDelete('menu_categories', {});
+  await queryInterface.bulkDelete('staff_messages', {});
   await queryInterface.bulkDelete('customers', {});
   await queryInterface.bulkDelete('restaurant_tables', {});
   await queryInterface.bulkDelete('items', {});

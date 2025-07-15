@@ -133,6 +133,11 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   await queryInterface.addIndex('menu_items', ['businessId', 'isAvailable']);
   await queryInterface.addIndex('menu_items', ['sku'], { unique: true });
   await queryInterface.addIndex('menu_items', ['barcode'], { unique: true });
+  
+  // Add composite indexes for analytics performance
+  await queryInterface.addIndex('menu_items', ['businessId', 'categoryId', 'isAvailable'], {
+    name: 'menu_items_businessId_categoryId_isAvailable_idx',
+  });
 }
 
 export async function down(queryInterface: QueryInterface): Promise<void> {

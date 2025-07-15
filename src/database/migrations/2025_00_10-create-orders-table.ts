@@ -116,6 +116,11 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   await queryInterface.addIndex('orders', ['tableId']);
   await queryInterface.addIndex('orders', ['status']);
   await queryInterface.addIndex('orders', ['createdAt']);
+  
+  // Add composite indexes for analytics performance
+  await queryInterface.addIndex('orders', ['businessId', 'createdAt', 'status'], {
+    name: 'orders_businessId_createdAt_status_idx',
+  });
 }
 
 export async function down(queryInterface: QueryInterface): Promise<void> {

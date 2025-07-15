@@ -84,6 +84,11 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   await queryInterface.addIndex('order_items', ['status']);
   await queryInterface.addIndex('order_items', ['orderId', 'status']);
   await queryInterface.addIndex('order_items', ['createdAt']);
+  
+  // Add composite indexes for analytics performance
+  await queryInterface.addIndex('order_items', ['orderId', 'itemId'], {
+    name: 'order_items_orderId_itemId_idx',
+  });
 }
 
 export async function down(queryInterface: QueryInterface): Promise<void> {
