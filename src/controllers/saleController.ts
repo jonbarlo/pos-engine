@@ -278,7 +278,8 @@ export class SaleController {
       }
 
       logger(`API endpoint GET /sales/${id}/with-items was called...`);
-      const sale = await SaleService.getSaleWithItems(saleId);
+      const businessId = req.user!.businessId;
+      const sale = await SaleService.getSaleWithItems(saleId, businessId);
       
       if (!sale) {
         res.status(404).json({ error: 'Sale not found' });
@@ -347,6 +348,167 @@ export class SaleController {
       });
     } catch (error) {
       logger(`Error creating missing orders: ${error}`);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  };
+
+  /**
+   * Get item performance analytics
+   */
+  public static getItemAnalytics = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const { startDate, endDate, limit = 10 } = req.query;
+      const businessId = req.user!.businessId;
+      
+      const filters: any = {};
+      
+      // Set default date range to include seeded data if no dates provided
+      if (startDate) {
+        filters.startDate = new Date(startDate as string);
+      } else {
+        // Default to 6 months ago to include seeded data
+        filters.startDate = new Date(Date.now() - 6 * 30 * 24 * 60 * 60 * 1000);
+      }
+      
+      if (endDate) {
+        filters.endDate = new Date(endDate as string);
+      } else {
+        // Default to 6 months in the future to include seeded data
+        filters.endDate = new Date(Date.now() + 6 * 30 * 24 * 60 * 60 * 1000);
+      }
+      
+      if (limit) filters.limit = parseInt(limit as string);
+
+      logger(`API endpoint GET /sales/analytics/items was called...`);
+      const analytics = await SaleService.getItemAnalytics(businessId, filters);
+      
+      res.json(analytics);
+    } catch (error) {
+      logger(`Error getting item analytics: ${error}`);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  };
+
+  /**
+   * Get revenue analytics and trends
+   */
+  public static getRevenueAnalytics = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const { period = 'monthly', startDate, endDate } = req.query;
+      const businessId = req.user!.businessId;
+      
+      const filters: any = { period: period as string };
+      
+      // Set default date range to include seeded data if no dates provided
+      if (startDate) {
+        filters.startDate = new Date(startDate as string);
+      } else {
+        // Default to 6 months ago to include seeded data
+        filters.startDate = new Date(Date.now() - 6 * 30 * 24 * 60 * 60 * 1000);
+      }
+      
+      if (endDate) {
+        filters.endDate = new Date(endDate as string);
+      } else {
+        // Default to 6 months in the future to include seeded data
+        filters.endDate = new Date(Date.now() + 6 * 30 * 24 * 60 * 60 * 1000);
+      }
+
+      logger(`API endpoint GET /sales/analytics/revenue was called...`);
+      const analytics = await SaleService.getRevenueAnalytics(businessId, filters);
+      
+      res.json(analytics);
+    } catch (error) {
+      logger(`Error getting revenue analytics: ${error}`);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  };
+
+  /**
+   * Get staff performance analytics
+   */
+  public static getStaffAnalytics = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const { startDate, endDate } = req.query;
+      const businessId = req.user!.businessId;
+      
+      const filters: any = {};
+      
+      // Set default date range to include seeded data if no dates provided
+      if (startDate) {
+        filters.startDate = new Date(startDate as string);
+      } else {
+        // Default to 6 months ago to include seeded data
+        filters.startDate = new Date(Date.now() - 6 * 30 * 24 * 60 * 60 * 1000);
+      }
+      
+      if (endDate) {
+        filters.endDate = new Date(endDate as string);
+      } else {
+        // Default to 6 months in the future to include seeded data
+        filters.endDate = new Date(Date.now() + 6 * 30 * 24 * 60 * 60 * 1000);
+      }
+
+      logger(`API endpoint GET /sales/analytics/staff was called...`);
+      const analytics = await SaleService.getStaffAnalytics(businessId, filters);
+      
+      res.json(analytics);
+    } catch (error) {
+      logger(`Error getting staff analytics: ${error}`);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  };
+
+  /**
+   * Get customer analytics
+   */
+  public static getCustomerAnalytics = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const { startDate, endDate, limit = 10 } = req.query;
+      const businessId = req.user!.businessId;
+      
+      const filters: any = {};
+      
+      // Set default date range to include seeded data if no dates provided
+      if (startDate) {
+        filters.startDate = new Date(startDate as string);
+      } else {
+        // Default to 6 months ago to include seeded data
+        filters.startDate = new Date(Date.now() - 6 * 30 * 24 * 60 * 60 * 1000);
+      }
+      
+      if (endDate) {
+        filters.endDate = new Date(endDate as string);
+      } else {
+        // Default to 6 months in the future to include seeded data
+        filters.endDate = new Date(Date.now() + 6 * 30 * 24 * 60 * 60 * 1000);
+      }
+      
+      if (limit) filters.limit = parseInt(limit as string);
+
+      logger(`API endpoint GET /sales/analytics/customers was called...`);
+      const analytics = await SaleService.getCustomerAnalytics(businessId, filters);
+      
+      res.json(analytics);
+    } catch (error) {
+      logger(`Error getting customer analytics: ${error}`);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  };
+
+  /**
+   * Get inventory performance analytics
+   */
+  public static getInventoryAnalytics = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const businessId = req.user!.businessId;
+
+      logger(`API endpoint GET /sales/analytics/inventory was called...`);
+      const analytics = await SaleService.getInventoryAnalytics(businessId);
+      
+      res.json(analytics);
+    } catch (error) {
+      logger(`Error getting inventory analytics: ${error}`);
       res.status(500).json({ error: 'Internal server error' });
     }
   };

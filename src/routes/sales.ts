@@ -242,6 +242,110 @@ salesRouter.post('/with-items', SaleController.createSaleWithItems);
 
 /**
  * @swagger
+ * /api/sales/{id}/with-items:
+ *   get:
+ *     summary: Get sale by ID with order items
+ *     tags: [Sales]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Sale ID
+ *     responses:
+ *       200:
+ *         description: Sale details with order items
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                 businessId:
+ *                   type: integer
+ *                 userId:
+ *                   type: integer
+ *                 saleNumber:
+ *                   type: string
+ *                 totalAmount:
+ *                   type: number
+ *                 paymentMethod:
+ *                   type: string
+ *                 status:
+ *                   type: string
+ *                 customerName:
+ *                   type: string
+ *                 customerEmail:
+ *                   type: string
+ *                 customerPhone:
+ *                   type: string
+ *                 notes:
+ *                   type: string
+ *                 payments:
+ *                   type: string
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *                 updatedAt:
+ *                   type: string
+ *                   format: date-time
+ *                 saleItems:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       itemId:
+ *                         type: integer
+ *                       quantity:
+ *                         type: integer
+ *                       unitPrice:
+ *                         type: number
+ *                       totalPrice:
+ *                         type: number
+ *                       discountAmount:
+ *                         type: number
+ *                       finalPrice:
+ *                         type: number
+ *                       notes:
+ *                         type: string
+ *                       item:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: integer
+ *                           name:
+ *                             type: string
+ *                           description:
+ *                             type: string
+ *                           price:
+ *                             type: number
+ *                           category:
+ *                             type: string
+ *                           imageUrl:
+ *                             type: string
+ *       404:
+ *         description: Sale not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+salesRouter.get('/:id/with-items', SaleController.getSaleWithItems);
+
+/**
+ * @swagger
  * /api/sales/user/{userId}:
  *   get:
  *     summary: Get sales by user ID
@@ -457,5 +561,351 @@ salesRouter.delete('/:id', SaleController.deleteSale);
  *               $ref: '#/components/schemas/Error'
  */
 salesRouter.post('/create-missing-orders', SaleController.createMissingOrders);
+
+/**
+ * @swagger
+ * /api/sales/analytics/items:
+ *   get:
+ *     summary: Get item performance analytics
+ *     tags: [Sales Analytics]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Start date for analysis (YYYY-MM-DD)
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: End date for analysis (YYYY-MM-DD)
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of top items to return
+ *     responses:
+ *       200:
+ *         description: Item performance analytics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 topSellers:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       itemId:
+ *                         type: integer
+ *                       itemName:
+ *                         type: string
+ *                       totalQuantity:
+ *                         type: integer
+ *                       totalRevenue:
+ *                         type: number
+ *                       averagePrice:
+ *                         type: number
+ *                       profitMargin:
+ *                         type: number
+ *                 worstSellers:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       itemId:
+ *                         type: integer
+ *                       itemName:
+ *                         type: string
+ *                       totalQuantity:
+ *                         type: integer
+ *                       totalRevenue:
+ *                         type: number
+ *                       lastSoldDate:
+ *                         type: string
+ *                       daysSinceLastSale:
+ *                         type: integer
+ *                 summary:
+ *                   type: object
+ *                   properties:
+ *                     totalItemsSold:
+ *                       type: integer
+ *                     totalRevenue:
+ *                       type: number
+ *                     averageOrderValue:
+ *                       type: number
+ *                     mostProfitableItem:
+ *                       type: string
+ *                     leastProfitableItem:
+ *                       type: string
+ */
+salesRouter.get('/analytics/items', SaleController.getItemAnalytics);
+
+/**
+ * @swagger
+ * /api/sales/analytics/revenue:
+ *   get:
+ *     summary: Get revenue analytics and trends
+ *     tags: [Sales Analytics]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: period
+ *         schema:
+ *           type: string
+ *           enum: [daily, weekly, monthly, yearly]
+ *           default: monthly
+ *         description: Time period for analysis
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Start date for analysis (YYYY-MM-DD)
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: End date for analysis (YYYY-MM-DD)
+ *     responses:
+ *       200:
+ *         description: Revenue analytics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 periodData:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       period:
+ *                         type: string
+ *                       revenue:
+ *                         type: number
+ *                       transactions:
+ *                         type: integer
+ *                       averageOrderValue:
+ *                         type: number
+ *                       growthRate:
+ *                         type: number
+ *                 summary:
+ *                   type: object
+ *                   properties:
+ *                     totalRevenue:
+ *                       type: number
+ *                     totalTransactions:
+ *                       type: integer
+ *                     averageOrderValue:
+ *                       type: number
+ *                     revenueGrowth:
+ *                       type: number
+ *                     bestDay:
+ *                       type: string
+ *                     bestHour:
+ *                       type: integer
+ */
+salesRouter.get('/analytics/revenue', SaleController.getRevenueAnalytics);
+
+/**
+ * @swagger
+ * /api/sales/analytics/staff:
+ *   get:
+ *     summary: Get staff performance analytics
+ *     tags: [Sales Analytics]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Start date for analysis (YYYY-MM-DD)
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: End date for analysis (YYYY-MM-DD)
+ *     responses:
+ *       200:
+ *         description: Staff performance analytics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 staffPerformance:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       userId:
+ *                         type: integer
+ *                       userName:
+ *                         type: string
+ *                       totalSales:
+ *                         type: number
+ *                       totalTransactions:
+ *                         type: integer
+ *                       averageOrderValue:
+ *                         type: number
+ *                       bestSellingItem:
+ *                         type: string
+ *                       performanceRank:
+ *                         type: integer
+ *                 summary:
+ *                   type: object
+ *                   properties:
+ *                     topPerformer:
+ *                       type: string
+ *                     totalStaff:
+ *                       type: integer
+ *                     averageSalesPerStaff:
+ *                       type: number
+ */
+salesRouter.get('/analytics/staff', SaleController.getStaffAnalytics);
+
+/**
+ * @swagger
+ * /api/sales/analytics/customers:
+ *   get:
+ *     summary: Get customer analytics
+ *     tags: [Sales Analytics]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Start date for analysis (YYYY-MM-DD)
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: End date for analysis (YYYY-MM-DD)
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of top customers to return
+ *     responses:
+ *       200:
+ *         description: Customer analytics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 topCustomers:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       customerId:
+ *                         type: integer
+ *                       customerName:
+ *                         type: string
+ *                       totalSpent:
+ *                         type: number
+ *                       totalOrders:
+ *                         type: integer
+ *                       averageOrderValue:
+ *                       type: number
+ *                       lastVisit:
+ *                         type: string
+ *                       favoriteItems:
+ *                         type: array
+ *                         items:
+ *                           type: string
+ *                 summary:
+ *                   type: object
+ *                   properties:
+ *                     totalCustomers:
+ *                       type: integer
+ *                     repeatCustomers:
+ *                       type: integer
+ *                     averageCustomerValue:
+ *                       type: number
+ *                     customerRetentionRate:
+ *                       type: number
+ */
+salesRouter.get('/analytics/customers', SaleController.getCustomerAnalytics);
+
+/**
+ * @swagger
+ * /api/sales/analytics/inventory:
+ *   get:
+ *     summary: Get inventory performance analytics
+ *     tags: [Sales Analytics]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Inventory performance analytics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 lowStockItems:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       itemId:
+ *                         type: integer
+ *                       itemName:
+ *                         type: string
+ *                       currentStock:
+ *                         type: integer
+ *                       minStock:
+ *                         type: integer
+ *                       daysUntilStockout:
+ *                         type: integer
+ *                 overstockedItems:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       itemId:
+ *                         type: integer
+ *                       itemName:
+ *                         type: string
+ *                       currentStock:
+ *                         type: integer
+ *                       maxStock:
+ *                         type: integer
+ *                       daysOfInventory:
+ *                         type: integer
+ *                 summary:
+ *                   type: object
+ *                   properties:
+ *                     totalItems:
+ *                       type: integer
+ *                     lowStockCount:
+ *                       type: integer
+ *                     overstockedCount:
+ *                       type: integer
+ *                     inventoryValue:
+ *                       type: number
+ *                     turnoverRate:
+ *                       type: number
+ */
+salesRouter.get('/analytics/inventory', SaleController.getInventoryAnalytics);
 
 export default salesRouter; 

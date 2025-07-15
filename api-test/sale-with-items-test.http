@@ -1,0 +1,80 @@
+### Test Sale with Items Endpoint
+### This endpoint is critical for mobile apps to display complete sale details
+
+### 1. Get Sale with Items (should include saleItems array)
+GET http://localhost:3031/api/sales/1/with-items
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+###
+
+### 2. Get Sale with Items - Non-existent Sale (should return 404)
+GET http://localhost:3031/api/sales/99999/with-items
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+###
+
+### 3. Get Sale with Items - Invalid ID (should return 400)
+GET http://localhost:3031/api/sales/invalid/with-items
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+###
+
+### 4. Get Sale with Items - No Authentication (should return 401)
+GET http://localhost:3031/api/sales/1/with-items
+Content-Type: application/json
+
+###
+
+### 5. Compare: Get Sale without Items (original endpoint)
+GET http://localhost:3031/api/sales/1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+###
+
+### Expected Response Structure for /sales/{id}/with-items:
+# {
+#   "id": 1,
+#   "businessId": 1,
+#   "userId": 1,
+#   "saleNumber": "SALE-IT-2024-001",
+#   "totalAmount": 39.17,
+#   "paymentMethod": "credit_card",
+#   "status": "completed",
+#   "customerName": "John Smith",
+#   "customerEmail": "john.smith@email.com",
+#   "customerPhone": null,
+#   "notes": "Table A2 - Window seat",
+#   "payments": "[{\"amount\":39.17,\"method\":\"credit_card\",...}]",
+#   "createdAt": "2024-01-15T20:30:00.000Z",
+#   "updatedAt": "2024-01-15T20:30:00.000Z",
+#   "saleItems": [
+#     {
+#       "id": 1,
+#       "itemId": 1,
+#       "quantity": 1,
+#       "unitPrice": 18.99,
+#       "totalPrice": 18.99,
+#       "discountAmount": 0,
+#       "finalPrice": 18.99,
+#       "notes": null,
+#       "item": {
+#         "id": 1,
+#         "name": "Margherita Pizza",
+#         "description": "Fresh mozzarella, tomato sauce, basil",
+#         "price": 18.99,
+#         "category": "Pizza",
+#         "imageUrl": "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=400&h=300&fit=crop"
+#       }
+#     }
+#   ],
+#   "user": {
+#     "id": 1,
+#     "name": "Antonio Romano",
+#     "email": "antonio@italiandelight.com",
+#     "role": "cashier"
+#   }
+# } 
