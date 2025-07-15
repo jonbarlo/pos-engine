@@ -1167,6 +1167,49 @@ router.post('/:id/items', authenticateToken, async (req: AuthRequest, res): Prom
       totalAmount: newTotalAmount
     });
 
+    // Check if kitchen order exists for this order
+    const existingKitchenOrder = await KitchenOrderModel.findOne({
+      where: { orderId: order.id }
+    });
+
+    if (!existingKitchenOrder) {
+      // Create kitchen order if it doesn't exist
+      const orderItems = await OrderItemModel.findAll({
+        where: { orderId: order.id }
+      });
+      
+      if (orderItems.length > 0) {
+        await createKitchenOrderFromOrder(order, orderItems);
+        logger(`Created missing kitchen order for order ${order.id} when adding items`);
+      }
+    } else {
+      // Update existing kitchen order with new items
+      const newItems = items.map((item, index) => {
+        const menuItem = items.find(mi => mi.itemId === item.itemId);
+        return {
+          id: existingKitchenOrder.totalItems + index + 1,
+          itemName: menuItem?.name || `Item ${item.itemId}`,
+          quantity: item.quantity,
+          status: 'pending' as const,
+          specialInstructions: item.notes || '',
+          modifications: [],
+          allergens: [],
+          preparationTime: 15
+        };
+      });
+
+      const currentItems = existingKitchenOrder.items || [];
+      const updatedItems = [...currentItems, ...newItems];
+      
+      await existingKitchenOrder.update({
+        items: updatedItems,
+        totalItems: updatedItems.length,
+        notes: `Updated with new items - ${new Date().toISOString()}`
+      });
+      
+      logger(`Updated existing kitchen order ${existingKitchenOrder.id} with new items`);
+    }
+
     // Reload order with items
     const updatedOrder = await OrderModel.findByPk(order.id, {
       include: [
