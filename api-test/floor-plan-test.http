@@ -1,0 +1,181 @@
+### Floor Plan API Tests
+
+# Variables
+@baseUrl = http://localhost:3000/api
+@authToken = {{login.response.body.token}}
+
+### Login to get token
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@restaurant.com",
+  "password": "password123"
+}
+
+### 1. Create a new floor plan
+POST {{baseUrl}}/floor-plans
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Main Dining Room",
+  "width": 1000,
+  "height": 800,
+  "backgroundImage": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1000&h=800&fit=crop"
+}
+
+### 2. Get all floor plans
+GET {{baseUrl}}/floor-plans
+Authorization: Bearer {{authToken}}
+
+### 3. Get floor plan by ID (replace {id} with actual ID)
+GET {{baseUrl}}/floor-plans/1
+Authorization: Bearer {{authToken}}
+
+### 4. Get floor plan with tables
+GET {{baseUrl}}/floor-plans/1/tables
+Authorization: Bearer {{authToken}}
+
+### 5. Get available tables for floor plan
+GET {{baseUrl}}/floor-plans/1/available-tables
+Authorization: Bearer {{authToken}}
+
+### 6. Update table position (replace {tableId} with actual table ID)
+PUT {{baseUrl}}/floor-plans/1/tables/1/position
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "x": 150,
+  "y": 200,
+  "rotation": 45,
+  "width": 100,
+  "height": 80
+}
+
+### 7. Update floor plan
+PUT {{baseUrl}}/floor-plans/1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Updated Main Dining Room",
+  "width": 1200,
+  "height": 900
+}
+
+### 8. Remove table from floor plan
+DELETE {{baseUrl}}/floor-plans/1/tables/1
+Authorization: Bearer {{authToken}}
+
+### 9. Delete floor plan
+DELETE {{baseUrl}}/floor-plans/1
+Authorization: Bearer {{authToken}}
+
+### 10. Create multiple floor plans for testing
+POST {{baseUrl}}/floor-plans
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Patio Area",
+  "width": 800,
+  "height": 600
+}
+
+###
+
+POST {{baseUrl}}/floor-plans
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Bar Section",
+  "width": 600,
+  "height": 400
+}
+
+### 11. Position multiple tables on floor plan
+PUT {{baseUrl}}/floor-plans/1/tables/1/position
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "x": 100,
+  "y": 100,
+  "rotation": 0,
+  "width": 80,
+  "height": 60
+}
+
+###
+
+PUT {{baseUrl}}/floor-plans/1/tables/2/position
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "x": 250,
+  "y": 100,
+  "rotation": 0,
+  "width": 80,
+  "height": 60
+}
+
+###
+
+PUT {{baseUrl}}/floor-plans/1/tables/3/position
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "x": 400,
+  "y": 100,
+  "rotation": 0,
+  "width": 80,
+  "height": 60
+}
+
+###
+
+PUT {{baseUrl}}/floor-plans/1/tables/4/position
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "x": 100,
+  "y": 250,
+  "rotation": 0,
+  "width": 80,
+  "height": 60
+}
+
+###
+
+PUT {{baseUrl}}/floor-plans/1/tables/5/position
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "x": 250,
+  "y": 250,
+  "rotation": 0,
+  "width": 80,
+  "height": 60
+}
+
+###
+
+PUT {{baseUrl}}/floor-plans/1/tables/6/position
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "x": 400,
+  "y": 250,
+  "rotation": 0,
+  "width": 80,
+  "height": 60
+} 
