@@ -742,6 +742,88 @@ Authorization: Bearer <your_jwt_token>
 **Path Parameters:**
 - `id` (integer, required) - Order ID
 
+### Add Items to Order
+**POST** `/orders/{id}/items`
+
+**Path Parameters:**
+- `id` (integer, required) - Order ID
+
+**Required Fields:**
+- `items` (array) - Array of items to add
+
+**Item Object Required Fields:**
+- `itemId` (integer) - Menu item ID
+- `quantity` (integer) - Quantity ordered
+
+**Item Object Optional Fields:**
+- `notes` (string) - Item-specific notes
+
+**Request Body:**
+```json
+{
+  "items": [
+    {
+      "itemId": 1,
+      "quantity": 2,
+      "notes": "Extra cheese please"
+    },
+    {
+      "itemId": 3,
+      "quantity": 1,
+      "notes": "No onions"
+    }
+  ]
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "orderNumber": "ORD-1704067200000-123",
+    "businessId": 1,
+    "serverId": 1,
+    "customerId": 1,
+    "tableId": 5,
+    "orderType": "dine_in",
+    "status": "pending",
+    "subtotal": 51.96,
+    "taxAmount": 4.42,
+    "totalAmount": 56.38,
+    "notes": "General order notes",
+    "orderItems": [
+      {
+        "id": 1,
+        "itemId": 1,
+        "itemName": "Margherita Pizza",
+        "quantity": 2,
+        "unitPrice": 12.99,
+        "totalPrice": 25.98,
+        "notes": "Extra cheese please"
+      },
+      {
+        "id": 2,
+        "itemId": 3,
+        "itemName": "Spaghetti Carbonara",
+        "quantity": 1,
+        "unitPrice": 16.99,
+        "totalPrice": 16.99,
+        "notes": "No onions"
+      }
+    ],
+    "createdAt": "2025-01-01T00:00:00.000Z"
+  },
+  "message": "Items added to order successfully"
+}
+```
+
+**Error Responses:**
+- `400` - Invalid items array, missing required fields, or invalid menu items
+- `404` - Order not found
+- `400` - Cannot add items to completed or cancelled order
+
 ### Delete Order
 **DELETE** `/orders/{id}`
 
@@ -869,7 +951,8 @@ Authorization: Bearer <your_jwt_token>
 **GET** `/tables`
 
 **Query Parameters:**
-- `status` (optional: "available", "occupied", "reserved", "maintenance")
+- `status` (optional: "available", "occupied", "reserved", "cleaning", "out_of_service")
+- `section` (optional: string) - Filter by section
 - `capacity` (optional: integer) - Filter by capacity
 
 **Response:**
@@ -877,13 +960,15 @@ Authorization: Bearer <your_jwt_token>
 [
   {
     "id": 1,
-    "name": "Table 1",
+    "businessId": 1,
+    "tableNumber": "A1",
     "capacity": 4,
+    "partySize": null,
     "status": "available",
-    "location": "Main Dining",
+    "section": "Main Floor",
     "currentOrderId": null,
     "serverId": null,
-    "businessId": 1,
+    "isActive": true,
     "createdAt": "2025-01-01T00:00:00.000Z",
     "updatedAt": "2025-01-01T00:00:00.000Z"
   }
@@ -900,19 +985,19 @@ Authorization: Bearer <your_jwt_token>
 **POST** `/tables`
 
 **Required Fields:**
-- `name` (string) - Table name
+- `tableNumber` (string) - Table number/name
 - `capacity` (integer) - Number of seats
 
 **Optional Fields:**
-- `location` (string) - Table location
-- `status` (string) - "available", "occupied", "reserved", "maintenance"
+- `section` (string) - Table section (default: "Main Floor")
+- `status` (string) - "available", "occupied", "reserved", "cleaning", "out_of_service"
 
 **Request Body:**
 ```json
 {
-  "name": "Table 1",
+  "tableNumber": "A1",
   "capacity": 4,
-  "location": "Main Dining",
+  "section": "Main Floor",
   "status": "available"
 }
 ```
@@ -941,6 +1026,135 @@ Authorization: Bearer <your_jwt_token>
   "status": "occupied"
 }
 ```
+
+### Assign Waiter to Table
+**PUT** `/tables/{id}/assign`
+
+**Path Parameters:**
+- `id` (integer, required) - Table ID
+
+**Request Body:**
+```json
+{
+  "serverId": 2
+}
+```
+
+**Required Fields:**
+- `serverId` (integer) - Waiter/server ID
+
+### Clear Table
+**POST** `/tables/{id}/clear`
+
+**Path Parameters:**
+- `id` (integer, required) - Table ID
+
+**Description:** Marks table as available, clears any assigned waiter, and resets party size
+
+**Response:**
+```json
+{
+  "data": {
+    "id": 1,
+    "businessId": 1,
+    "tableNumber": "A1",
+    "capacity": 6,
+    "partySize": null,
+    "status": "available",
+    "section": "Main Floor",
+    "currentOrderId": null,
+    "serverId": null,
+    "isActive": true,
+    "createdAt": "2025-01-01T00:00:00.000Z",
+    "updatedAt": "2025-01-01T12:00:00.000Z"
+  }
+}
+```
+
+### Get Orders by Table
+**GET** `/tables/{id}/orders`
+
+**Path Parameters:**
+- `id` (integer, required) - Table ID
+
+**Query Parameters:**
+- `status` (optional) - Filter by order status
+- `orderType` (optional) - Filter by order type
+
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "businessId": 1,
+    "serverId": 3,
+    "customerId": null,
+    "orderNumber": "IT-2024-001",
+    "tableId": 1,
+    "status": "in_progress",
+    "orderType": "dine_in",
+    "subtotal": 35.98,
+    "totalAmount": 39.17,
+    "taxAmount": 3.19,
+    "discountAmount": 0,
+    "tipAmount": 0,
+    "notes": "Window seat",
+    "specialInstructions": null,
+    "estimatedReadyTime": null,
+    "actualReadyTime": null,
+    "createdAt": "2025-01-01T00:00:00.000Z",
+    "updatedAt": "2025-01-01T00:00:00.000Z"
+  }
+]
+```
+
+### Seat Customers at Table
+**POST** `/tables/{id}/seat`
+
+**Path Parameters:**
+- `id` (integer, required) - Table ID
+
+**Request Body:**
+```json
+{
+  "partySize": 4,
+  "serverId": 2,
+  "notes": "Window seat preferred"
+}
+```
+
+**Required Fields:**
+- `partySize` (integer) - Number of customers being seated
+
+**Optional Fields:**
+- `serverId` (integer) - ID of the waiter/server assigned
+- `notes` (string) - Additional notes about the seating
+
+**Response:**
+```json
+{
+  "data": {
+    "id": 1,
+    "businessId": 1,
+    "tableNumber": "A1",
+    "capacity": 6,
+    "partySize": 4,
+    "status": "occupied",
+    "section": "Main Floor",
+    "currentOrderId": null,
+    "serverId": 2,
+    "isActive": true,
+    "createdAt": "2025-01-01T00:00:00.000Z",
+    "updatedAt": "2025-01-01T12:00:00.000Z"
+  },
+  "message": "Successfully seated party of 4 at table A1"
+}
+```
+
+**Error Responses:**
+- `400` - Invalid table ID, customer count, or capacity exceeded
+- `404` - Table not found
+- `409` - Table not available for seating
 
 ---
 

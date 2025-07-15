@@ -5,15 +5,58 @@ import {
   CustomerModel, 
   TableModel, 
   BusinessModel, 
-  OrderItemModel 
+  OrderItemModel,
+  KitchenOrderModel
 } from '../models';
 import { OrderStatus, OrderType } from '../models/OrderModel';
+import { OrderItemStatus } from '../models/OrderItemModel';
 import { TableStatus } from '../models/TableModel';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { logger } from '../utils/logger';
 import { Op } from 'sequelize';
+import { OrderController } from '../controllers/orderController';
 
 const router = Router();
+
+/**
+ * Helper function to create kitchen order from order
+ */
+async function createKitchenOrderFromOrder(order: any, orderItems: any[]): Promise<void> {
+  try {
+    // Create kitchen order items
+    const kitchenItems = orderItems.map((item, index) => ({
+      id: index + 1,
+      itemName: item.itemName,
+      quantity: item.quantity,
+      status: 'pending' as const,
+      specialInstructions: item.notes || '',
+      modifications: [],
+      allergens: [],
+      preparationTime: 15 // Default preparation time
+    }));
+
+    // Create kitchen order
+    await KitchenOrderModel.create({
+      businessId: order.businessId,
+      orderId: order.id,
+      orderNumber: order.orderNumber,
+      customerName: 'Customer', // Could be enhanced to get from customer
+      orderType: order.orderType,
+      priority: 'normal',
+      status: 'pending',
+      estimatedPrepTime: 15,
+      items: kitchenItems,
+      totalItems: kitchenItems.length,
+      completedItems: 0,
+      notes: `Auto-generated from order ${order.orderNumber}`
+    });
+
+    logger(`Created kitchen order for order ${order.orderNumber}`);
+  } catch (error) {
+    logger(`Error creating kitchen order for order ${order.orderNumber}: ${error}`);
+    // Don't throw error to avoid breaking order creation
+  }
+}
 
 /**
  * @swagger
@@ -89,7 +132,6 @@ const router = Router();
  *         - itemId
  *         - itemName
  *         - quantity
- *         - unitPrice
  *       properties:
  *         id:
  *           type: integer
@@ -535,9 +577,13 @@ router.post('/', authenticateToken, async (req: AuthRequest, res): Promise<void>
         quantity: item.quantity,
         unitPrice: item.unitPrice,
         totalPrice: item.totalPrice,
+        status: OrderItemStatus.PENDING,
         notes: item.notes
-      } as any);
+      });
     }
+
+    // Create kitchen order
+    await createKitchenOrderFromOrder(order, orderItems);
 
     // Update table status to occupied if this is a dine-in order with tableId
     if (orderType === OrderType.DINE_IN && tableId) {
@@ -774,6 +820,9 @@ router.post('/table', authenticateToken, async (req: AuthRequest, res): Promise<
         notes: item.notes
       } as any);
     }
+
+    // Create kitchen order
+    await createKitchenOrderFromOrder(order, orderItems);
 
     // Update table status to occupied and link the order
     await table.update({
@@ -1039,9 +1088,10 @@ router.post('/:id/items', authenticateToken, async (req: AuthRequest, res): Prom
     const { items } = req.body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
+      logger(`Invalid items array: ${JSON.stringify(items)}`);
       res.status(400).json({
         success: false,
-        message: 'Items array is required'
+        message: 'Items array is required and must be a non-empty array'
       });
       return;
     }
@@ -1070,6 +1120,7 @@ router.post('/:id/items', authenticateToken, async (req: AuthRequest, res): Prom
 
     for (const item of items) {
       if (!item.itemId || !item.quantity) {
+        logger(`Invalid item data in add items endpoint: ${JSON.stringify(item)}`);
         res.status(400).json({
           success: false,
           message: 'Each item must have itemId and quantity'
@@ -1096,8 +1147,9 @@ router.post('/:id/items', authenticateToken, async (req: AuthRequest, res): Prom
         quantity: item.quantity,
         unitPrice: menuItem.price,
         totalPrice: itemTotal,
+        status: OrderItemStatus.PENDING,
         notes: item.notes
-      } as any);
+      });
 
       logger(`Added item ${menuItem.name} to order ${id}`);
     }
@@ -1742,6 +1794,467 @@ router.post('/:id/complete', authenticateToken, async (req: AuthRequest, res): P
     res.status(500).json({
       success: false,
       message: 'Failed to complete order'
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/orders/{id}/complete:
+ *   put:
+ *     summary: Complete an order and create a sale
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Order ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - paymentMethod
+ *             properties:
+ *               paymentMethod:
+ *                 type: string
+ *                 enum: [cash, card, check, mobile]
+ *                 description: Payment method used
+ *               customerName:
+ *                 type: string
+ *                 description: Customer name
+ *               customerEmail:
+ *                 type: string
+ *                 format: email
+ *                 description: Customer email
+ *               customerPhone:
+ *                 type: string
+ *                 description: Customer phone number
+ *               notes:
+ *                 type: string
+ *                 description: Additional notes
+ *     responses:
+ *       200:
+ *         description: Order completed and sale created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     order:
+ *                       $ref: '#/components/schemas/Order'
+ *                     sale:
+ *                       $ref: '#/components/schemas/Sale'
+ *                 message:
+ *                   type: string
+ *                   example: Order completed successfully
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.put('/:id/complete', OrderController.completeOrder);
+
+/**
+ * @swagger
+ * /api/tables/{tableId}/clear:
+ *   put:
+ *     summary: Clear a table and complete all pending orders
+ *     tags: [Tables]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: tableId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Table ID
+ *     responses:
+ *       200:
+ *         description: Table cleared successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     ordersCompleted:
+ *                       type: integer
+ *                       description: Number of orders completed
+ *                     salesCreated:
+ *                       type: integer
+ *                       description: Number of sales created
+ *                     errors:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                       description: Any errors encountered
+ *                 message:
+ *                   type: string
+ *                   example: Table cleared successfully
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.put('/tables/:tableId/clear', OrderController.clearTable);
+
+/**
+ * @swagger
+ * /api/tables/{tableId}/orders:
+ *   get:
+ *     summary: Get all orders for a specific table
+ *     tags: [Tables]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: tableId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Table ID
+ *     responses:
+ *       200:
+ *         description: Orders retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Order'
+ *                 message:
+ *                   type: string
+ *                   example: Found 3 orders for table 1
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get('/tables/:tableId/orders', OrderController.getOrdersByTable);
+
+/**
+ * @swagger
+ * /api/orders/pending:
+ *   get:
+ *     summary: Get all pending orders for the business
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Pending orders retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Order'
+ *                 message:
+ *                   type: string
+ *                   example: Found 5 pending orders
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get('/pending', OrderController.getPendingOrders);
+
+/**
+ * @swagger
+ * /api/orders/completed:
+ *   get:
+ *     summary: Get completed orders for the business
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Start date for filtering (YYYY-MM-DD)
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: End date for filtering (YYYY-MM-DD)
+ *     responses:
+ *       200:
+ *         description: Completed orders retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Order'
+ *                 message:
+ *                   type: string
+ *                   example: Found 25 completed orders
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get('/completed', OrderController.getCompletedOrders);
+
+/**
+ * @swagger
+ * /api/orders/stats:
+ *   get:
+ *     summary: Get order statistics for the business
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Start date for filtering (YYYY-MM-DD)
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: End date for filtering (YYYY-MM-DD)
+ *     responses:
+ *       200:
+ *         description: Order statistics retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     totalCompletedOrders:
+ *                       type: integer
+ *                       description: Total number of completed orders
+ *                     totalPendingOrders:
+ *                       type: integer
+ *                       description: Total number of pending orders
+ *                     totalRevenue:
+ *                       type: number
+ *                       description: Total revenue from completed orders
+ *                     averageOrderValue:
+ *                       type: number
+ *                       description: Average order value
+ *                     ordersByStatus:
+ *                       type: object
+ *                       properties:
+ *                         pending:
+ *                           type: integer
+ *                         confirmed:
+ *                           type: integer
+ *                         in_progress:
+ *                           type: integer
+ *                         ready:
+ *                           type: integer
+ *                         served:
+ *                           type: integer
+ *                 message:
+ *                   type: string
+ *                   example: Order statistics retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get('/stats', OrderController.getOrderStats);
+
+/**
+ * @swagger
+ * /api/orders/create-missing-kitchen-orders:
+ *   post:
+ *     summary: Create missing kitchen orders for existing orders
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Missing kitchen orders created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     success:
+ *                       type: integer
+ *                       description: Number of kitchen orders created successfully
+ *                     failed:
+ *                       type: integer
+ *                       description: Number of kitchen orders that failed to create
+ *                     errors:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                       description: List of error messages
+ *                 message:
+ *                   type: string
+ *                   example: Missing kitchen orders created successfully
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.post('/create-missing-kitchen-orders', authenticateToken, async (req: AuthRequest, res): Promise<void> => {
+  try {
+    const businessId = req.user?.businessId;
+    if (!businessId) {
+      res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+      return;
+    }
+
+    logger(`API endpoint POST /orders/create-missing-kitchen-orders was called for business ${businessId}`);
+
+    // Find orders that don't have associated kitchen orders
+    const ordersWithoutKitchenOrders = await OrderModel.findAll({
+      where: { businessId },
+      include: [
+        {
+          model: OrderItemModel,
+          as: 'orderItems'
+        }
+      ]
+    });
+
+    const result = { success: 0, failed: 0, errors: [] as string[] };
+
+    for (const order of ordersWithoutKitchenOrders) {
+      try {
+        // Check if kitchen order already exists for this order
+        const existingKitchenOrder = await KitchenOrderModel.findOne({
+          where: { orderId: order.id }
+        });
+
+        if (existingKitchenOrder) {
+          continue; // Kitchen order already exists, skip
+        }
+
+        // Convert order items to kitchen order format
+        const orderItems = (order as any).orderItems || [];
+        if (orderItems.length === 0) {
+          logger(`WARNING: Order ${order.id} has no items, skipping kitchen order creation`);
+          continue;
+        }
+
+        // Create kitchen order
+        await createKitchenOrderFromOrder(order, orderItems);
+        result.success++;
+        logger(`SUCCESS: Created missing kitchen order for order ${order.id}`);
+
+      } catch (error) {
+        result.failed++;
+        const errorMsg = `Failed to create kitchen order for order ${order.id}: ${error}`;
+        result.errors.push(errorMsg);
+        logger(`ERROR: ${errorMsg}`);
+      }
+    }
+
+    logger(`INFO: Completed creating missing kitchen orders. Success: ${result.success}, Failed: ${result.failed}`);
+
+    res.json({
+      success: true,
+      data: result,
+      message: 'Missing kitchen orders created successfully'
+    });
+
+  } catch (error) {
+    logger(`Error creating missing kitchen orders: ${error}`);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create missing kitchen orders'
     });
   }
 });

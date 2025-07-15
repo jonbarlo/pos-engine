@@ -24,6 +24,11 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       allowNull: false,
       defaultValue: 4,
     },
+    partySize: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: null,
+    },
     currentOrderId: {
       type: DataTypes.INTEGER,
       allowNull: true,

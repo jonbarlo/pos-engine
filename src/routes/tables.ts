@@ -7,6 +7,7 @@ import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { requireRestaurant } from '../middleware/restaurantCheck';
 import { logger } from '../utils/logger';
 import { Op } from 'sequelize';
+import { TableController } from '../controllers/tableController';
 
 const router = Router();
 
@@ -130,6 +131,7 @@ router.get('/', async (req: AuthRequest, res) => {
         businessId: table.businessId,
         tableNumber: table.tableNumber,
         capacity: table.capacity,
+        partySize: table.partySize,
         status: table.status,
         section: table.section,
         currentOrderId: table.currentOrderId,
@@ -204,6 +206,7 @@ router.get('/:id', async (req: AuthRequest, res) => {
         businessId: table.businessId,
         tableNumber: table.tableNumber,
         capacity: table.capacity,
+        partySize: table.partySize,
         status: table.status,
         section: table.section,
         currentOrderId: table.currentOrderId,
@@ -308,6 +311,7 @@ router.put('/:id/status', async (req: AuthRequest, res) => {
         businessId: table.businessId,
         tableNumber: table.tableNumber,
         capacity: table.capacity,
+        partySize: table.partySize,
         status: table.status,
         section: table.section,
         currentOrderId: table.currentOrderId,
@@ -408,6 +412,7 @@ router.put('/:id/assign', async (req: AuthRequest, res) => {
         businessId: table.businessId,
         tableNumber: table.tableNumber,
         capacity: table.capacity,
+        partySize: table.partySize,
         status: table.status,
         section: table.section,
         currentOrderId: table.currentOrderId,
@@ -480,7 +485,8 @@ router.post('/:id/clear', async (req: AuthRequest, res) => {
     await table.update({
       status: TableStatus.AVAILABLE,
       currentOrderId: null,
-      serverId: null
+      serverId: null,
+      partySize: null
     });
     
     logger(`Cleared table ${id} for business ${businessId}`);
@@ -491,6 +497,7 @@ router.post('/:id/clear', async (req: AuthRequest, res) => {
         businessId: table.businessId,
         tableNumber: table.tableNumber,
         capacity: table.capacity,
+        partySize: table.partySize,
         status: table.status,
         section: table.section,
         currentOrderId: table.currentOrderId,
@@ -595,6 +602,7 @@ router.post('/', async (req: AuthRequest, res) => {
         businessId: newTable.businessId,
         tableNumber: newTable.tableNumber,
         capacity: newTable.capacity,
+        partySize: newTable.partySize,
         status: newTable.status,
         section: newTable.section,
         currentOrderId: newTable.currentOrderId,
@@ -607,6 +615,142 @@ router.post('/', async (req: AuthRequest, res) => {
   } catch (error) {
     logger(`Error creating table: ${error}`);
     res.status(500).json({ error: 'Failed to create table' });
+  }
+});
+
+/**
+ * @swagger
+ * /api/tables/{id}/seat:
+ *   post:
+ *     summary: Seat customers at a table
+ *     tags: [Tables]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Table ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               partySize:
+ *                 type: integer
+ *                 description: Number of customers being seated
+ *               serverId:
+ *                 type: integer
+ *                 description: ID of the waiter/server assigned
+ *               notes:
+ *                 type: string
+ *                 description: Additional notes about the seating
+ *     responses:
+ *       200:
+ *         description: Customers seated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   $ref: '#/components/schemas/Table'
+ *       400:
+ *         description: Invalid request data
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Business is not restaurant type
+ *       404:
+ *         description: Table not found
+ *       409:
+ *         description: Table is not available for seating
+ *       500:
+ *         description: Server error
+ */
+router.post('/:id/seat', async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+    const { partySize, serverId, notes } = req.body;
+    const businessId = req.user!.businessId;
+    
+    if (!id || isNaN(parseInt(id))) {
+      res.status(400).json({ error: 'Invalid table ID' });
+      return;
+    }
+    
+    if (!partySize || partySize <= 0) {
+      res.status(400).json({ error: 'Valid party size is required' });
+      return;
+    }
+    
+    // Find the table
+    const table = await TableModel.findOne({
+      where: { id: parseInt(id), businessId, isActive: true }
+    });
+    
+    if (!table) {
+      res.status(404).json({ error: 'Table not found' });
+      return;
+    }
+    
+    // Check if table is available for seating
+    if (table.status !== TableStatus.AVAILABLE && table.status !== TableStatus.RESERVED) {
+      res.status(409).json({ 
+        error: 'Table is not available for seating',
+        currentStatus: table.status
+      });
+      return;
+    }
+    
+    // Check capacity
+    if (partySize > table.capacity) {
+      res.status(400).json({ 
+        error: 'Party size exceeds table capacity',
+        tableCapacity: table.capacity,
+        requestedSeats: partySize
+      });
+      return;
+    }
+    
+    // Update table status to occupied
+    const updateData: any = {
+      status: TableStatus.OCCUPIED,
+      partySize: partySize
+    };
+    
+    if (serverId) {
+      updateData.serverId = parseInt(serverId);
+    }
+    
+    await table.update(updateData);
+    
+    logger(`Seated party of ${partySize} at table ${id} for business ${businessId}${serverId ? ` with server ${serverId}` : ''}`);
+    
+    res.status(200).json({
+      data: {
+        id: table.id,
+        businessId: table.businessId,
+        tableNumber: table.tableNumber,
+        capacity: table.capacity,
+        partySize: table.partySize,
+        status: table.status,
+        section: table.section,
+        currentOrderId: table.currentOrderId,
+        serverId: table.serverId,
+        isActive: table.isActive,
+        createdAt: table.createdAt,
+        updatedAt: table.updatedAt
+      },
+      message: `Successfully seated party of ${partySize} at table ${table.tableNumber}`
+    });
+  } catch (error) {
+    logger(`Error seating customers at table: ${error}`);
+    res.status(500).json({ error: 'Failed to seat customers at table' });
   }
 });
 
@@ -706,6 +850,7 @@ router.put('/:id', async (req: AuthRequest, res) => {
         businessId: table.businessId,
         tableNumber: table.tableNumber,
         capacity: table.capacity,
+        partySize: table.partySize,
         status: table.status,
         section: table.section,
         currentOrderId: table.currentOrderId,
@@ -779,5 +924,326 @@ router.delete('/:id', async (req: AuthRequest, res) => {
     res.status(500).json({ error: 'Failed to delete table' });
   }
 });
+
+/**
+ * @swagger
+ * /api/tables/with-orders:
+ *   get:
+ *     summary: Get all tables with their current orders
+ *     tags: [Tables]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Tables with orders retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       tableNumber:
+ *                         type: string
+ *                       capacity:
+ *                         type: integer
+ *                       status:
+ *                         type: string
+ *                       orders:
+ *                         type: array
+ *                         items:
+ *                           $ref: '#/components/schemas/Order'
+ *                       totalPendingAmount:
+ *                         type: number
+ *                 message:
+ *                   type: string
+ *                   example: Found 10 tables
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Business is not restaurant type
+ */
+router.get('/with-orders', TableController.getTablesWithOrders);
+
+/**
+ * @swagger
+ * /api/tables/{tableId}/with-orders:
+ *   get:
+ *     summary: Get a specific table with its orders
+ *     tags: [Tables]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: tableId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Table ID
+ *     responses:
+ *       200:
+ *         description: Table with orders retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     tableNumber:
+ *                       type: string
+ *                     capacity:
+ *                       type: integer
+ *                     status:
+ *                       type: string
+ *                     orders:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Order'
+ *                     totalPendingAmount:
+ *                       type: number
+ *                 message:
+ *                   type: string
+ *                   example: Table 1 retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Business is not restaurant type
+ *       404:
+ *         description: Table not found
+ */
+router.get('/:tableId/with-orders', TableController.getTableWithOrders);
+
+/**
+ * @swagger
+ * /api/tables/{tableId}/status:
+ *   put:
+ *     summary: Update table status
+ *     tags: [Tables]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: tableId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Table ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - status
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [available, occupied, reserved, cleaning, out_of_service]
+ *                 description: New table status
+ *               serverId:
+ *                 type: integer
+ *                 description: Server ID to assign
+ *     responses:
+ *       200:
+ *         description: Table status updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/Table'
+ *                 message:
+ *                   type: string
+ *                   example: Table status updated to occupied
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Business is not restaurant type
+ */
+router.put('/:tableId/status', TableController.updateTableStatus);
+
+/**
+ * @swagger
+ * /api/tables/{tableId}/assign:
+ *   put:
+ *     summary: Assign table to a server
+ *     tags: [Tables]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: tableId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Table ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - serverId
+ *             properties:
+ *               serverId:
+ *                 type: integer
+ *                 description: Server ID to assign to the table
+ *     responses:
+ *       200:
+ *         description: Table assigned successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/Table'
+ *                 message:
+ *                   type: string
+ *                   example: Table assigned to server 1
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Business is not restaurant type
+ */
+router.put('/:tableId/assign', TableController.assignTable);
+
+/**
+ * @swagger
+ * /api/tables/stats:
+ *   get:
+ *     summary: Get table statistics
+ *     tags: [Tables]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Table statistics retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     totalTables:
+ *                       type: integer
+ *                       description: Total number of tables
+ *                     availableTables:
+ *                       type: integer
+ *                       description: Number of available tables
+ *                     occupiedTables:
+ *                       type: integer
+ *                       description: Number of occupied tables
+ *                     reservedTables:
+ *                       type: integer
+ *                       description: Number of reserved tables
+ *                     outOfServiceTables:
+ *                       type: integer
+ *                       description: Number of out of service tables
+ *                     totalCapacity:
+ *                       type: integer
+ *                       description: Total seating capacity
+ *                     tablesWithPendingOrders:
+ *                       type: integer
+ *                       description: Number of tables with pending orders
+ *                     utilizationRate:
+ *                       type: string
+ *                       description: Table utilization rate as percentage
+ *                     averageCapacity:
+ *                       type: integer
+ *                       description: Average table capacity
+ *                 message:
+ *                   type: string
+ *                   example: Table statistics retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Business is not restaurant type
+ */
+router.get('/stats', TableController.getTableStats);
+
+/**
+ * @swagger
+ * /api/tables/needing-attention:
+ *   get:
+ *     summary: Get tables that need attention (have pending orders)
+ *     tags: [Tables]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Tables needing attention retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       tableId:
+ *                         type: integer
+ *                       tableNumber:
+ *                         type: string
+ *                       status:
+ *                         type: string
+ *                       pendingOrders:
+ *                         type: integer
+ *                       totalAmount:
+ *                         type: number
+ *                       oldestOrderAge:
+ *                         type: integer
+ *                         description: Age of oldest order in minutes
+ *                       oldestOrderId:
+ *                         type: integer
+ *                       serverId:
+ *                         type: integer
+ *                 message:
+ *                   type: string
+ *                   example: Found 3 tables needing attention
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Business is not restaurant type
+ */
+router.get('/needing-attention', TableController.getTablesNeedingAttention);
 
 export default router;

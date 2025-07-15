@@ -13,6 +13,7 @@ export interface TableAttributes {
   businessId: number;
   tableNumber: string;
   capacity: number;
+  partySize?: number | null;
   status: TableStatus;
   currentOrderId?: number | null;
   serverId?: number | null;
@@ -27,6 +28,7 @@ export interface TableCreationAttributes {
   businessId: number;
   tableNumber: string;
   capacity: number;
+  partySize?: number | null;
   status?: TableStatus;
   currentOrderId?: number | null;
   serverId?: number | null;
@@ -39,6 +41,7 @@ export class TableModel extends Model<TableAttributes, TableCreationAttributes> 
   public businessId!: number;
   public tableNumber!: string;
   public capacity!: number;
+  public partySize?: number | null;
   public status!: TableStatus;
   public currentOrderId?: number | null;
   public serverId?: number | null;
@@ -81,6 +84,15 @@ export const initializeTableModel = (sequelize: Sequelize): void => {
       capacity: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        validate: {
+          min: 1,
+          max: 20,
+        },
+      },
+      partySize: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: null,
         validate: {
           min: 1,
           max: 20,

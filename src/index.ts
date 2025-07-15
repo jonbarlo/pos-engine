@@ -401,12 +401,157 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
  *               type: array
  *               items:
  *                 $ref: '#/components/schemas/StaffMessage'
- *       400:
- *         description: Missing user information
  *       401:
  *         description: Authentication required
  *       500:
  *         description: Internal server error
+ */
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Table:
+ *       type: object
+ *       required:
+ *         - businessId
+ *         - tableNumber
+ *         - capacity
+ *         - status
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: Auto-generated table ID
+ *         businessId:
+ *           type: integer
+ *           description: Business ID (must be restaurant type)
+ *         tableNumber:
+ *           type: string
+ *           description: Table number/name
+ *         capacity:
+ *           type: integer
+ *           description: Maximum number of guests
+ *         partySize:
+ *           type: integer
+ *           nullable: true
+ *           description: Current number of guests seated at the table
+ *         status:
+ *           type: string
+ *           enum: [available, occupied, reserved, cleaning, out_of_service]
+ *           description: Current table status
+ *         section:
+ *           type: string
+ *           description: Table section (e.g., "patio", "window", "bar")
+ *         currentOrderId:
+ *           type: integer
+ *           nullable: true
+ *           description: Current order ID if table is occupied
+ *         serverId:
+ *           type: integer
+ *           nullable: true
+ *           description: Assigned waiter/server ID
+ *         isActive:
+ *           type: boolean
+ *           description: Whether table is active
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           description: Creation timestamp
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *           description: Last update timestamp
+ *     
+ *     TableSeatRequest:
+ *       type: object
+ *       required:
+ *         - customerCount
+ *       properties:
+ *         customerCount:
+ *           type: integer
+ *           minimum: 1
+ *           description: Number of customers being seated
+ *         serverId:
+ *           type: integer
+ *           description: ID of the waiter/server assigned
+ *         notes:
+ *           type: string
+ *           maxLength: 500
+ *           description: Additional notes about the seating
+ *     
+ *     TableSeatResponse:
+ *       type: object
+ *       properties:
+ *         data:
+ *           $ref: '#/components/schemas/Table'
+ *         message:
+ *           type: string
+ *           description: Success message with seating details
+ */
+
+/**
+ * @swagger
+ * tags:
+ *   name: Tables
+ *   description: Restaurant table management operations
+ */
+
+/**
+ * @swagger
+ * /api/tables/{id}/seat:
+ *   post:
+ *     summary: Seat customers at a table
+ *     tags: [Tables]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Table ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               partySize:
+ *                 type: integer
+ *                 description: Number of customers being seated
+ *               serverId:
+ *                 type: integer
+ *                 description: ID of the waiter/server assigned
+ *               notes:
+ *                 type: string
+ *                 description: Additional notes about the seating
+ *     responses:
+ *       200:
+ *         description: Table successfully seated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   $ref: '#/components/schemas/Table'
+ *                 message:
+ *                   type: string
+ *                   example: Successfully seated party of 4 at table A1
+ *       400:
+ *         description: Invalid table ID, party size, or capacity exceeded
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Business is not restaurant type
+ *       404:
+ *         description: Table not found
+ *       409:
+ *         description: Table not available for seating
+ *       500:
+ *         description: Server error
  */
 
 /**
