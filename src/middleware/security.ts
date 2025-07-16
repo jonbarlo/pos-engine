@@ -13,9 +13,9 @@ export const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: true, // Don't count successful logins
-  handler: (req: any, res) => {
+  handler: (req: any, res: any) => {
     logger(`Rate limit exceeded for auth endpoint from IP: ${req.ip}`);
-    res.status(429).json({
+    res.status(429 as number).json({
       error: 'Too many login attempts',
       message: 'Please wait 15 minutes before trying again',
       retryAfter: 900 // 15 minutes in seconds
@@ -30,9 +30,9 @@ export const apiLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: false,
-  handler: (req: any, res) => {
+  handler: (req: any, res: any) => {
     logger(`Rate limit exceeded for API endpoint from IP: ${req.ip}`);
-    res.status(429).json({
+    res.status(429 as number).json({
       error: 'Too many requests',
       message: 'Please wait 15 minutes before trying again',
       retryAfter: 900 // 15 minutes in seconds
