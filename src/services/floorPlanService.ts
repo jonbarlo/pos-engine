@@ -99,8 +99,11 @@ export class FloorPlanService {
       });
 
       if (!floorPlan) {
+        logger(`Floor plan ${id} not found for business ${businessId}`);
         return null;
       }
+
+      logger(`Found floor plan: ${floorPlan.name}`);
 
       const tablePositions = await TablePositionModel.findAll({
         where: { floorPlanId: id },
@@ -114,7 +117,9 @@ export class FloorPlanService {
         order: [['table', 'tableNumber', 'ASC']]
       });
 
-      return {
+      logger(`Found ${tablePositions.length} table positions for floor plan ${id}`);
+
+      const result = {
         ...floorPlan.toJSON(),
         tablePositions: tablePositions.map((tp: any) => ({
           id: tp.id,
@@ -126,6 +131,9 @@ export class FloorPlanService {
           table: tp.table
         }))
       };
+
+      logger(`Returning floor plan with ${result.tablePositions.length} tables`);
+      return result;
     } catch (error) {
       logger(`Error getting floor plan with tables: ${error}`);
       throw error;

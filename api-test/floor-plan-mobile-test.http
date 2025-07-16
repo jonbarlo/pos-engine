@@ -1,0 +1,45 @@
+### Floor Plan Mobile App Test
+
+# Variables
+@baseUrl = http://localhost:3000/api
+@authToken = {{login.response.body.token}}
+
+### Login to get token
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "marco@italiandelight.com",
+  "password": "Password123",
+  "businessSlug": "italian-delight"
+}
+
+### 1. Test existing endpoint - Get all floor plans
+GET {{baseUrl}}/floor-plans
+Authorization: Bearer {{authToken}}
+
+### 2. Test existing endpoint - Get floor plan with tables (if floor plan ID 1 exists)
+GET {{baseUrl}}/floor-plans/1/tables
+Authorization: Bearer {{authToken}}
+
+### 3. Test existing endpoint - Get available tables for floor plan
+GET {{baseUrl}}/floor-plans/1/available-tables
+Authorization: Bearer {{authToken}}
+
+### 4. Test debug endpoint to see all data
+GET {{baseUrl}}/test/floor-plans
+
+### 5. Test with different user
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "yuki@sushimaster.com",
+  "password": "Password123",
+  "businessSlug": "sushi-master"
+}
+
+### 6. Test floor plans with different business
+GET {{baseUrl}}/floor-plans
+Authorization: Bearer {{login.response.body.token}} 

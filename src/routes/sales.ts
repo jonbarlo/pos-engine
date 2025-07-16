@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { SaleController } from '../controllers/saleController';
 import { authenticateToken } from '../middleware/auth';
+import { analyticsLimiter } from '../middleware/security';
 
 const salesRouter = Router();
 
@@ -645,7 +646,7 @@ salesRouter.post('/create-missing-orders', SaleController.createMissingOrders);
  *                     leastProfitableItem:
  *                       type: string
  */
-salesRouter.get('/analytics/items', SaleController.getItemAnalytics);
+salesRouter.get('/analytics/items', analyticsLimiter, SaleController.getItemAnalytics);
 
 /**
  * @swagger
@@ -714,7 +715,7 @@ salesRouter.get('/analytics/items', SaleController.getItemAnalytics);
  *                     bestHour:
  *                       type: integer
  */
-salesRouter.get('/analytics/revenue', SaleController.getRevenueAnalytics);
+salesRouter.get('/analytics/revenue', analyticsLimiter, SaleController.getRevenueAnalytics);
 
 /**
  * @swagger
@@ -774,7 +775,7 @@ salesRouter.get('/analytics/revenue', SaleController.getRevenueAnalytics);
  *                     averageSalesPerStaff:
  *                       type: number
  */
-salesRouter.get('/analytics/staff', SaleController.getStaffAnalytics);
+salesRouter.get('/analytics/staff', analyticsLimiter, SaleController.getStaffAnalytics);
 
 /**
  * @swagger
@@ -844,7 +845,7 @@ salesRouter.get('/analytics/staff', SaleController.getStaffAnalytics);
  *                     customerRetentionRate:
  *                       type: number
  */
-salesRouter.get('/analytics/customers', SaleController.getCustomerAnalytics);
+salesRouter.get('/analytics/customers', analyticsLimiter, SaleController.getCustomerAnalytics);
 
 /**
  * @swagger
@@ -906,6 +907,6 @@ salesRouter.get('/analytics/customers', SaleController.getCustomerAnalytics);
  *                     turnoverRate:
  *                       type: number
  */
-salesRouter.get('/analytics/inventory', SaleController.getInventoryAnalytics);
+salesRouter.get('/analytics/inventory', analyticsLimiter, SaleController.getInventoryAnalytics);
 
 export default salesRouter; 

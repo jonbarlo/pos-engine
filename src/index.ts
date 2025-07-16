@@ -1,11 +1,18 @@
 import express from 'express';
-import cors from 'cors';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import dotenv from 'dotenv';
 import { logger } from './utils/logger';
 import DatabaseService from './services/databaseService';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import { 
+  corsOptions, 
+  helmetConfig, 
+  apiLimiter, 
+  requestLogger, 
+  sanitizeRequest
+} from './middleware/security';
+import cors from 'cors';
 
 // Load environment variables FIRST
 dotenv.config();
@@ -17,10 +24,18 @@ import { initializeAllModels, setupAssociations } from './models';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Security and logging middleware
+app.use(helmetConfig);
+app.use(cors(corsOptions));
+app.use(requestLogger);
+app.use(sanitizeRequest);
+
+// Body parsing middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Rate limiting - apply to all routes
+app.use('/api', apiLimiter);
 
 // Swagger documentation
 const options = {
@@ -786,6 +801,57 @@ async function startServer() {
     // Mobile app compatibility routes
     // Alias for /api/messages to redirect to staff-messages
     app.use('/api/messages', staffMessagesRoutes);
+    
+    // Simple test endpoint for floor plan data (for debugging)
+    app.get('/api/test/floor-plans', async (req, res) => {
+      try {
+        const { FloorPlanModel } = await import('./models');
+        const { TablePositionModel } = await import('./models');
+        const { TableModel } = await import('./models');
+        
+        // Get all floor plans
+        const floorPlans = await FloorPlanModel.findAll({
+          where: { isActive: true },
+          order: [['businessId', 'ASC'], ['name', 'ASC']]
+        });
+
+        // Get all table positions
+        const tablePositions = await TablePositionModel.findAll({
+          include: [
+            {
+              model: TableModel,
+              as: 'table',
+              attributes: ['id', 'tableNumber', 'capacity', 'status', 'section']
+            }
+          ],
+          order: [['floorPlanId', 'ASC']]
+        });
+
+        res.json({
+          success: true,
+          data: {
+            floorPlans: floorPlans.map(fp => ({
+              id: fp.id,
+              businessId: fp.businessId,
+              name: fp.name,
+              width: fp.width,
+              height: fp.height
+            })),
+            tablePositions: tablePositions.map((tp: any) => ({
+              id: tp.id,
+              floorPlanId: tp.floorPlanId,
+              tableId: tp.tableId,
+              x: tp.x,
+              y: tp.y,
+              table: tp.table
+            }))
+          }
+        });
+      } catch (error) {
+        console.error('Error in test endpoint:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+      }
+    });
     
     // Alias for /api/menu-items to redirect to menu/items
     app.get('/api/menu-items', async (req, res) => {

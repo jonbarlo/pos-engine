@@ -2,6 +2,7 @@ import { Router } from 'express';
 const authRouter = Router();
 import { AuthController } from '../controllers/authController';
 import { loginValidation, registerValidation } from '../middleware/validation';
+import { authLimiter, validateRequest, validationSchemas } from '../middleware/security';
 
 /**
  * @swagger
@@ -35,7 +36,7 @@ import { loginValidation, registerValidation } from '../middleware/validation';
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-authRouter.post('/login', loginValidation, AuthController.login);
+authRouter.post('/login', authLimiter, validateRequest(validationSchemas.userLogin), AuthController.login);
 
 /**
  * @swagger
@@ -88,6 +89,6 @@ authRouter.post('/login', loginValidation, AuthController.login);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-authRouter.post('/register', registerValidation, AuthController.register);
+authRouter.post('/register', validateRequest(validationSchemas.userRegistration), AuthController.register);
 
 export default authRouter; 

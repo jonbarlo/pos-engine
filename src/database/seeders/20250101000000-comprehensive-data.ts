@@ -1366,8 +1366,8 @@ export async function down(queryInterface: QueryInterface): Promise<void> {
   await queryInterface.bulkDelete('sales', {});
   await queryInterface.bulkDelete('order_items', {});
   await queryInterface.bulkDelete('deliveries', {});
-  await queryInterface.bulkDelete('orders', {});
   await queryInterface.bulkDelete('kitchen_orders', {});
+  await queryInterface.bulkDelete('orders', {});
   await queryInterface.bulkDelete('reservations', {});
   await queryInterface.bulkDelete('menu_items', {});
   await queryInterface.bulkDelete('menu_categories', {});

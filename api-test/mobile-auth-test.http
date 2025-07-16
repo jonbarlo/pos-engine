@@ -1,0 +1,58 @@
+### Mobile App Authentication Test
+
+# Variables
+@baseUrl = http://localhost:3000/api
+
+### 1. Test Login - Should work now with increased rate limits
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "marco@italiandelight.com",
+  "password": "Password123",
+  "businessSlug": "italian-delight"
+}
+
+### 2. Test Login with businessId instead of businessSlug
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "marco@italiandelight.com",
+  "password": "Password123",
+  "businessId": 1
+}
+
+### 3. Test Floor Plan Access (after login)
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "marco@italiandelight.com",
+  "password": "Password123",
+  "businessSlug": "italian-delight"
+}
+
+### Get floor plans with tables
+GET {{baseUrl}}/floor-plans
+Authorization: Bearer {{login.response.body.token}}
+
+### Get specific floor plan with tables
+GET {{baseUrl}}/floor-plans/1/tables
+Authorization: Bearer {{login.response.body.token}}
+
+### 4. Test Tables Access
+GET {{baseUrl}}/tables
+Authorization: Bearer {{login.response.body.token}}
+
+### 5. Test Multiple Login Attempts (to verify rate limiting is working but not too restrictive)
+# This should work multiple times in development mode
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "marco@italiandelight.com",
+  "password": "Password123",
+  "businessSlug": "italian-delight"
+} 
