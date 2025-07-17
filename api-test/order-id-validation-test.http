@@ -1,0 +1,102 @@
+### Order ID Validation Test
+
+# Variables
+@baseUrl = http://localhost:300pi
+@authToken = {{login.response.body.token}}
+
+### Login to get token
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+[object Object]
+email":marco@italiandelight.com,
+  ssword: Password123,
+ businessSlug": italian-delight"
+}
+
+###1est Add Items with Invalid Order ID (should fail gracefully)
+POST {{baseUrl}}/orders/null/items
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+[object Object]items: [
+    [object Object]
+      itemId": 1
+   quantity:1,
+  notes:Test item
+    }
+  ]
+}
+
+###2est Add Items with Undefined Order ID (should fail gracefully)
+POST [object Object]{baseUrl}}/orders/undefined/items
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+[object Object]items: [
+    [object Object]
+      itemId": 1
+   quantity:1,
+  notes:Test item
+    }
+  ]
+}
+
+###3est Add Items with Invalid Number (should fail gracefully)
+POST [object Object]{baseUrl}}/orders/abc/items
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+[object Object]items: [
+    [object Object]
+      itemId": 1
+   quantity:1,
+  notes:Test item
+    }
+  ]
+}
+
+### 4. Test Status Update with Invalid Order ID (should fail gracefully)
+PATCH {{baseUrl}}/orders/null/status
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+[object Object]status": "CONFIRMED",
+  "notes": "Test status update"
+}
+
+###5est Get Order with Invalid Order ID (should fail gracefully)
+GET {{baseUrl}}/orders/null
+Authorization: Bearer [object Object][object Object]authToken}}
+
+### 6. Test Valid Order Operations (should work)
+# First create an order
+POST [object Object]{baseUrl}}/orders
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+[object Object]
+  orderType": "DINE_IN",
+ tableId": 1,
+ items: [
+    [object Object]
+      itemId": 1
+   quantity:1,
+  notes": "Test order
+    }
+  ]
+}
+
+###7 Test Add Items to Valid Order (should work)
+POST [object Object][object Object]baseUrl}}/orders/1/items
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+[object Object]items: [
+    [object Object]
+      itemId": 2
+   quantity:1,
+      "notes": Additional item"
+    }
+  ]
+} 

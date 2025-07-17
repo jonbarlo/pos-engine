@@ -350,9 +350,27 @@ router.get('/:id', authenticateToken, async (req: AuthRequest, res): Promise<voi
     }
 
     const { id } = req.params;
+    
+    // Validate order ID
+    if (!id || id === null || id === 'undefined') {
+      res.status(400).json({
+        success: false,
+        message: 'Valid order ID is required'
+      });
+      return;
+    }
+
+    const orderId = parseInt(id);
+    if (isNaN(orderId)) {
+      res.status(400).json({
+        success: false,
+        message: 'Order ID must be a valid number'
+      });
+      return;
+    }
 
     const order = await OrderModel.findOne({
-      where: { id, businessId },
+      where: { id: orderId, businessId },
       include: [
         {
           model: CustomerModel,
@@ -528,14 +546,14 @@ router.post('/', authenticateToken, async (req: AuthRequest, res): Promise<void>
         return;
       }
 
-      const itemTotal = menuItem.price * item.quantity;
+      const itemTotal = Math.round((menuItem.price * item.quantity) * 100) / 100;
       subtotal += itemTotal;
 
       orderItems.push({
         itemId: item.itemId,
         itemName: menuItem.name,
         quantity: item.quantity,
-        unitPrice: menuItem.price,
+        unitPrice: Math.round(menuItem.price * 100) / 100,
         totalPrice: itemTotal,
         notes: item.notes
       });
@@ -544,27 +562,27 @@ router.post('/', authenticateToken, async (req: AuthRequest, res): Promise<void>
     // Get business tax rate
     const business = await BusinessModel.findByPk(businessId);
     const taxRate = business?.taxRate || 0;
-    const taxAmount = subtotal * (taxRate / 100);
-    const totalAmount = subtotal + taxAmount;
+    const taxAmount = Math.round((subtotal * (taxRate / 100)) * 100) / 100;
+    const totalAmount = Math.round((subtotal + taxAmount) * 100) / 100;
 
     // Generate order number
     const timestamp = Date.now();
     const random = Math.floor(Math.random() * 1000);
     const orderNumber = `ORD-${timestamp}-${random}`;
 
-    // Create order
+    // Create order with properly formatted decimal values
     const order = await OrderModel.create({
       businessId,
       serverId: req.user?.userId || 1, // Use current user as server
       customerId,
       tableId,
       orderNumber,
-      orderType,
+      orderType, // Use the orderType from request body
       status: OrderStatus.PENDING,
-      subtotal,
-      taxAmount,
+      subtotal: parseFloat(subtotal.toFixed(2)), // Ensure proper decimal format
+      taxAmount: parseFloat(taxAmount.toFixed(2)), // Ensure proper decimal format
       discountAmount: 0,
-      totalAmount,
+      totalAmount: parseFloat(totalAmount.toFixed(2)), // Ensure proper decimal format
       notes
     });
 
@@ -768,14 +786,14 @@ router.post('/table', authenticateToken, async (req: AuthRequest, res): Promise<
         return;
       }
 
-      const itemTotal = menuItem.price * item.quantity;
+      const itemTotal = Math.round((menuItem.price * item.quantity) * 100) / 100;
       subtotal += itemTotal;
 
       orderItems.push({
         itemId: item.itemId,
         itemName: menuItem.name,
         quantity: item.quantity,
-        unitPrice: menuItem.price,
+        unitPrice: Math.round(menuItem.price * 100) / 100,
         totalPrice: itemTotal,
         notes: item.notes
       });
@@ -784,8 +802,8 @@ router.post('/table', authenticateToken, async (req: AuthRequest, res): Promise<
     // Get business tax rate
     const business = await BusinessModel.findByPk(businessId);
     const taxRate = business?.taxRate || 0;
-    const taxAmount = subtotal * (taxRate / 100);
-    const totalAmount = subtotal + taxAmount;
+    const taxAmount = Math.round((subtotal * (taxRate / 100)) * 100) / 100;
+    const totalAmount = Math.round((subtotal + taxAmount) * 100) / 100;
 
     // Generate order number
     const timestamp = Date.now();
@@ -801,10 +819,10 @@ router.post('/table', authenticateToken, async (req: AuthRequest, res): Promise<
       orderNumber,
       orderType: OrderType.DINE_IN,
       status: OrderStatus.PENDING,
-      subtotal,
-      taxAmount,
+      subtotal: parseFloat(subtotal.toFixed(2)), // Ensure proper decimal format
+      taxAmount: parseFloat(taxAmount.toFixed(2)), // Ensure proper decimal format
       discountAmount: 0,
-      totalAmount,
+      totalAmount: parseFloat(totalAmount.toFixed(2)), // Ensure proper decimal format
       notes
     });
 
@@ -936,6 +954,25 @@ router.patch('/:id/status', authenticateToken, async (req: AuthRequest, res): Pr
     }
 
     const { id } = req.params;
+    
+    // Validate order ID
+    if (!id || id === null || id === 'undefined') {
+      res.status(400).json({
+        success: false,
+        message: 'Valid order ID is required'
+      });
+      return;
+    }
+
+    const orderId = parseInt(id);
+    if (isNaN(orderId)) {
+      res.status(400).json({
+        success: false,
+        message: 'Order ID must be a valid number'
+      });
+      return;
+    }
+
     const { status, notes } = req.body;
 
     if (!status) {
@@ -947,7 +984,7 @@ router.patch('/:id/status', authenticateToken, async (req: AuthRequest, res): Pr
     }
 
     const order = await OrderModel.findOne({
-      where: { id, businessId }
+      where: { id: orderId, businessId }
     });
 
     if (!order) {
@@ -1085,6 +1122,25 @@ router.post('/:id/items', authenticateToken, async (req: AuthRequest, res): Prom
     }
 
     const { id } = req.params;
+    
+    // Validate order ID
+    if (!id || id === null || id === 'undefined') {
+      res.status(400).json({
+        success: false,
+        message: 'Valid order ID is required'
+      });
+      return;
+    }
+
+    const orderId = parseInt(id);
+    if (isNaN(orderId)) {
+      res.status(400).json({
+        success: false,
+        message: 'Order ID must be a valid number'
+      });
+      return;
+    }
+
     const { items } = req.body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
@@ -1097,7 +1153,7 @@ router.post('/:id/items', authenticateToken, async (req: AuthRequest, res): Prom
     }
 
     const order = await OrderModel.findOne({
-      where: { id, businessId }
+      where: { id: orderId, businessId }
     });
 
     if (!order) {
@@ -1137,7 +1193,7 @@ router.post('/:id/items', authenticateToken, async (req: AuthRequest, res): Prom
         return;
       }
 
-      const itemTotal = menuItem.price * item.quantity;
+      const itemTotal = Math.round((menuItem.price * item.quantity) * 100) / 100;
       additionalSubtotal += itemTotal;
 
       await OrderItemModel.create({
@@ -1145,7 +1201,7 @@ router.post('/:id/items', authenticateToken, async (req: AuthRequest, res): Prom
         itemId: item.itemId,
         itemName: menuItem.name,
         quantity: item.quantity,
-        unitPrice: menuItem.price,
+        unitPrice: Math.round(menuItem.price * 100) / 100,
         totalPrice: itemTotal,
         status: OrderItemStatus.PENDING,
         notes: item.notes
@@ -1158,13 +1214,13 @@ router.post('/:id/items', authenticateToken, async (req: AuthRequest, res): Prom
     const newSubtotal = order.subtotal + additionalSubtotal;
     const business = await BusinessModel.findByPk(businessId);
     const taxRate = business?.taxRate || 0;
-    const newTaxAmount = newSubtotal * (taxRate / 100);
-    const newTotalAmount = newSubtotal + newTaxAmount;
+    const newTaxAmount = Math.round((newSubtotal * (taxRate / 100)) * 100) / 100;
+    const newTotalAmount = Math.round((newSubtotal + newTaxAmount) * 100) / 100;
 
     await order.update({
-      subtotal: newSubtotal,
-      taxAmount: newTaxAmount,
-      totalAmount: newTotalAmount
+      subtotal: parseFloat(newSubtotal.toFixed(2)),
+      taxAmount: parseFloat(newTaxAmount.toFixed(2)),
+      totalAmount: parseFloat(newTotalAmount.toFixed(2))
     });
 
     // Check if kitchen order exists for this order

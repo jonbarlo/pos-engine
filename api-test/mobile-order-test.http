@@ -1,0 +1,114 @@
+### Mobile App Order Creation Test
+
+# Variables
+@baseUrl = http://localhost:300pi
+@authToken = {{login.response.body.token}}
+
+### Login to get token
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+[object Object]
+email":marco@italiandelight.com,
+  ssword: Password123,
+ businessSlug": italian-delight"
+}
+
+### 1. Test Order Creation (General)
+POST [object Object]{baseUrl}}/orders
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+[object Object]
+  orderType": "DINE_IN",
+ tableId": 1,
+ items: [
+    [object Object]
+      itemId": 1
+   quantity:2,
+   notes": "Extra cheese please"
+    },
+    [object Object]
+      itemId": 2
+   quantity:1,
+  notes:Well done"
+    }
+  ],notes": "Table order for mobile app test"
+}
+
+### 2. Test Table Order Creation
+POST [object Object]{baseUrl}}/orders/table
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+[object Object]
+ tableId": 1,
+ items: [
+    [object Object]
+      itemId": 1
+   quantity:1,
+    notes":Mobile app order"
+    }
+  ],
+notes":Mobile app table order test"
+}
+
+### 3. Test Takeaway Order Creation
+POST [object Object]{baseUrl}}/orders
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+[object Object]  orderType: AKEAWAY",
+ items: [
+    [object Object]
+      itemId": 1
+   quantity:1,
+      notes:Takeaway order"
+    }
+  ],
+notes": "Mobile app takeaway order test"
+}
+
+### 4. Test Order Update (Add Items)
+POST [object Object][object Object]baseUrl}}/orders/1/items
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+[object Object]items: [
+    [object Object]
+      itemId": 2
+   quantity:1,
+      "notes": Additional item
+    }
+  ]
+}
+
+### 5. Test Order Status Update
+PATCH [object Object][object Object]baseUrl}}/orders/1/status
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+[object Object]status": "CONFIRMED",notes: "Order confirmed via mobile app"
+}
+
+### 6. Test Get Orders
+GET [object Object]{baseUrl}}/orders
+Authorization: Bearer [object Object][object Object]authToken}}
+
+### 7. Test Get Pending Orders
+GET {{baseUrl}}/orders/pending
+Authorization: Bearer [object Object][object Object]authToken}}
+
+### 8Test Get Orders by Table
+GET [object Object][object Object]baseUrl}}/tables/1/orders
+Authorization: Bearer [object Object][object Object]authToken}}
+
+### 9. Test Order Completion
+PUT [object Object][object Object]baseUrl}}/orders/1/complete
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+[object Object]  paymentMethod: credit_card,
+ customerName": "Mobile App Customer",
+  customerEmail": mobile@test.com"
+} 
