@@ -23,7 +23,10 @@ export const requireRestaurant = async (req: Request, res: Response, next: NextF
                       req.body.businessId ||
                       (req as any).user?.businessId;
 
+    logger(`🔍 DEBUG: requireRestaurant - businessId: ${businessId}, user: ${JSON.stringify((req as any).user)}`);
+
     if (!businessId) {
+      logger(`❌ DEBUG: No businessId found in request`);
       res.status(400).json({
         error: 'Business ID is required',
         message: 'Please provide a business ID to access this feature'
@@ -31,10 +34,12 @@ export const requireRestaurant = async (req: Request, res: Response, next: NextF
       return;
     }
 
+    logger(`🔍 DEBUG: Calling requireRestaurantBusiness with businessId: ${businessId}`);
     await requireRestaurantBusiness(Number(businessId));
+    logger(`✅ DEBUG: Restaurant check passed for businessId: ${businessId}`);
     next();
   } catch (error) {
-    logger(`Restaurant check failed: ${error}`);
+    logger(`❌ DEBUG: Restaurant check failed: ${error}`);
     res.status(403).json({
       error: 'Feature not available',
       message: 'This feature is only available for restaurant businesses',

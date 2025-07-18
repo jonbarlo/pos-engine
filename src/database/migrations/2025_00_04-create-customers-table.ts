@@ -27,8 +27,28 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       type: DataTypes.TEXT,
       allowNull: true,
     },
+    city: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+    },
+    state: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+    },
+    zipCode: {
+      type: DataTypes.STRING(20),
+      allowNull: true,
+    },
+    country: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+    },
     dateOfBirth: {
       type: DataTypes.DATE,
+      allowNull: true,
+    },
+    gender: {
+      type: DataTypes.ENUM('male', 'female', 'other', 'prefer_not_to_say'),
       allowNull: true,
     },
     loyaltyPoints: {
@@ -41,8 +61,17 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       allowNull: false,
       defaultValue: 0.00,
     },
+    visitCount: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
     lastVisit: {
       type: DataTypes.DATE,
+      allowNull: true,
+    },
+    preferences: {
+      type: DataTypes.TEXT,
       allowNull: true,
     },
     isActive: {

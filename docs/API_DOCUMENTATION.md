@@ -26,41 +26,6 @@ Authorization: Bearer <your_jwt_token>
 - **kitchen_manager**: Extra manager permissions (assign orders, override statuses)
 - **none**: No extra kitchen permissions (default)
 
-## Test Credentials
-- **Email:** maria.esposito@example.com
-- **Password:** password123
-- **Business ID:** 1
-
----
-
-## Health Check Endpoints
-
-### Health Check
-**GET** `/health`
-
-**Response:**
-```json
-{
-  "status": "OK",
-  "timestamp": "2025-01-01T00:00:00.000Z",
-  "environment": "development"
-}
-```
-
-### API Health Check
-**GET** `/api/health`
-
-**Response:**
-```json
-{
-  "status": "OK",
-  "timestamp": "2025-01-01T00:00:00.000Z",
-  "environment": "development"
-}
-```
-
----
-
 ## Authentication Endpoints
 
 ### Login
@@ -68,27 +33,27 @@ Authorization: Bearer <your_jwt_token>
 
 **Required Fields:**
 - `email` (string) - Valid email address
-- `password` (string) - Minimum 6 characters, must contain at least one letter
+- `password` (string) - Minimum 6 characters
 - Either `businessId` (integer) OR `businessSlug` (string) - One is required
 
 **Request Body:**
 ```json
 {
-  "email": "maria.esposito@example.com",
-  "password": "password123",
-  "businessId": 1
+  "email": "marco@italiandelight.com",
+  "password": "Password123",
+  "businessSlug": "italian-delight"
 }
 ```
 
 **Response:**
 ```json
 {
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token": "<jwt>",
   "user": {
     "id": 1,
-    "email": "maria.esposito@example.com",
-    "businessId": 1,
-    "role": "cashier"
+    "email": "marco@italiandelight.com",
+    "businessId": 4,
+    "role": "owner"
   }
 }
 ```
@@ -97,13 +62,11 @@ Authorization: Bearer <your_jwt_token>
 **POST** `/auth/register`
 
 **Required Fields:**
-- `name` (string) - 2-100 characters, letters, spaces, hyphens, apostrophes only
-- `email` (string) - Valid email address
-- `password` (string) - Minimum 8 characters, must contain lowercase, uppercase, number, and special character
-- Either `businessId` (integer) OR `businessSlug` (string) - One is required
-
-**Optional Fields:**
-- `role` (string) - "admin", "cashier", "manager", or "waitstaff"
+- `name` (string)
+- `email` (string)
+- `password` (string)
+- Either `businessId` (integer) OR `businessSlug` (string)
+- `role` (string, optional, default: cashier)
 
 **Request Body:**
 ```json
@@ -111,8 +74,154 @@ Authorization: Bearer <your_jwt_token>
   "name": "John Doe",
   "email": "john@example.com",
   "password": "SecurePass123!",
-  "businessId": 1,
+  "businessSlug": "italian-delight",
   "role": "cashier"
+}
+```
+
+**Response:**
+```json
+{
+  "id": 2,
+  "name": "John Doe",
+  "email": "john@example.com",
+  "businessId": 4,
+  "role": "cashier"
+}
+```
+
+### Get Profile
+**GET** `/auth/profile`
+
+**Headers:**
+- `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "id": 1,
+  "name": "Marco Rossi",
+  "email": "marco@italiandelight.com",
+  "businessId": 4,
+  "role": "owner"
+}
+```
+
+---
+
+## User Endpoints
+
+### Get All Users
+**GET** `/users`
+
+**Headers:**
+- `Authorization: Bearer <token>`
+
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "name": "Marco Rossi",
+    "email": "marco@italiandelight.com",
+    "role": "owner",
+    "businessId": 4,
+    "isActive": true,
+    "createdAt": "2025-01-01T00:00:00.000Z",
+    "updatedAt": "2025-01-01T00:00:00.000Z"
+  }
+]
+```
+
+### Get User by ID
+**GET** `/users/{id}`
+
+**Path Parameters:**
+- `id` (integer, required) - User ID
+
+**Response:**
+```json
+{
+  "id": 1,
+  "name": "Marco Rossi",
+  "email": "marco@italiandelight.com",
+  "role": "owner",
+  "businessId": 4,
+  "isActive": true,
+  "createdAt": "2025-01-01T00:00:00.000Z",
+  "updatedAt": "2025-01-01T00:00:00.000Z"
+}
+```
+
+### Create User
+**POST** `/users`
+
+**Headers:**
+- `Authorization: Bearer <token>`
+
+**Request Body:**
+```json
+{
+  "name": "Jane Smith",
+  "email": "jane@example.com",
+  "password": "Password123",
+  "role": "manager"
+}
+```
+
+**Response:**
+```json
+{
+  "id": 3,
+  "name": "Jane Smith",
+  "email": "jane@example.com",
+  "role": "manager",
+  "businessId": 4,
+  "isActive": true,
+  "createdAt": "2025-01-01T00:00:00.000Z",
+  "updatedAt": "2025-01-01T00:00:00.000Z"
+}
+```
+
+### Update User
+**PUT** `/users/{id}`
+
+**Path Parameters:**
+- `id` (integer, required) - User ID
+
+**Request Body:**
+```json
+{
+  "name": "Jane Smith",
+  "role": "manager",
+  "isActive": false
+}
+```
+
+**Response:**
+```json
+{
+  "id": 3,
+  "name": "Jane Smith",
+  "email": "jane@example.com",
+  "role": "manager",
+  "businessId": 4,
+  "isActive": false,
+  "createdAt": "2025-01-01T00:00:00.000Z",
+  "updatedAt": "2025-01-01T00:00:00.000Z"
+}
+```
+
+### Delete User
+**DELETE** `/users/{id}`
+
+**Path Parameters:**
+- `id` (integer, required) - User ID
+
+**Response:**
+```json
+{
+  "message": "User deleted successfully"
 }
 ```
 
@@ -184,70 +293,6 @@ Authorization: Bearer <your_jwt_token>
 
 **Path Parameters:**
 - `id` (integer, required) - Business ID
-
----
-
-## User Endpoints
-
-### Get All Users
-**GET** `/users`
-
-**Query Parameters:**
-- `page` (optional, default: 1)
-- `limit` (optional, default: 10)
-
-**Response:**
-```json
-[
-  {
-    "id": 1,
-    "name": "Maria Esposito",
-    "email": "maria@example.com",
-    "role": "cashier",
-    "businessId": 1,
-    "isActive": true,
-    "createdAt": "2025-01-01T00:00:00.000Z",
-    "updatedAt": "2025-01-01T00:00:00.000Z"
-  }
-]
-```
-
-### Get User by ID
-**GET** `/users/{id}`
-
-**Path Parameters:**
-- `id` (integer, required) - User ID
-
-### Create User
-**POST** `/users`
-
-**Required Fields:**
-- `name` (string) - User name
-- `email` (string) - Valid email address
-- `password` (string) - Minimum 6 characters
-- `role` (string) - "admin", "cashier", "manager", "waitstaff"
-
-**Request Body:**
-```json
-{
-  "name": "John Doe",
-  "email": "john@example.com",
-  "password": "password123",
-  "role": "cashier"
-}
-```
-
-### Update User
-**PUT** `/users/{id}`
-
-**Path Parameters:**
-- `id` (integer, required) - User ID
-
-### Delete User
-**DELETE** `/users/{id}`
-
-**Path Parameters:**
-- `id` (integer, required) - User ID
 
 ---
 
@@ -957,29 +1002,46 @@ Authorization: Bearer <your_jwt_token>
 
 **Response:**
 ```json
-[
-  {
-    "id": 1,
-    "businessId": 1,
-    "tableNumber": "A1",
-    "capacity": 4,
-    "partySize": null,
-    "status": "available",
-    "section": "Main Floor",
-    "currentOrderId": null,
-    "serverId": null,
-    "isActive": true,
-    "createdAt": "2025-01-01T00:00:00.000Z",
-    "updatedAt": "2025-01-01T00:00:00.000Z"
-  }
-]
+{
+  "data": [
+    {
+      "id": 1,
+      "businessId": 1,
+      "tableNumber": "A1",
+      "capacity": 4,
+      "partySize": null,
+      "status": "reserved",
+      "section": "Main Floor",
+      "currentOrderId": null,
+      "serverId": null,
+      "isActive": true,
+      "reservation": {
+        "customerName": "John Smith",
+        "customerPhone": "+1-555-0101",
+        "partySize": 4,
+        "reservationDate": "2024-01-15",
+        "reservationTime": "19:00:00",
+        "notes": "Window seat preferred"
+      },
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z"
+    }
+  ]
+}
 ```
+
+**Note:** Reservation data is only included when:
+- Table status is "reserved"
+- Table has active reservations (status: pending or confirmed)
+- Reservation date matches today's date
 
 ### Get Table by ID
 **GET** `/tables/{id}`
 
 **Path Parameters:**
 - `id` (integer, required) - Table ID
+
+**Response:** Same format as above, with reservation data if applicable
 
 ### Create Table
 **POST** `/tables`
@@ -1146,15 +1208,9 @@ Authorization: Bearer <your_jwt_token>
     "isActive": true,
     "createdAt": "2025-01-01T00:00:00.000Z",
     "updatedAt": "2025-01-01T12:00:00.000Z"
-  },
-  "message": "Successfully seated party of 4 at table A1"
+  }
 }
 ```
-
-**Error Responses:**
-- `400` - Invalid table ID, customer count, or capacity exceeded
-- `404` - Table not found
-- `409` - Table not available for seating
 
 ---
 
@@ -1164,60 +1220,111 @@ Authorization: Bearer <your_jwt_token>
 **GET** `/reservations`
 
 **Query Parameters:**
-- `page` (optional, default: 1)
-- `limit` (optional, default: 10)
-- `status` (optional: "confirmed", "pending", "cancelled", "completed")
-- `date` (optional: YYYY-MM-DD) - Filter by date
+- `date` (optional) - Filter by reservation date (YYYY-MM-DD)
+- `status` (optional) - Filter by reservation status
+- `tableId` (optional) - Filter by assigned table
 
 **Response:**
 ```json
-[
-  {
-    "id": 1,
-    "customerId": 1,
-    "tableId": 5,
-    "reservationDate": "2025-01-15",
-    "reservationTime": "19:00",
-    "partySize": 4,
-    "status": "confirmed",
-    "notes": "Anniversary celebration",
-    "businessId": 1,
-    "createdAt": "2025-01-01T00:00:00.000Z",
-    "updatedAt": "2025-01-01T00:00:00.000Z"
-  }
-]
+{
+  "data": [
+    {
+      "id": 1,
+      "businessId": 1,
+      "tableId": 1,
+      "customerId": null,
+      "customerName": "John Smith",
+      "customerPhone": "+1-555-0101",
+      "customerEmail": "john@example.com",
+      "partySize": 4,
+      "reservationDate": "2024-01-15",
+      "reservationTime": "19:00:00",
+      "status": "confirmed",
+      "specialRequests": "Window seat preferred",
+      "table": {
+        "id": 1,
+        "tableNumber": "A1",
+        "capacity": 4,
+        "section": "Main Floor"
+      },
+      "createdAt": "2024-01-10T10:00:00Z",
+      "updatedAt": "2024-01-10T10:00:00Z"
+    }
+  ]
+}
 ```
 
-### Get Reservation by ID
+### Get Specific Reservation
 **GET** `/reservations/{id}`
 
 **Path Parameters:**
 - `id` (integer, required) - Reservation ID
 
+**Response:**
+```json
+{
+  "data": {
+    "id": 1,
+    "businessId": 1,
+    "tableId": 1,
+    "customerId": null,
+    "customerName": "John Smith",
+    "customerPhone": "+1-555-0101",
+    "customerEmail": "john@example.com",
+    "partySize": 4,
+    "reservationDate": "2024-01-15",
+    "reservationTime": "19:00:00",
+    "status": "confirmed",
+    "specialRequests": "Window seat preferred",
+    "table": {
+      "id": 1,
+      "tableNumber": "A1",
+      "capacity": 4,
+      "section": "Main Floor"
+    },
+    "createdAt": "2024-01-10T10:00:00Z",
+    "updatedAt": "2024-01-10T10:00:00Z"
+  }
+}
+```
+
 ### Create Reservation
 **POST** `/reservations`
 
 **Required Fields:**
-- `customerId` (integer) - Customer ID
-- `tableId` (integer) - Table ID
-- `reservationDate` (string) - Date (YYYY-MM-DD)
-- `reservationTime` (string) - Time (HH:MM)
-- `partySize` (integer) - Number of guests
+- `customerName` (string) - Customer name
+- `partySize` (integer) - Number of guests (1-20)
+- `reservationDate` (string) - Date in YYYY-MM-DD format
+- `reservationTime` (string) - Time in HH:MM:SS format
 
 **Optional Fields:**
-- `notes` (string) - Reservation notes
+- `tableId` (integer) - Assigned table ID
+- `customerId` (integer) - Customer ID if customer exists in system
+- `customerPhone` (string) - Customer phone number
+- `customerEmail` (string) - Customer email address
+- `status` (string) - Reservation status (default: "pending")
+- `specialRequests` (string) - Special requests or notes
 
 **Request Body:**
 ```json
 {
-  "customerId": 1,
-  "tableId": 5,
-  "reservationDate": "2025-01-15",
-  "reservationTime": "19:00",
+  "tableId": 1,
+  "customerName": "John Smith",
+  "customerPhone": "+1-555-0101",
+  "customerEmail": "john@example.com",
   "partySize": 4,
-  "notes": "Anniversary celebration"
+  "reservationDate": "2024-01-15",
+  "reservationTime": "19:00:00",
+  "status": "pending",
+  "specialRequests": "Window seat preferred"
 }
 ```
+
+**Validation Rules:**
+- Party size must be between 1 and 20
+- Date must be in YYYY-MM-DD format
+- Time must be in HH:MM:SS format
+- Table ID must exist and belong to the business
 
 ### Update Reservation
 **PUT** `/reservations/{id}`
@@ -1225,17 +1332,170 @@ Authorization: Bearer <your_jwt_token>
 **Path Parameters:**
 - `id` (integer, required) - Reservation ID
 
+**Request Body:** Same as create, but all fields are optional
+
 ### Delete Reservation
 **DELETE** `/reservations/{id}`
 
 **Path Parameters:**
 - `id` (integer, required) - Reservation ID
 
-### Get Reservations by Date
-**GET** `/reservations/date/{date}`
+**Response:**
+```json
+{
+  "message": "Reservation deleted successfully"
+}
+```
+
+---
+
+## Floor Plan Endpoints
+
+### Get All Floor Plans
+**GET** `/floor-plans`
+
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "businessId": 1,
+    "name": "Main Dining Room",
+    "width": 1200,
+    "height": 800,
+    "backgroundImage": "https://example.com/floor-plan.jpg",
+    "isActive": true,
+    "createdAt": "2025-01-01T00:00:00.000Z",
+    "updatedAt": "2025-01-01T00:00:00.000Z"
+  }
+]
+```
+
+### Get Floor Plan by ID
+**GET** `/floor-plans/{id}`
 
 **Path Parameters:**
-- `date` (string, required) - Date (YYYY-MM-DD)
+- `id` (integer, required) - Floor plan ID
+
+### Get Floor Plan with Tables
+**GET** `/floor-plans/{id}/tables`
+
+**Path Parameters:**
+- `id` (integer, required) - Floor plan ID
+
+**Response:**
+```json
+{
+  "id": 1,
+  "name": "Main Dining Room",
+  "width": 1200,
+  "height": 800,
+  "backgroundImage": "https://example.com/floor-plan.jpg",
+  "tablePositions": [
+    {
+      "id": 1,
+      "tableId": 1,
+      "tableNumber": "A1",
+      "tableStatus": "reserved",
+      "x": 150,
+      "y": 200,
+      "rotation": 0,
+      "width": 80,
+      "height": 60,
+      "reservation": {
+        "customerName": "John Smith",
+        "customerPhone": "+1-555-0101",
+        "partySize": 4,
+        "reservationDate": "2024-01-15",
+        "reservationTime": "19:00:00",
+        "notes": "Window seat preferred"
+      }
+    }
+  ]
+}
+```
+
+**Note:** Reservation data is only included when:
+- Table status is "reserved"
+- Table has active reservations (status: pending or confirmed)
+- Reservation date matches today's date
+
+### Create Floor Plan
+**POST** `/floor-plans`
+
+**Required Fields:**
+- `name` (string) - Floor plan name
+
+**Optional Fields:**
+- `width` (integer) - Width in pixels (default: 800)
+- `height` (integer) - Height in pixels (default: 600)
+- `backgroundImage` (string) - Background image URL
+
+**Request Body:**
+```json
+{
+  "name": "Main Dining Room",
+  "width": 1200,
+  "height": 800,
+  "backgroundImage": "https://example.com/floor-plan.jpg"
+}
+```
+
+### Update Floor Plan
+**PUT** `/floor-plans/{id}`
+
+**Path Parameters:**
+- `id` (integer, required) - Floor plan ID
+
+### Delete Floor Plan
+**DELETE** `/floor-plans/{id}`
+
+**Path Parameters:**
+- `id` (integer, required) - Floor plan ID
+
+### Update Table Position
+**PUT** `/floor-plans/{floorPlanId}/tables/{tableId}/position`
+
+**Path Parameters:**
+- `floorPlanId` (integer, required) - Floor plan ID
+- `tableId` (integer, required) - Table ID
+
+**Request Body:**
+```json
+{
+  "x": 150,
+  "y": 200,
+  "rotation": 0,
+  "width": 80,
+  "height": 60
+}
+```
+
+### Remove Table from Floor Plan
+**DELETE** `/floor-plans/{floorPlanId}/tables/{tableId}`
+
+**Path Parameters:**
+- `floorPlanId` (integer, required) - Floor plan ID
+- `tableId` (integer, required) - Table ID
+
+### Get Available Tables for Floor Plan
+**GET** `/floor-plans/{id}/available-tables`
+
+**Path Parameters:**
+- `id` (integer, required) - Floor plan ID
+
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "tableNumber": "A1",
+    "capacity": 4,
+    "status": "available",
+    "section": "Main Floor"
+  }
+]
+```
 
 ---
 
@@ -2381,6 +2641,49 @@ Authorization: Bearer <your_jwt_token>
 **Path Parameters:**
 - `id` (integer, required) - Table ID
 
+### Get Table Reservations (Mobile App Endpoint)
+**GET** `/tables/{tableId}/reservations`
+
+**Purpose:** Get reservations for a specific table (Mobile App Compatible)
+
+**Path Parameters:**
+- `tableId` (integer, required) - Table ID
+
+**Query Parameters:**
+- `date` (optional) - Filter by date (YYYY-MM-DD format, defaults to today)
+- `status` (optional) - Filter by reservation status (pending, confirmed, seated, completed, cancelled, no_show)
+
+**Request:**
+```bash
+curl -X GET "http://localhost:3031/api/tables/1/reservations?date=2024-01-15&status=confirmed" \
+  -H "Authorization: Bearer <token>"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "customerName": "John Smith",
+      "customerPhone": "+1-555-0101",
+      "customerEmail": "john@example.com",
+      "partySize": 4,
+      "reservationDate": "2024-01-15",
+      "reservationTime": "19:00:00",
+      "status": "confirmed",
+      "notes": "Window seat preferred",
+      "createdAt": "2024-01-10T10:00:00Z",
+      "updatedAt": "2024-01-10T10:00:00Z"
+    }
+  ],
+  "message": "Found 1 reservation for table 1"
+}
+```
+
+**Status:** ✅ Working (Mobile App Compatible)
+
 ### Create Table
 **POST** `/tables`
 
@@ -2473,23 +2776,37 @@ Common HTTP Status Codes:
    - Table status automatically updates when orders are created/completed
    - Available → Occupied (when first order is placed)
    - Occupied → Available (when order is completed)
-9. **Order Management**:
-   - Orders can be created for tables, takeaway, or delivery
-   - Kitchen orders are automatically generated for dine-in orders
-   - Order status flows: pending → preparing → ready → completed
-10. **Mobile App Compatibility**:
+   - Tables can be marked as "reserved" for reservations
+   - Reservation data is automatically included in table responses when applicable
+9. **Reservation System**:
+   - Reservations can be created with or without table assignment
+   - Reservation data is automatically included in table responses when:
+     - Table status is "reserved"
+     - Table has active reservations (status: pending or confirmed)
+     - Reservation date matches today's date
+   - Reservation statuses: pending, confirmed, seated, completed, cancelled, no_show
+   - Party size validation: 1-20 guests
+   - Date format: YYYY-MM-DD, Time format: HH:MM:SS
+10. **Order Management**:
+    - Orders can be created for tables, takeaway, or delivery
+    - Kitchen orders are automatically generated for dine-in orders
+    - Order status flows: pending → preparing → ready → completed
+11. **Mobile App Compatibility**:
     - `/api/messages` is an alias for `/api/staff-messages`
     - `/api/promotions` returns filtered promotional messages
     - All mobile app endpoints require authentication
-11. **Response Format**: All endpoints return consistent response format:
+    - Table endpoints automatically include reservation data for mobile display
+    - Floor plan endpoints include table positions with reservation data
+12. **Response Format**: All endpoints return consistent response format:
     - Success responses: `{success: true, data: {...}, message: "..."}`
     - List responses include pagination: `{success: true, data: [...], pagination: {...}}`
     - Error responses: `{error: "error message"}`
-12. **Required Fields**: 
+13. **Required Fields**: 
     - Sales endpoints require `userId` and `businessId` (not `customerName`)
     - Sales with items require `unitPrice` for each item
     - All timestamps include both `createdAt` and `updatedAt`
-13. **Sales Analytics**:
+    - Reservations require `customerName`, `partySize`, `reservationDate`, `reservationTime`
+14. **Sales Analytics**:
     - All analytics endpoints support date filtering with `startDate` and `endDate` parameters
     - Date format: YYYY-MM-DD
     - Analytics are business-scoped and require appropriate permissions
@@ -2498,19 +2815,21 @@ Common HTTP Status Codes:
     - Staff performance includes efficiency metrics and customer satisfaction
     - Customer analytics categorize customers as new, returning, or loyal
     - Inventory analytics provide stock alerts and reorder recommendations
-14. **Sales with Items**:
+15. **Sales with Items**:
     - `/sales/{id}/with-items` returns complete sale details including all items
     - Includes item SKU, barcode, category, and pricing information
     - Perfect for mobile apps requiring detailed sale information
     - Business-scoped for security
-15. **Floor Plan Management**:
+16. **Floor Plan Management**:
     - Floor plans have dimensions (width/height) for visual representation
     - Table positions include x/y coordinates, rotation, and size
     - Background images can be set for visual floor plan representation
     - Tables can be positioned on multiple floor plans
     - Floor plans are business-scoped
-16. **Table Management**:
+    - Table positions include reservation data when tables are reserved
+17. **Table Management**:
     - Tables have status tracking (available, occupied, reserved, cleaning, out_of_service)
     - Tables can be assigned to sections (Main Floor, Patio, etc.)
     - Table positions are managed separately from table definitions
-    - Table status updates automatically with order lifecycle 
+    - Table status updates automatically with order lifecycle
+    - Reservation data is automatically included in table responses when applicable

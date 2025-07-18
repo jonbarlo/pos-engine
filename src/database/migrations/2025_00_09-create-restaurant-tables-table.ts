@@ -72,6 +72,25 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   await queryInterface.addIndex('restaurant_tables', ['businessId', 'status']);
   await queryInterface.addIndex('restaurant_tables', ['businessId', 'isActive']);
   await queryInterface.addIndex('restaurant_tables', ['businessId', 'serverId']);
+  await queryInterface.addIndex('restaurant_tables', ['currentOrderId']);
+
+  // Add foreign key constraint for currentOrderId (after table creation to avoid circular dependency)
+  try {
+    await queryInterface.addConstraint('restaurant_tables', {
+      fields: ['currentOrderId'],
+      type: 'foreign key',
+      name: 'restaurant_tables_currentOrderId_fkey',
+      references: {
+        table: 'orders',
+        field: 'id'
+      },
+      onDelete: 'SET NULL',
+      onUpdate: 'CASCADE'
+    });
+  } catch (error) {
+    // If orders table doesn't exist yet, skip the constraint (it will be added later)
+    console.log('Orders table not found, skipping currentOrderId foreign key constraint');
+  }
 }
 
 

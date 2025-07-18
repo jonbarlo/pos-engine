@@ -167,6 +167,44 @@ app.post('/api/tables', (req: any, res: any) => {
   res.status(201).json({ data: mockTable });
 });
 
+app.post('/api/tables/:id/seat', (req: any, res: any) => {
+  const { id } = req.params;
+  const { customerName, customerPhone, customerEmail, partySize, serverId, notes } = req.body;
+  
+  if (!partySize || partySize <= 0) {
+    return res.status(400).json({ error: 'Valid party size is required' });
+  }
+  
+  const mockTable = {
+    id: parseInt(id),
+    businessId: 1,
+    tableNumber: `Table ${id}`,
+    capacity: 4,
+    status: 'occupied',
+    section: 'Main Floor',
+    currentOrderId: 123,
+    serverId: serverId ? parseInt(serverId) : null,
+    partySize: partySize,
+    customerName: customerName || null,
+    notes: notes || null,
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  };
+  
+  const mockOrder = {
+    id: 123,
+    orderNumber: `ORDER-${Date.now()}-${id}`,
+    customerId: customerEmail ? 456 : null
+  };
+  
+  res.json({
+    data: mockTable,
+    order: mockOrder,
+    message: `Successfully seated party of ${partySize} at table ${mockTable.tableNumber}`
+  });
+});
+
 describe('Table Routes', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -303,6 +341,54 @@ describe('Table Routes', () => {
         .expect(400);
 
       expect(response.body).toHaveProperty('error', 'Missing required fields: tableNumber and capacity are required');
+    });
+  });
+
+  describe('POST /api/tables/:id/seat', () => {
+    it('should seat customers at table', async () => {
+      const response = await request(app)
+        .post('/api/tables/1/seat')
+        .send({
+          customerName: 'John Doe',
+          customerPhone: '+1-555-0123',
+          customerEmail: 'john@example.com',
+          partySize: 4,
+          serverId: 1,
+          notes: 'Window seat preferred'
+        })
+        .expect(200);
+
+      expect(response.body).toHaveProperty('data');
+      expect(response.body).toHaveProperty('order');
+      expect(response.body).toHaveProperty('message');
+      expect(response.body.data).toHaveProperty('status', 'occupied');
+      expect(response.body.data).toHaveProperty('partySize', 4);
+      expect(response.body.data).toHaveProperty('currentOrderId', 123);
+    });
+
+    it('should return 400 for invalid party size', async () => {
+      const response = await request(app)
+        .post('/api/tables/1/seat')
+        .send({
+          customerName: 'John Doe',
+          partySize: 0
+        })
+        .expect(400);
+
+      expect(response.body).toHaveProperty('error', 'Valid party size is required');
+    });
+
+    it('should work with minimal data', async () => {
+      const response = await request(app)
+        .post('/api/tables/1/seat')
+        .send({
+          partySize: 2
+        })
+        .expect(200);
+
+      expect(response.body).toHaveProperty('data');
+      expect(response.body.data).toHaveProperty('status', 'occupied');
+      expect(response.body.data).toHaveProperty('partySize', 2);
     });
   });
 }); 

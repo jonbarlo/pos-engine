@@ -38,7 +38,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     },
     customerPhone: {
       type: DataTypes.STRING(20),
-      allowNull: true
+      allowNull: false
     },
     customerEmail: {
       type: DataTypes.STRING(100),
@@ -54,8 +54,18 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       allowNull: false
     },
     reservationTime: {
-      type: DataTypes.TIME,
+      type: DataTypes.STRING(5),
       allowNull: false
+    },
+    duration: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 90
+    },
+    source: {
+      type: DataTypes.ENUM('phone', 'online', 'walk_in', 'third_party'),
+      allowNull: false,
+      defaultValue: 'phone'
     },
     status: {
       type: DataTypes.ENUM('pending', 'confirmed', 'seated', 'completed', 'cancelled', 'no_show'),
@@ -65,6 +75,43 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     specialRequests: {
       type: DataTypes.TEXT,
       allowNull: true
+    },
+    notes: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    confirmedAt: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    seatedAt: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    completedAt: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    cancelledAt: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    cancelledBy: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'users',
+        key: 'id'
+      }
+    },
+    cancellationReason: {
+      type: DataTypes.STRING(255),
+      allowNull: true
+    },
+    isActive: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true
     },
     createdAt: {
       type: DataTypes.DATE,
@@ -84,7 +131,17 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   await queryInterface.addIndex('reservations', ['customerId']);
   await queryInterface.addIndex('reservations', ['reservationDate']);
   await queryInterface.addIndex('reservations', ['status']);
+  await queryInterface.addIndex('reservations', ['source']);
+  await queryInterface.addIndex('reservations', ['isActive']);
   await queryInterface.addIndex('reservations', ['customerPhone']);
+  await queryInterface.addIndex('reservations', ['customerEmail']);
+  await queryInterface.addIndex('reservations', ['reservationDate', 'reservationTime']);
+  
+  // Composite indexes for common queries
+  await queryInterface.addIndex('reservations', ['businessId', 'reservationDate']);
+  await queryInterface.addIndex('reservations', ['businessId', 'status']);
+  await queryInterface.addIndex('reservations', ['tableId', 'reservationDate']);
+  await queryInterface.addIndex('reservations', ['businessId', 'customerId']);
 }
 
 export async function down(queryInterface: QueryInterface): Promise<void> {

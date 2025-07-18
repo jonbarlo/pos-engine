@@ -33,6 +33,8 @@ export interface TableCreationAttributes {
   currentOrderId?: number | null;
   serverId?: number | null;
   section?: string;
+  customerName?: string | null;
+  notes?: string | null;
   isActive?: boolean;
 }
 
@@ -55,7 +57,11 @@ export class TableModel extends Model<TableAttributes, TableCreationAttributes> 
     business: any;
     server: any;
     currentOrder: any;
+    reservations: any;
   };
+
+  // Instance associations
+  public reservations?: any[];
 }
 
 export const initializeTableModel = (sequelize: Sequelize): void => {
@@ -126,6 +132,7 @@ export const initializeTableModel = (sequelize: Sequelize): void => {
         allowNull: false,
         defaultValue: 'Main Floor',
       },
+
       isActive: {
         type: DataTypes.BOOLEAN,
         allowNull: false,

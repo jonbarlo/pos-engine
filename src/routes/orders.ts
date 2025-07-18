@@ -1193,21 +1193,46 @@ router.post('/:id/items', authenticateToken, async (req: AuthRequest, res): Prom
         return;
       }
 
-      const itemTotal = Math.round((menuItem.price * item.quantity) * 100) / 100;
-      additionalSubtotal += itemTotal;
-
-      await OrderItemModel.create({
-        orderId: order.id,
-        itemId: item.itemId,
-        itemName: menuItem.name,
-        quantity: item.quantity,
-        unitPrice: Math.round(menuItem.price * 100) / 100,
-        totalPrice: itemTotal,
-        status: OrderItemStatus.PENDING,
-        notes: item.notes
+      // Check if this item already exists in the order
+      const existingOrderItem = await OrderItemModel.findOne({
+        where: {
+          orderId: order.id,
+          itemId: item.itemId
+        }
       });
 
-      logger(`Added item ${menuItem.name} to order ${id}`);
+      if (existingOrderItem) {
+        // Update existing order item - increase quantity and recalculate total
+        const newQuantity = existingOrderItem.quantity + item.quantity;
+        const newTotalPrice = Math.round((menuItem.price * newQuantity) * 100) / 100;
+        const additionalPrice = Math.round((menuItem.price * item.quantity) * 100) / 100;
+        additionalSubtotal += additionalPrice;
+
+        await existingOrderItem.update({
+          quantity: newQuantity,
+          totalPrice: newTotalPrice,
+          notes: item.notes || existingOrderItem.notes
+        });
+
+        logger(`Updated existing item ${menuItem.name} in order ${id} - new quantity: ${newQuantity}`);
+      } else {
+        // Create new order item
+        const itemTotal = Math.round((menuItem.price * item.quantity) * 100) / 100;
+        additionalSubtotal += itemTotal;
+
+        await OrderItemModel.create({
+          orderId: order.id,
+          itemId: item.itemId,
+          itemName: menuItem.name,
+          quantity: item.quantity,
+          unitPrice: Math.round(menuItem.price * 100) / 100,
+          totalPrice: itemTotal,
+          status: OrderItemStatus.PENDING,
+          notes: item.notes
+        });
+
+        logger(`Added new item ${menuItem.name} to order ${id}`);
+      }
     }
 
     // Update order totals
@@ -1239,31 +1264,31 @@ router.post('/:id/items', authenticateToken, async (req: AuthRequest, res): Prom
         logger(`Created missing kitchen order for order ${order.id} when adding items`);
       }
     } else {
-      // Update existing kitchen order with new items
-      const newItems = items.map((item, index) => {
-        const menuItem = items.find(mi => mi.itemId === item.itemId);
-        return {
-          id: existingKitchenOrder.totalItems + index + 1,
-          itemName: menuItem?.name || `Item ${item.itemId}`,
-          quantity: item.quantity,
+      // Update existing kitchen order - regenerate from current order items
+      const orderItems = await OrderItemModel.findAll({
+        where: { orderId: order.id }
+      });
+      
+      if (orderItems.length > 0) {
+        const kitchenItems = orderItems.map((orderItem, index) => ({
+          id: index + 1,
+          itemName: orderItem.itemName,
+          quantity: orderItem.quantity,
           status: 'pending' as const,
-          specialInstructions: item.notes || '',
+          specialInstructions: orderItem.notes || '',
           modifications: [],
           allergens: [],
           preparationTime: 15
-        };
-      });
-
-      const currentItems = existingKitchenOrder.items || [];
-      const updatedItems = [...currentItems, ...newItems];
-      
-      await existingKitchenOrder.update({
-        items: updatedItems,
-        totalItems: updatedItems.length,
-        notes: `Updated with new items - ${new Date().toISOString()}`
-      });
-      
-      logger(`Updated existing kitchen order ${existingKitchenOrder.id} with new items`);
+        }));
+        
+        await existingKitchenOrder.update({
+          items: kitchenItems,
+          totalItems: kitchenItems.length,
+          notes: `Updated with all current items - ${new Date().toISOString()}`
+        });
+        
+        logger(`Updated existing kitchen order ${existingKitchenOrder.id} with all current items`);
+      }
     }
 
     // Reload order with items

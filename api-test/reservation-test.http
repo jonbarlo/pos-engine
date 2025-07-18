@@ -1,0 +1,66 @@
+### Reservation System Test
+
+### 1. Login to get token
+POST http://localhost:3031/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "marco@italiandelight.com",
+  "password": "Password123",
+  "businessId": 1
+}
+
+### 2. Get all tables (should show reservation data for reserved tables)
+GET http://localhost:3031/api/tables
+Authorization: Bearer {{authToken}}
+
+### 3. Get specific table with reservation
+GET http://localhost:3031/api/tables/3
+Authorization: Bearer {{authToken}}
+
+### 4. Get floor plan with tables (should show reservation data)
+GET http://localhost:3031/api/floor-plans/1/tables
+Authorization: Bearer {{authToken}}
+
+### 5. Get all reservations
+GET http://localhost:3031/api/reservations
+Authorization: Bearer {{authToken}}
+
+### 6. Get specific reservation
+GET http://localhost:3031/api/reservations/1
+Authorization: Bearer {{authToken}}
+
+### 7. Create new reservation
+POST http://localhost:3031/api/reservations
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "tableId": 4,
+  "customerName": "Test Customer",
+  "customerPhone": "+1-555-9999",
+  "customerEmail": "test@example.com",
+  "partySize": 3,
+  "reservationDate": "2025-01-15",
+  "reservationTime": "19:30:00",
+  "status": "pending",
+  "specialRequests": "Test reservation"
+}
+
+### 8. Update reservation
+PUT http://localhost:3031/api/reservations/1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "status": "confirmed",
+  "specialRequests": "Updated special requests"
+}
+
+### 9. Delete reservation
+DELETE http://localhost:3031/api/reservations/4
+Authorization: Bearer {{authToken}}
+
+### 10. Test tables after reservation creation (should show new reservation)
+GET http://localhost:3031/api/tables
+Authorization: Bearer {{authToken}} 

@@ -187,15 +187,15 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     items[i.sku] = item.id;
   }
 
-  // 4. Create Tables
+  // 4. Create Tables (All initially available - will be updated after orders are created)
   const tableData = [
     // Italian Delight Tables
     { businessSlug: 'italian-delight', tableNumber: 'A1', capacity: 4, status: TableStatus.AVAILABLE, section: 'Main Floor' },
-    { businessSlug: 'italian-delight', tableNumber: 'A2', capacity: 6, status: TableStatus.OCCUPIED, section: 'Main Floor' },
-    { businessSlug: 'italian-delight', tableNumber: 'B1', capacity: 2, status: TableStatus.RESERVED, section: 'Patio' },
+    { businessSlug: 'italian-delight', tableNumber: 'A2', capacity: 6, status: TableStatus.AVAILABLE, section: 'Main Floor' },
+    { businessSlug: 'italian-delight', tableNumber: 'B1', capacity: 2, status: TableStatus.AVAILABLE, section: 'Patio' },
     // Sushi Master Tables
     { businessSlug: 'sushi-master', tableNumber: 'S1', capacity: 4, status: TableStatus.AVAILABLE, section: 'Main Floor' },
-    { businessSlug: 'sushi-master', tableNumber: 'S2', capacity: 8, status: TableStatus.OCCUPIED, section: 'Bar' },
+    { businessSlug: 'sushi-master', tableNumber: 'S2', capacity: 8, status: TableStatus.AVAILABLE, section: 'Bar' },
     // Coffee Corner Tables
     { businessSlug: 'coffee-corner', tableNumber: 'C1', capacity: 2, status: TableStatus.AVAILABLE, section: 'Indoor' },
     { businessSlug: 'coffee-corner', tableNumber: 'C2', capacity: 4, status: TableStatus.CLEANING, section: 'Outdoor' }
@@ -712,7 +712,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     { businessSlug: 'coffee-corner', categoryKey: 'coffee-corner-Coffee', name: 'Espresso', description: 'Single shot of espresso', price: 3.50, cost: 1.20, sku: 'CO-MI-COF-001', barcode: '123456789030', itemSku: 'CO-ESP-001', imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=300&fit=crop' },
     { businessSlug: 'coffee-corner', categoryKey: 'coffee-corner-Coffee', name: 'Cappuccino', description: 'Espresso with steamed milk and foam', price: 4.99, cost: 1.80, sku: 'CO-MI-COF-002', barcode: '123456789031', itemSku: 'CO-CAP-001', imageUrl: 'https://images.unsplash.com/photo-1534778101976-62847782c06b?w=400&h=300&fit=crop' },
     { businessSlug: 'coffee-corner', categoryKey: 'coffee-corner-Coffee', name: 'Latte', description: 'Espresso with steamed milk', price: 4.49, cost: 1.60, sku: 'CO-MI-COF-003', barcode: '123456789032', itemSku: 'CO-LAT-001', imageUrl: 'https://images.unsplash.com/photo-1541167760496-1628856ab772?w=400&h=300&fit=crop' },
-    { businessSlug: 'coffee-corner', categoryKey: 'coffee-corner-Pastries', name: 'Blueberry Muffin', description: 'Fresh baked blueberry muffin', price: 3.99, cost: 1.50, sku: 'CO-MI-PAS-001', barcode: '123456789033', itemSku: 'CO-PAS-001', imageUrl: 'https://images.unsplash.com/photo-1607958996338-0106d5c0c1e1?w=400&h=300&fit=crop' },
+    { businessSlug: 'coffee-corner', categoryKey: 'coffee-corner-Pastries', name: 'Blueberry Muffin', description: 'Fresh baked blueberry muffin', price: 3.99, cost: 1.50, sku: 'CO-MI-PAS-001', barcode: '123456789033', itemSku: 'CO-PAS-001', imageUrl: 'https://images.unsplash.com/photo-1607958996338-0106d5c0c1e1?w=400&h=300&fit=crop&crop=center' },
     { businessSlug: 'coffee-corner', categoryKey: 'coffee-corner-Pastries', name: 'Chocolate Croissant', description: 'Buttery croissant with chocolate', price: 4.49, cost: 1.80, sku: 'CO-MI-PAS-002', barcode: '123456789034', itemSku: 'CO-PAS-002', imageUrl: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=400&h=300&fit=crop' },
     { businessSlug: 'coffee-corner', categoryKey: 'coffee-corner-Tea', name: 'Earl Grey Tea', description: 'Classic Earl Grey tea', price: 3.99, cost: 1.20, sku: 'CO-MI-TEA-001', barcode: '123456789035', itemSku: null, imageUrl: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop' },
     { businessSlug: 'coffee-corner', categoryKey: 'coffee-corner-Smoothies', name: 'Berry Blast Smoothie', description: 'Mixed berry smoothie', price: 5.99, cost: 2.20, sku: 'CO-MI-SMO-001', barcode: '123456789036', itemSku: null, imageUrl: 'https://images.unsplash.com/photo-1505252585461-04db1eb84625?w=400&h=300&fit=crop' }
@@ -800,14 +800,14 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     updatedAt: new Date()
   })));
 
-  // Update table statuses to reflect current orders
+  // Update table statuses to reflect current orders (following POS convention)
   console.log('🔍 DEBUG: Updating table statuses to reflect current orders...');
   const tableUpdates = [
-    { tableKey: 'italian-delight-A2', orderNumber: 'IT-2024-001', serverEmail: 'giuseppe@italiandelight.com' },
-    { tableKey: 'italian-delight-A1', orderNumber: 'IT-2024-002', serverEmail: 'giuseppe@italiandelight.com' },
-    { tableKey: 'sushi-master-S2', orderNumber: 'SU-2024-001', serverEmail: 'aiko@sushimaster.com' },
-    { tableKey: 'sushi-master-S1', orderNumber: 'SU-2024-002', serverEmail: 'aiko@sushimaster.com' },
-    { tableKey: 'coffee-corner-C1', orderNumber: 'CO-2024-002', serverEmail: 'sarah@coffeecorner.com' }
+    { tableKey: 'italian-delight-A2', orderNumber: 'IT-2024-001', serverEmail: 'giuseppe@italiandelight.com', partySize: 4 },
+    { tableKey: 'italian-delight-A1', orderNumber: 'IT-2024-002', serverEmail: 'giuseppe@italiandelight.com', partySize: 2 },
+    { tableKey: 'sushi-master-S2', orderNumber: 'SU-2024-001', serverEmail: 'aiko@sushimaster.com', partySize: 6 },
+    { tableKey: 'sushi-master-S1', orderNumber: 'SU-2024-002', serverEmail: 'aiko@sushimaster.com', partySize: 3 },
+    { tableKey: 'coffee-corner-C1', orderNumber: 'CO-2024-002', serverEmail: 'sarah@coffeecorner.com', partySize: 2 }
   ];
 
   for (const update of tableUpdates) {
@@ -817,13 +817,13 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     
     if (tableId && orderId && serverId) {
       await queryInterface.sequelize.query(
-        'UPDATE restaurant_tables SET status = ?, currentOrderId = ?, serverId = ? WHERE id = ?',
+        'UPDATE restaurant_tables SET status = ?, currentOrderId = ?, serverId = ?, partySize = ? WHERE id = ?',
         { 
-          replacements: [TableStatus.OCCUPIED, orderId, serverId, tableId],
+          replacements: [TableStatus.OCCUPIED, orderId, serverId, update.partySize, tableId],
           type: QueryTypes.UPDATE 
         }
       );
-      console.log(`🔍 DEBUG: Updated table ${update.tableKey} with order ${update.orderNumber}`);
+      console.log(`🔍 DEBUG: Updated table ${update.tableKey} with order ${update.orderNumber} and party size ${update.partySize}`);
     }
   }
 
@@ -1177,7 +1177,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     };
   }));
 
-  // 12. Create Reservations
+  // 12. Create Reservations (using tables that are not occupied by orders)
   const reservationData = [
     {
       businessSlug: 'italian-delight',
@@ -1186,21 +1186,43 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       customerName: 'Maria Garcia',
       customerPhone: '+1-555-0102',
       partySize: 4,
-      reservationDate: '2024-01-15',
-      reservationTime: '19:00:00',
+      reservationDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Tomorrow
+      reservationTime: '19:00',
+      duration: 90,
+      source: 'phone',
       status: 'confirmed',
-      specialRequests: 'Anniversary celebration'
+      specialRequests: 'Anniversary celebration',
+      notes: 'VIP customer - anniversary celebration'
     },
     {
       businessSlug: 'sushi-master',
+      tableKey: 'sushi-master-S3', // Use a different table that's not occupied
       customerName: 'New Customer',
       customerPhone: '+1-555-0202',
       customerEmail: 'newcustomer@email.com',
       partySize: 6,
-      reservationDate: '2024-01-16',
-      reservationTime: '20:00:00',
+      reservationDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Day after tomorrow
+      reservationTime: '20:00',
+      duration: 90,
+      source: 'online',
       status: 'pending',
-      specialRequests: 'Window seat preferred'
+      specialRequests: 'Window seat preferred',
+      notes: 'First-time customer'
+    },
+    {
+      businessSlug: 'coffee-corner',
+      tableKey: 'coffee-corner-C3', // Use a different table that's not occupied
+      customerName: 'Regular Customer',
+      customerPhone: '+1-555-0301',
+      customerEmail: 'jennifer.lee@email.com',
+      partySize: 2,
+      reservationDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 3 days from now
+      reservationTime: '18:30',
+      duration: 90,
+      source: 'phone',
+      status: 'confirmed',
+      specialRequests: 'Quiet corner table',
+      notes: 'Regular customer - prefers quiet seating'
     }
   ];
   await queryInterface.bulkInsert('reservations', reservationData.map(r => ({
@@ -1213,11 +1235,43 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     partySize: r.partySize,
     reservationDate: r.reservationDate,
     reservationTime: r.reservationTime,
+    duration: r.duration,
+    source: r.source,
     status: r.status,
     specialRequests: r.specialRequests,
+    notes: r.notes,
+    isActive: true,
     createdAt: new Date(),
     updatedAt: new Date()
   })));
+
+  // 12.5. Update table statuses for reserved tables
+  console.log('🔍 DEBUG: Updating table statuses for reservations...');
+  const tableStatusUpdates = [
+    { tableKey: 'italian-delight-B1', status: 'reserved' },
+    { tableKey: 'sushi-master-S3', status: 'reserved' },
+    { tableKey: 'coffee-corner-C3', status: 'reserved' }
+  ];
+
+  for (const update of tableStatusUpdates) {
+    const tableId = tables[update.tableKey];
+    if (tableId) {
+      // Find the corresponding reservation to get party size
+      const reservation = reservationData.find(r => r.tableKey === update.tableKey);
+      const partySize = reservation ? reservation.partySize : 2;
+      
+      await queryInterface.sequelize.query(
+        'UPDATE restaurant_tables SET status = ?, partySize = ? WHERE id = ?',
+        { 
+          replacements: [update.status, partySize, tableId],
+          type: QueryTypes.UPDATE 
+        }
+      );
+      console.log(`🔍 DEBUG: Updated table ${update.tableKey} status to ${update.status} with party size ${partySize}`);
+    } else {
+      console.log(`🔍 DEBUG: Table not found for key: ${update.tableKey}`);
+    }
+  }
 
   // 13. Create Kitchen Orders
   const kitchenOrderData = [

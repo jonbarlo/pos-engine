@@ -2,6 +2,8 @@ import { FloorPlanModel, FloorPlanAttributes, FloorPlanCreationAttributes } from
 import { TablePositionModel, TablePositionAttributes } from '../models/TablePositionModel';
 import { TableModel } from '../models/TableModel';
 import { logger } from '../utils/logger';
+import { ReservationModel } from '../models/ReservationModel';
+import { Op } from 'sequelize';
 
 export class FloorPlanService {
   // Create a new floor plan
@@ -105,13 +107,30 @@ export class FloorPlanService {
 
       logger(`Found floor plan: ${floorPlan.name}`);
 
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
       const tablePositions = await TablePositionModel.findAll({
         where: { floorPlanId: id },
         include: [
           {
             model: TableModel,
             as: 'table',
-            attributes: ['id', 'tableNumber', 'capacity', 'status', 'section']
+            attributes: ['id', 'tableNumber', 'capacity', 'status', 'section'],
+            include: [
+              {
+                model: ReservationModel,
+                as: 'reservations',
+                where: {
+                  status: ['pending', 'confirmed'],
+                  reservationDate: { [Op.gte]: today.toISOString().split('T')[0] }
+                },
+                required: false,
+                attributes: ['id', 'customerName', 'customerPhone', 'partySize', 'reservationDate', 'reservationTime', 'notes', 'status'],
+                order: [['reservationDate', 'ASC'], ['reservationTime', 'ASC']],
+                limit: 1
+              }
+            ]
           }
         ],
         order: [['table', 'tableNumber', 'ASC']]
@@ -121,15 +140,34 @@ export class FloorPlanService {
 
       const result = {
         ...floorPlan.toJSON(),
-        tablePositions: tablePositions.map((tp: any) => ({
-          id: tp.id,
-          x: tp.x,
-          y: tp.y,
-          rotation: tp.rotation,
-          width: tp.width,
-          height: tp.height,
-          table: tp.table
-        }))
+        tablePositions: tablePositions.map((tp: any) => {
+          const tableData: any = {
+            id: tp.id,
+            tableId: tp.table.id,
+            tableNumber: tp.table.tableNumber,
+            tableStatus: tp.table.status,
+            x: tp.x,
+            y: tp.y,
+            rotation: tp.rotation,
+            width: tp.width,
+            height: tp.height
+          };
+
+          // Add reservation data if table is reserved and has active reservations
+          if (tp.table.status === 'reserved' && tp.table.reservations && tp.table.reservations.length > 0) {
+            const reservation = tp.table.reservations[0];
+            tableData.reservation = {
+              customerName: reservation.customerName,
+              customerPhone: reservation.customerPhone,
+              partySize: reservation.partySize,
+              reservationDate: reservation.reservationDate,
+              reservationTime: reservation.reservationTime,
+              notes: reservation.notes
+            };
+          }
+
+          return tableData;
+        })
       };
 
       logger(`Returning floor plan with ${result.tablePositions.length} tables`);

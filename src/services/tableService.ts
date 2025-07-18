@@ -1,4 +1,4 @@
-import { TableModel, OrderModel } from '../models';
+import { TableModel, OrderModel, ReservationModel, CustomerModel } from '../models';
 import { TableStatus } from '../models/TableModel';
 import { OrderStatus, OrderType } from '../models/OrderModel';
 import { logger } from '../utils/logger';
@@ -14,23 +14,52 @@ export interface TableWithOrders {
   businessId: number;
   orders: any[];
   totalPendingAmount: number;
+  reservation?: {
+    customerName: string;
+    customerPhone: string;
+    partySize: number;
+    reservationDate: string;
+    reservationTime: string;
+    notes?: string;
+  };
+  customer?: {
+    id: number;
+    name: string;
+    phone: string;
+    email?: string;
+    notes?: string;
+  };
 }
 
 export class TableService {
   /**
-   * Get all tables for a business with their current orders
+   * Get all tables for a business with their current orders and reservations
    */
   static async getTablesWithOrders(businessId: number): Promise<TableWithOrders[]> {
     try {
       const tables = await TableModel.findAll({
         where: { businessId },
+        include: [
+          {
+            model: ReservationModel,
+            as: 'reservations',
+            where: { 
+              status: ['pending', 'confirmed'],
+              reservationDate: new Date().toISOString().split('T')[0] // Today's date
+            },
+            required: false,
+            attributes: ['id', 'customerName', 'customerPhone', 'partySize', 'reservationDate', 'reservationTime', 'notes', 'status'],
+            order: [['reservationTime', 'ASC']],
+            limit: 1 // Get the most relevant reservation
+          }
+        ],
         order: [['tableNumber', 'ASC']]
       });
 
       const tablesWithOrders: TableWithOrders[] = [];
 
       for (const table of tables) {
-        // Get pending orders for this table
+        // Get pending orders for this table with customer data
         const orders = await OrderModel.findAll({
           where: {
             tableId: table.id,
@@ -39,6 +68,13 @@ export class TableService {
               [Op.notIn]: [OrderStatus.COMPLETED, OrderStatus.CANCELLED]
             }
           },
+          include: [
+            {
+              model: CustomerModel,
+              as: 'customer',
+              attributes: ['id', 'name', 'phone', 'email', 'notes']
+            }
+          ],
           order: [['createdAt', 'ASC']]
         });
 
@@ -47,7 +83,18 @@ export class TableService {
           return sum + (order.totalAmount || 0);
         }, 0);
 
-        tablesWithOrders.push({
+        let customerInfo = null;
+        let currentOrder = null;
+        if (table.currentOrderId) {
+          currentOrder = await OrderModel.findOne({
+            where: { id: table.currentOrderId, businessId },
+            include: [{ model: CustomerModel, as: 'customer', attributes: ['id', 'name', 'phone', 'email', 'notes'] }]
+          });
+          if (currentOrder && (currentOrder as any).customer) {
+            customerInfo = (currentOrder as any).customer;
+          }
+        }
+        const tableData: TableWithOrders = {
           id: table.id,
           tableNumber: table.tableNumber,
           capacity: table.capacity,
@@ -56,8 +103,36 @@ export class TableService {
           serverId: table.serverId || undefined,
           businessId: table.businessId,
           orders: orders.map(order => order.toJSON()),
-          totalPendingAmount: parseFloat(totalPendingAmount.toFixed(2))
-        });
+          totalPendingAmount: parseFloat(totalPendingAmount.toFixed(2)),
+          customer: customerInfo || undefined
+        };
+
+        // Add reservation data if table is reserved and has active reservations
+        if (table.status === 'reserved' && table.reservations && table.reservations.length > 0) {
+          const reservation = table.reservations[0];
+          tableData.reservation = {
+            customerName: reservation.customerName,
+            customerPhone: reservation.customerPhone,
+            partySize: reservation.partySize,
+            reservationDate: reservation.reservationDate,
+            reservationTime: reservation.reservationTime,
+            notes: reservation.notes
+          };
+        }
+
+        // Add customer data from the first order if available (for occupied tables)
+        if (orders.length > 0 && (orders[0] as any).customer) {
+          const customer = (orders[0] as any).customer;
+          tableData.customer = {
+            id: customer.id,
+            name: customer.name,
+            phone: customer.phone,
+            email: customer.email,
+            notes: customer.notes
+          };
+        }
+
+        tablesWithOrders.push(tableData);
       }
 
       return tablesWithOrders;
@@ -68,24 +143,45 @@ export class TableService {
   }
 
   /**
-   * Get a specific table with its orders
+   * Get a specific table with its orders and reservations
    */
   static async getTableWithOrders(tableId: number, businessId: number): Promise<TableWithOrders | null> {
     try {
       const table = await TableModel.findOne({
-        where: { id: tableId, businessId }
+        where: { id: tableId, businessId },
+        include: [
+          {
+            model: ReservationModel,
+            as: 'reservations',
+            where: { 
+              status: ['pending', 'confirmed'],
+              reservationDate: new Date().toISOString().split('T')[0] // Today's date
+            },
+            required: false,
+            attributes: ['id', 'customerName', 'customerPhone', 'partySize', 'reservationDate', 'reservationTime', 'notes', 'status'],
+            order: [['reservationTime', 'ASC']],
+            limit: 1 // Get the most relevant reservation
+          }
+        ]
       });
 
       if (!table) {
         return null;
       }
 
-      // Get all orders for this table
+      // Get all orders for this table with customer data
       const orders = await OrderModel.findAll({
         where: {
           tableId: table.id,
           businessId
         },
+        include: [
+          {
+            model: CustomerModel,
+            as: 'customer',
+            attributes: ['id', 'name', 'phone', 'email', 'notes']
+          }
+        ],
         order: [['createdAt', 'DESC']]
       });
 
@@ -96,7 +192,18 @@ export class TableService {
           return sum + (order.totalAmount || 0);
         }, 0);
 
-      return {
+      let customerInfo = null;
+      let currentOrder = null;
+      if (table.currentOrderId) {
+        currentOrder = await OrderModel.findOne({
+          where: { id: table.currentOrderId, businessId },
+          include: [{ model: CustomerModel, as: 'customer', attributes: ['id', 'name', 'phone', 'email', 'notes'] }]
+        });
+        if (currentOrder && (currentOrder as any).customer) {
+          customerInfo = (currentOrder as any).customer;
+        }
+      }
+      const tableData: TableWithOrders = {
         id: table.id,
         tableNumber: table.tableNumber,
         capacity: table.capacity,
@@ -105,8 +212,36 @@ export class TableService {
         serverId: table.serverId || undefined,
         businessId: table.businessId,
         orders: orders.map(order => order.toJSON()),
-        totalPendingAmount: parseFloat(totalPendingAmount.toFixed(2))
+        totalPendingAmount: parseFloat(totalPendingAmount.toFixed(2)),
+        customer: customerInfo || undefined
       };
+
+      // Add reservation data if table is reserved and has active reservations
+      if (table.status === 'reserved' && table.reservations && table.reservations.length > 0) {
+        const reservation = table.reservations[0];
+        tableData.reservation = {
+          customerName: reservation.customerName,
+          customerPhone: reservation.customerPhone,
+          partySize: reservation.partySize,
+          reservationDate: reservation.reservationDate,
+          reservationTime: reservation.reservationTime,
+          notes: reservation.notes
+        };
+      }
+
+      // Add customer data from the first order if available (for occupied tables)
+      if (orders.length > 0 && (orders[0] as any).customer) {
+        const customer = (orders[0] as any).customer;
+        tableData.customer = {
+          id: customer.id,
+          name: customer.name,
+          phone: customer.phone,
+          email: customer.email,
+          notes: customer.notes
+        };
+      }
+
+      return tableData;
     } catch (error) {
       logger(`Error getting table ${tableId} with orders: ${error}`);
       throw error;
@@ -288,6 +423,144 @@ export class TableService {
       return tablesNeedingAttention.sort((a, b) => b.oldestOrderAge - a.oldestOrderAge);
     } catch (error) {
       logger(`Error getting tables needing attention for business ${businessId}: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Seat customers at a table
+   */
+  static async seatTable(tableId: number, businessId: number, seatingData: {
+    customerName?: string;
+    customerPhone?: string;
+    customerEmail?: string;
+    partySize: number;
+    serverId?: number;
+    notes?: string;
+  }): Promise<any> {
+    try {
+      logger(`🔍 DEBUG: Starting seatTable for tableId: ${tableId}, businessId: ${businessId}`);
+      logger(`🔍 DEBUG: Seating data: ${JSON.stringify(seatingData, null, 2)}`);
+      
+      const { customerName, customerPhone, customerEmail, partySize, serverId, notes } = seatingData;
+
+      // Find the table
+      logger(`🔍 DEBUG: Looking for table with id: ${tableId}, businessId: ${businessId}`);
+      const table = await TableModel.findOne({
+        where: { id: tableId, businessId }
+      });
+
+      if (!table) {
+        logger(`🔍 DEBUG: Table not found for id: ${tableId}, businessId: ${businessId}`);
+        throw new Error('Table not found');
+      }
+
+      logger(`🔍 DEBUG: Found table: ${JSON.stringify(table.toJSON(), null, 2)}`);
+
+      if (table.status !== 'available') {
+        logger(`🔍 DEBUG: Table status is not available: ${table.status}`);
+        throw new Error(`Table is not available. Current status: ${table.status}`);
+      }
+
+      // Create or find customer
+      logger(`🔍 DEBUG: Starting customer creation/finding logic`);
+      let customer = null;
+      if (customerEmail) {
+        logger(`🔍 DEBUG: Looking for existing customer with email: ${customerEmail}`);
+        customer = await CustomerModel.findOne({
+          where: { email: customerEmail, businessId }
+        });
+        if (customer) {
+          logger(`🔍 DEBUG: Found existing customer: ${JSON.stringify(customer.toJSON(), null, 2)}`);
+        } else {
+          logger(`🔍 DEBUG: No existing customer found with email: ${customerEmail}`);
+        }
+      }
+
+      if (!customer && (customerName || customerPhone)) {
+        logger(`🔍 DEBUG: Creating new customer with data: customerName=${customerName}, customerPhone=${customerPhone}, customerEmail=${customerEmail}`);
+        const customerData: any = {
+          businessId,
+          name: customerName || 'Walk-in Customer',
+          loyaltyPoints: 0,
+          totalSpent: '0.00',
+          visitCount: 1,
+          isActive: true
+        };
+        
+        if (customerEmail) customerData.email = customerEmail;
+        if (customerPhone) customerData.phone = customerPhone;
+        
+        logger(`🔍 DEBUG: Customer data to create: ${JSON.stringify(customerData, null, 2)}`);
+        
+        try {
+          customer = await CustomerModel.create(customerData);
+          logger(`🔍 DEBUG: Customer created successfully: ${JSON.stringify(customer.toJSON(), null, 2)}`);
+        } catch (customerError) {
+          logger(`🔍 DEBUG: Customer creation failed: ${customerError}`);
+          logger(`🔍 DEBUG: Customer error details: ${JSON.stringify(customerError, null, 2)}`);
+          throw customerError;
+        }
+      }
+
+      // Create an order for the seated customers
+      logger(`🔍 DEBUG: Starting order creation`);
+      const orderData: any = {
+        businessId,
+        tableId,
+        orderNumber: `ORDER-${Date.now()}-${tableId}`,
+        orderType: OrderType.DINE_IN,
+        status: OrderStatus.PENDING,
+        totalAmount: 0
+      };
+      
+      if (customer?.id) orderData.customerId = customer.id;
+      if (notes) orderData.notes = notes;
+      if (serverId) orderData.serverId = serverId;
+      
+      logger(`🔍 DEBUG: Order data to create: ${JSON.stringify(orderData, null, 2)}`);
+      
+      let order;
+      try {
+        order = await OrderModel.create(orderData);
+        logger(`🔍 DEBUG: Order created successfully: ${JSON.stringify(order.toJSON(), null, 2)}`);
+      } catch (orderError) {
+        logger(`🔍 DEBUG: Order creation failed: ${orderError}`);
+        logger(`🔍 DEBUG: Order error details: ${JSON.stringify(orderError, null, 2)}`);
+        throw orderError;
+      }
+
+      // Update table status
+      logger(`🔍 DEBUG: Starting table update`);
+      const updateData: any = {
+        status: TableStatus.OCCUPIED,
+        partySize,
+        currentOrderId: order.id
+      };
+      
+      if (serverId) updateData.serverId = serverId;
+      if (customerName) updateData.customerName = customerName;
+      if (notes) updateData.notes = notes;
+      
+      logger(`🔍 DEBUG: Table update data: ${JSON.stringify(updateData, null, 2)}`);
+      
+      try {
+        await table.update(updateData);
+        logger(`🔍 DEBUG: Table updated successfully`);
+      } catch (tableError) {
+        logger(`🔍 DEBUG: Table update failed: ${tableError}`);
+        logger(`🔍 DEBUG: Table error details: ${JSON.stringify(tableError, null, 2)}`);
+        throw tableError;
+      }
+
+      return {
+        table: table.toJSON(),
+        order: order.toJSON(),
+        customer: customer?.toJSON()
+      };
+    } catch (error) {
+      logger(`Error seating customers at table ${tableId}: ${error}`);
+      logger(`Error details: ${JSON.stringify(error, null, 2)}`);
       throw error;
     }
   }

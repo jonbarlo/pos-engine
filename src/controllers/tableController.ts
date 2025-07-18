@@ -237,4 +237,65 @@ export class TableController {
       });
     }
   };
+
+  /**
+   * Seat customers at a table
+   */
+  public static seatTable = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const businessId = req.user?.businessId;
+      if (!businessId) {
+        res.status(401).json({ success: false, message: 'Authentication required' });
+        return;
+      }
+
+      const { tableId } = req.params;
+      if (!tableId) {
+        res.status(400).json({ success: false, message: 'Table ID is required' });
+        return;
+      }
+
+      const tableIdNum = parseInt(tableId);
+      if (isNaN(tableIdNum)) {
+        res.status(400).json({ success: false, message: 'Invalid table ID' });
+        return;
+      }
+
+      const { customerName, customerPhone, customerEmail, partySize, serverId, notes } = req.body;
+      
+      if (!partySize || partySize < 1) {
+        res.status(400).json({ success: false, message: 'Party size is required and must be at least 1' });
+        return;
+      }
+
+      logger(`API endpoint POST /tables/${tableId}/seat was called`);
+      logger(`🔍 DEBUG: Request body: ${JSON.stringify(req.body, null, 2)}`);
+      logger(`🔍 DEBUG: Table ID: ${tableIdNum}, Business ID: ${businessId}`);
+      
+      const result = await TableService.seatTable(tableIdNum, businessId, {
+        customerName,
+        customerPhone,
+        customerEmail,
+        partySize,
+        serverId,
+        notes
+      });
+      
+      res.json({
+        success: true,
+        data: result,
+        message: `Table ${result.table.tableNumber} seated successfully with ${partySize} customers`
+      });
+    } catch (error) {
+      logger(`Error seating customers at table: ${error}`);
+      logger(`🔍 DEBUG: Full error object: ${JSON.stringify(error, null, 2)}`);
+      if (error && typeof error === 'object' && 'parent' in error) {
+        logger(`🔍 DEBUG: Parent error: ${JSON.stringify((error as any).parent, null, 2)}`);
+      }
+      res.status(500).json({ 
+        success: false, 
+        message: error instanceof Error ? error.message : 'Internal server error' 
+      });
+    }
+  };
 } 

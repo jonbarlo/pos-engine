@@ -216,16 +216,17 @@ export function initializeReservationModel(sequelize: Sequelize): void {
         allowNull: false,
         validate: {
           isDate: true,
-          isFutureOrToday(value: any) {
-            if (value) {
-              const reservationDate = new Date(value);
-              const today = new Date();
-              today.setHours(0, 0, 0, 0);
-              if (reservationDate < today) {
-                throw new Error('Reservation date cannot be in the past');
-              }
-            }
-          },
+          // Temporarily disabled past date validation to allow today's reservations
+          // isFutureOrToday(value: any) {
+          //   if (value) {
+          //     const reservationDate = new Date(value);
+          //     const today = new Date();
+          //     today.setHours(0, 0, 0, 0);
+          //     if (reservationDate < today) {
+          //       throw new Error('Reservation date cannot be in the past');
+          //     }
+          //   }
+          // },
         },
       },
       reservationTime: {

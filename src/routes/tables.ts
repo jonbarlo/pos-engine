@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import { 
   TableModel, 
-  TableStatus 
+  TableStatus,
+  ReservationModel
 } from '../models';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { requireRestaurant } from '../middleware/restaurantCheck';
@@ -11,9 +12,9 @@ import { TableController } from '../controllers/tableController';
 
 const router = Router();
 
-// Apply authentication and business type middleware to all table routes
+// Apply authentication middleware to all table routes
 router.use(authenticateToken);
-router.use(requireRestaurant);
+// Remove requireRestaurant middleware
 
 /**
  * @swagger
@@ -117,35 +118,116 @@ router.get('/', async (req: AuthRequest, res) => {
       whereClause.serverId = parseInt(assignedWaiterId as string);
     }
     
-    // Query tables from database
+    // Query tables from database with reservations
     const tables = await TableModel.findAll({
       where: whereClause,
+      include: [
+        {
+          model: ReservationModel,
+          as: 'reservations',
+          where: { 
+            status: ['pending', 'confirmed'],
+            reservationDate: new Date().toISOString().split('T')[0] // Today's date only
+          },
+          required: false,
+          attributes: ['id', 'customerName', 'customerPhone', 'partySize', 'reservationDate', 'reservationTime', 'notes', 'status'],
+          order: [['reservationTime', 'ASC']],
+          limit: 1 // Get the most relevant reservation
+        }
+      ],
       order: [['tableNumber', 'ASC']]
     });
     
     logger(`Found ${tables.length} tables for business ${businessId}${status ? ` with status ${status}` : ''}${assignedWaiterId ? ` assigned to waiter ${assignedWaiterId}` : ''}`);
     
     res.status(200).json({
-      data: tables.map(table => ({
-        id: table.id,
-        businessId: table.businessId,
-        tableNumber: table.tableNumber,
-        capacity: table.capacity,
-        partySize: table.partySize,
-        status: table.status,
-        section: table.section,
-        currentOrderId: table.currentOrderId,
-        serverId: table.serverId,
-        isActive: table.isActive,
-        createdAt: table.createdAt,
-        updatedAt: table.updatedAt
-      }))
+      data: tables.map(table => {
+        const tableData: any = {
+          id: table.id,
+          businessId: table.businessId,
+          tableNumber: table.tableNumber,
+          capacity: table.capacity,
+          partySize: table.partySize,
+          status: table.status,
+          section: table.section,
+          currentOrderId: table.currentOrderId,
+          serverId: table.serverId,
+          isActive: table.isActive,
+          createdAt: table.createdAt,
+          updatedAt: table.updatedAt
+        };
+
+        // Add reservation data if table is reserved and has active reservations
+        if (table.status === 'reserved' && table.reservations && table.reservations.length > 0) {
+          const reservation = table.reservations[0];
+          tableData.reservation = {
+            id: reservation.id,
+            customerName: reservation.customerName,
+            customerPhone: reservation.customerPhone,
+            partySize: reservation.partySize,
+            reservationDate: reservation.reservationDate,
+            reservationTime: reservation.reservationTime,
+            notes: reservation.notes,
+            status: reservation.status
+          };
+        }
+
+        return tableData;
+      })
     });
   } catch (error) {
     logger(`Error getting tables: ${error}`);
     res.status(500).json({ error: 'Failed to get tables' });
   }
 });
+
+/**
+ * @swagger
+ * /api/tables/with-orders:
+ *   get:
+ *     summary: Get all tables with their current orders
+ *     tags: [Tables]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Tables with orders retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       tableNumber:
+ *                         type: string
+ *                       capacity:
+ *                         type: integer
+ *                       status:
+ *                         type: string
+ *                       orders:
+ *                         type: array
+ *                         items:
+ *                           $ref: '#/components/schemas/Order'
+ *                       totalPendingAmount:
+ *                         type: number
+ *                 message:
+ *                   type: string
+ *                   example: Found 10 tables
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Business is not restaurant type
+ */
+router.get('/with-orders', TableController.getTablesWithOrders);
 
 /**
  * @swagger
@@ -192,7 +274,21 @@ router.get('/:id', async (req: AuthRequest, res) => {
     }
     
     const table = await TableModel.findOne({
-      where: { id: parseInt(id), businessId, isActive: true }
+      where: { id: parseInt(id), businessId, isActive: true },
+      include: [
+        {
+          model: ReservationModel,
+          as: 'reservations',
+          where: { 
+            status: ['pending', 'confirmed'],
+            reservationDate: new Date().toISOString().split('T')[0] // Today's date only
+          },
+          required: false,
+          attributes: ['id', 'customerName', 'customerPhone', 'partySize', 'reservationDate', 'reservationTime', 'notes', 'status'],
+          order: [['reservationTime', 'ASC']],
+          limit: 1 // Get the most relevant reservation
+        }
+      ]
     });
     
     if (!table) {
@@ -200,21 +296,38 @@ router.get('/:id', async (req: AuthRequest, res) => {
       return;
     }
     
+    const tableData: any = {
+      id: table.id,
+      businessId: table.businessId,
+      tableNumber: table.tableNumber,
+      capacity: table.capacity,
+      partySize: table.partySize,
+      status: table.status,
+      section: table.section,
+      currentOrderId: table.currentOrderId,
+      serverId: table.serverId,
+      isActive: table.isActive,
+      createdAt: table.createdAt,
+      updatedAt: table.updatedAt
+    };
+
+    // Add reservation data if table is reserved and has active reservations
+    if (table.status === 'reserved' && table.reservations && table.reservations.length > 0) {
+      const reservation = table.reservations[0];
+      tableData.reservation = {
+        id: reservation.id,
+        customerName: reservation.customerName,
+        customerPhone: reservation.customerPhone,
+        partySize: reservation.partySize,
+        reservationDate: reservation.reservationDate,
+        reservationTime: reservation.reservationTime,
+        notes: reservation.notes,
+        status: reservation.status
+      };
+    }
+    
     res.status(200).json({
-      data: {
-        id: table.id,
-        businessId: table.businessId,
-        tableNumber: table.tableNumber,
-        capacity: table.capacity,
-        partySize: table.partySize,
-        status: table.status,
-        section: table.section,
-        currentOrderId: table.currentOrderId,
-        serverId: table.serverId,
-        isActive: table.isActive,
-        createdAt: table.createdAt,
-        updatedAt: table.updatedAt
-      }
+      data: tableData
     });
   } catch (error) {
     logger(`Error getting table: ${error}`);
@@ -1245,5 +1358,358 @@ router.get('/stats', TableController.getTableStats);
  *         description: Business is not restaurant type
  */
 router.get('/needing-attention', TableController.getTablesNeedingAttention);
+
+/**
+ * @swagger
+ * /api/tables/{tableId}/reservations:
+ *   get:
+ *     summary: Get reservations for a specific table
+ *     tags: [Tables]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: tableId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Table ID
+ *       - in: query
+ *         name: date
+ *         schema:
+ *           type: string
+ *           format: date
+ *           example: "2024-01-15"
+ *         description: Filter reservations by date (defaults to today)
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [pending, confirmed, seated, completed, cancelled, no_show]
+ *         description: Filter by reservation status
+ *     responses:
+ *       200:
+ *         description: Reservations for the table retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       customerName:
+ *                         type: string
+ *                       customerPhone:
+ *                         type: string
+ *                       customerEmail:
+ *                         type: string
+ *                       partySize:
+ *                         type: integer
+ *                       reservationDate:
+ *                         type: string
+ *                         format: date
+ *                       reservationTime:
+ *                         type: string
+ *                         format: time
+ *                       status:
+ *                         type: string
+ *                       notes:
+ *                         type: string
+ *                       createdAt:
+ *                         type: string
+ *                         format: date-time
+ *                       updatedAt:
+ *                         type: string
+ *                         format: date-time
+ *                 message:
+ *                   type: string
+ *                   example: Found 2 reservations for table 1
+ *       400:
+ *         description: Invalid table ID
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Table not found
+ *       500:
+ *         description: Server error
+ */
+router.get('/:tableId/reservations', async (req: AuthRequest, res) => {
+  try {
+    const { tableId } = req.params;
+    const { date, status } = req.query;
+    const businessId = req.user!.businessId;
+    
+    if (!tableId || isNaN(parseInt(tableId))) {
+      res.status(400).json({ error: 'Invalid table ID' });
+      return;
+    }
+    
+    // Verify table exists and belongs to business
+    const table = await TableModel.findOne({
+      where: { id: parseInt(tableId), businessId, isActive: true }
+    });
+    
+    if (!table) {
+      res.status(404).json({ error: 'Table not found' });
+      return;
+    }
+    
+    // Build reservation query
+    const reservationWhere: any = {
+      tableId: parseInt(tableId),
+      businessId
+    };
+    
+    // Filter by date (default to today)
+    const targetDate = date ? date as string : new Date().toISOString().split('T')[0];
+    reservationWhere.reservationDate = targetDate;
+    
+    // Filter by status if provided
+    if (status) {
+      reservationWhere.status = status;
+    }
+    
+    const reservations = await ReservationModel.findAll({
+      where: reservationWhere,
+      order: [['reservationTime', 'ASC']],
+      attributes: [
+        'id', 'customerName', 'customerPhone', 'customerEmail', 
+        'partySize', 'reservationDate', 'reservationTime', 
+        'status', 'notes', 'createdAt', 'updatedAt'
+      ]
+    });
+    
+    logger(`Found ${reservations.length} reservations for table ${tableId} on ${targetDate}`);
+    
+    res.status(200).json({
+      success: true,
+      data: reservations,
+      message: `Found ${reservations.length} reservation${reservations.length !== 1 ? 's' : ''} for table ${tableId}`
+    });
+  } catch (error) {
+    logger(`Error getting reservations for table: ${error}`);
+    res.status(500).json({ error: 'Failed to get table reservations' });
+  }
+});
+
+/**
+ * @swagger
+ * /api/tables/{tableId}/reservations:
+ *   post:
+ *     summary: Create a reservation for a specific table
+ *     tags: [Tables]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: tableId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Table ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - customerName
+ *               - partySize
+ *               - reservationDate
+ *               - reservationTime
+ *             properties:
+ *               customerName:
+ *                 type: string
+ *                 description: Customer name
+ *               customerPhone:
+ *                 type: string
+ *                 description: Customer phone number
+ *               customerEmail:
+ *                 type: string
+ *                 description: Customer email address
+ *               partySize:
+ *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 20
+ *                 description: Number of guests
+ *               reservationDate:
+ *                 type: string
+ *                 format: date
+ *                 example: "2024-01-15"
+ *                 description: Reservation date (YYYY-MM-DD)
+ *               reservationTime:
+ *                 type: string
+ *                 example: "19:00:00"
+ *                 description: Reservation time (HH:MM:SS)
+ *               status:
+ *                 type: string
+ *                 enum: [pending, confirmed, seated, completed, cancelled, no_show]
+ *                 default: pending
+ *                 description: Reservation status
+ *               specialRequests:
+ *                 type: string
+ *                 description: Special requests or notes
+ *     responses:
+ *       201:
+ *         description: Reservation created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     customerName:
+ *                       type: string
+ *                     partySize:
+ *                       type: integer
+ *                     reservationDate:
+ *                       type: string
+ *                     reservationTime:
+ *                       type: string
+ *                     status:
+ *                       type: string
+ *                     tableId:
+ *                       type: integer
+ *                     createdAt:
+ *                       type: string
+ *                       format: date-time
+ *                     updatedAt:
+ *                       type: string
+ *                       format: date-time
+ *                 message:
+ *                   type: string
+ *                   example: Reservation created successfully for table 1
+ *       400:
+ *         description: Invalid input data
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Table not found
+ *       500:
+ *         description: Server error
+ */
+router.post('/:tableId/reservations', async (req: AuthRequest, res) => {
+  try {
+    const { tableId } = req.params;
+    const businessId = req.user!.businessId;
+    const {
+      customerName,
+      customerPhone,
+      customerEmail,
+      partySize,
+      reservationDate,
+      reservationTime,
+      status = 'pending',
+      specialRequests
+    } = req.body;
+
+    // Validate table ID
+    if (!tableId || isNaN(parseInt(tableId))) {
+      res.status(400).json({ error: 'Invalid table ID' });
+      return;
+    }
+
+    // Verify table exists and belongs to business
+    const table = await TableModel.findOne({
+      where: { id: parseInt(tableId), businessId, isActive: true }
+    });
+    
+    if (!table) {
+      res.status(404).json({ error: 'Table not found' });
+      return;
+    }
+
+    // Validate required fields
+    if (!customerName || !partySize || !reservationDate || !reservationTime) {
+      res.status(400).json({ 
+        error: 'Missing required fields: customerName, partySize, reservationDate, reservationTime' 
+      });
+      return;
+    }
+
+    // Validate party size
+    if (partySize < 1 || partySize > 20) {
+      res.status(400).json({ error: 'Party size must be between 1 and 20' });
+      return;
+    }
+
+    // Validate date format
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(reservationDate)) {
+      res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD' });
+      return;
+    }
+
+    // Validate time format (accept both HH:MM and HH:MM:SS)
+    const timeRegex = /^\d{2}:\d{2}(:\d{2})?$/;
+    if (!timeRegex.test(reservationTime)) {
+      res.status(400).json({ error: 'Invalid time format. Use HH:MM or HH:MM:SS' });
+      return;
+    }
+
+    // Convert HH:MM:SS to HH:MM for database storage
+    const timeForDB = reservationTime.length === 8 ? reservationTime.substring(0, 5) : reservationTime;
+
+    // Create reservation
+    const reservation = await ReservationModel.create({
+      businessId,
+      tableId: parseInt(tableId),
+      customerName,
+      customerPhone,
+      customerEmail,
+      partySize,
+      reservationDate,
+      reservationTime,
+      status,
+      specialRequests,
+      duration: 90, // Default duration in minutes
+      source: 'online' // Source from mobile app (using 'online' as closest match)
+    });
+
+    // Update table status to reserved
+    await table.update({ status: TableStatus.RESERVED });
+
+    logger(`Created reservation ${reservation.id} for table ${tableId} in business ${businessId}`);
+
+    res.status(201).json({
+      success: true,
+      data: {
+        id: reservation.id,
+        businessId: reservation.businessId,
+        tableId: reservation.tableId,
+        customerName: reservation.customerName,
+        customerPhone: reservation.customerPhone,
+        customerEmail: reservation.customerEmail,
+        partySize: reservation.partySize,
+        reservationDate: reservation.reservationDate,
+        reservationTime: reservation.reservationTime,
+        status: reservation.status,
+        specialRequests: reservation.specialRequests,
+        createdAt: reservation.createdAt,
+        updatedAt: reservation.updatedAt
+      },
+      message: `Reservation created successfully for table ${tableId}`
+    });
+  } catch (error) {
+    logger(`Error creating reservation for table: ${error}`);
+    res.status(500).json({ error: 'Failed to create reservation' });
+  }
+});
 
 export default router;
