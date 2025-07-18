@@ -24,7 +24,8 @@
     "deploy:mochahost": "ts-node src/scripts/deploy-mochahost.ts",
     "test": "cross-env NODE_ENV=test jest",
     "db:drop:tables": "ts-node src/scripts/drop-tables.ts",
-    "db:drop:records": "ts-node src/scripts/drop-records.ts"
+    "db:drop:records": "ts-node src/scripts/drop-records.ts",
+    "db:reset": "npm run db:drop:tables && npm run migrate:all && npm run db:seed:dev"
   },
   "repository": {
     "type": "git",
