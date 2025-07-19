@@ -18,6 +18,8 @@ export interface TableAttributes {
   currentOrderId?: number | null;
   serverId?: number | null;
   section: string;
+  customerName?: string | null;
+  notes?: string | null;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -48,6 +50,8 @@ export class TableModel extends Model<TableAttributes, TableCreationAttributes> 
   public currentOrderId?: number | null;
   public serverId?: number | null;
   public section!: string;
+  public customerName?: string | null;
+  public notes?: string | null;
   public isActive!: boolean;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -132,7 +136,14 @@ export const initializeTableModel = (sequelize: Sequelize): void => {
         allowNull: false,
         defaultValue: 'Main Floor',
       },
-
+      customerName: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+      },
+      notes: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
       isActive: {
         type: DataTypes.BOOLEAN,
         allowNull: false,

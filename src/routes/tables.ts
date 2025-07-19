@@ -152,6 +152,8 @@ router.get('/', async (req: AuthRequest, res) => {
           section: table.section,
           currentOrderId: table.currentOrderId,
           serverId: table.serverId,
+          customerName: table.customerName,
+          notes: table.notes,
           isActive: table.isActive,
           createdAt: table.createdAt,
           updatedAt: table.updatedAt
@@ -306,6 +308,8 @@ router.get('/:id', async (req: AuthRequest, res) => {
       section: table.section,
       currentOrderId: table.currentOrderId,
       serverId: table.serverId,
+      customerName: table.customerName,
+      notes: table.notes,
       isActive: table.isActive,
       createdAt: table.createdAt,
       updatedAt: table.updatedAt
@@ -788,7 +792,7 @@ router.post('/', async (req: AuthRequest, res) => {
 router.post('/:id/seat', async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
-    const { partySize, serverId, notes } = req.body;
+    const { partySize, serverId, customerName, notes } = req.body;
     const businessId = req.user!.businessId;
     
     if (!id || isNaN(parseInt(id))) {
@@ -840,6 +844,14 @@ router.post('/:id/seat', async (req: AuthRequest, res) => {
       updateData.serverId = parseInt(serverId);
     }
     
+    if (customerName) {
+      updateData.customerName = customerName;
+    }
+    
+    if (notes) {
+      updateData.notes = notes;
+    }
+    
     await table.update(updateData);
     
     logger(`Seated party of ${partySize} at table ${id} for business ${businessId}${serverId ? ` with server ${serverId}` : ''}`);
@@ -855,6 +867,8 @@ router.post('/:id/seat', async (req: AuthRequest, res) => {
         section: table.section,
         currentOrderId: table.currentOrderId,
         serverId: table.serverId,
+        customerName: table.customerName,
+        notes: table.notes,
         isActive: table.isActive,
         createdAt: table.createdAt,
         updatedAt: table.updatedAt

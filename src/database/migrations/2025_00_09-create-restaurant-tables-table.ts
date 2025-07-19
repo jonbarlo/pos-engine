@@ -45,6 +45,14 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       type: DataTypes.STRING(50),
       allowNull: true,
     },
+    customerName: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+    },
+    notes: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
     status: {
       type: DataTypes.ENUM('available', 'occupied', 'reserved', 'cleaning', 'out_of_service'),
       allowNull: false,
