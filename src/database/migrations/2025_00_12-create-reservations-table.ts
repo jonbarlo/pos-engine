@@ -125,23 +125,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     }
   });
 
-  // Add indexes
-  await queryInterface.addIndex('reservations', ['businessId']);
-  await queryInterface.addIndex('reservations', ['tableId']);
-  await queryInterface.addIndex('reservations', ['customerId']);
-  await queryInterface.addIndex('reservations', ['reservationDate']);
-  await queryInterface.addIndex('reservations', ['status']);
-  await queryInterface.addIndex('reservations', ['source']);
-  await queryInterface.addIndex('reservations', ['isActive']);
-  await queryInterface.addIndex('reservations', ['customerPhone']);
-  await queryInterface.addIndex('reservations', ['customerEmail']);
-  await queryInterface.addIndex('reservations', ['reservationDate', 'reservationTime']);
-  
-  // Composite indexes for common queries
-  await queryInterface.addIndex('reservations', ['businessId', 'reservationDate']);
-  await queryInterface.addIndex('reservations', ['businessId', 'status']);
-  await queryInterface.addIndex('reservations', ['tableId', 'reservationDate']);
-  await queryInterface.addIndex('reservations', ['businessId', 'customerId']);
+  // Indexes are handled by the model
 }
 
 export async function down(queryInterface: QueryInterface): Promise<void> {

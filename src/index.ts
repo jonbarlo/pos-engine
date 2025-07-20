@@ -756,10 +756,8 @@ async function startServer() {
     // Initialize models and associations AFTER database connection
     initializeAllModels();
     
-    // Sync models (only in development/test) - MUST happen before associations
-    if (process.env.NODE_ENV !== 'production') {
-      await dbService.sync(false); // Regular sync, do not wipe data
-    }
+    // NO SYNC - Use migrations instead of automatic table creation
+    // await dbService.sync(false); // REMOVED - This conflicts with migrations
     
     setupAssociations();
     
@@ -780,6 +778,10 @@ async function startServer() {
     const splitBillingRoutes = (await import('./routes/splitBilling')).default;
     const staffMessagesRoutes = (await import('./routes/staffMessages')).default;
     const floorPlanRoutes = (await import('./routes/floorPlans')).default;
+    const recipeRoutes = (await import('./routes/recipes')).default;
+    const promotionRoutes = (await import('./routes/promotions')).default;
+    const mobileNotificationRoutes = (await import('./routes/mobileNotifications')).default;
+    const smartRecipeSuggestionRoutes = (await import('./routes/smartRecipeSuggestions')).default;
     // API routes
     app.use('/api/auth', authRoutes);
     app.use('/api/businesses', businessRoutes);
@@ -797,6 +799,10 @@ async function startServer() {
     app.use('/api/sales', splitBillingRoutes);
     app.use('/api/staff-messages', staffMessagesRoutes);
     app.use('/api/floor-plans', floorPlanRoutes);
+    app.use('/api/recipes', recipeRoutes);
+    app.use('/api/promotions', promotionRoutes);
+    app.use('/api/mobile-notifications', mobileNotificationRoutes);
+    app.use('/api/smart', smartRecipeSuggestionRoutes);
 
     // Mobile app compatibility routes
     // Alias for /api/messages to redirect to staff-messages
@@ -918,32 +924,7 @@ async function startServer() {
       }
     });
     
-    // Promotions endpoint (filtered staff messages)
-    app.get('/api/promotions', async (req, res) => {
-      try {
-        // Import the staff message controller and auth middleware dynamically
-        const { getStaffMessages } = await import('./controllers/staffMessageController');
-        const { authenticateToken } = await import('./middleware/auth');
-        
-        // Apply authentication middleware
-        authenticateToken(req, res, async () => {
-          try {
-            // Add promotion filter to query
-            req.query.messageType = 'promotion';
-            req.query.isActive = 'true';
-            
-            // Call the staff messages controller
-            await getStaffMessages(req, res);
-          } catch (error) {
-            logger(`Error in promotions endpoint: ${error}`);
-            res.status(500).json({ error: 'Internal server error' });
-          }
-        });
-      } catch (error) {
-        logger(`Error in promotions endpoint: ${error}`);
-        res.status(500).json({ error: 'Internal server error' });
-      }
-    });
+
 
     logger('Routes registered successfully.');
 

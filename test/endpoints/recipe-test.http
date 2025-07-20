@@ -1,0 +1,112 @@
+### Recipe Management API Tests
+
+# Variables
+@baseUrl = http://localhost:3031/api
+@authToken = {{login.response.body.token}}
+
+### Login to get token
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "marco@italiandelight.com",
+  "password": "Password123",
+  "businessSlug": "italian-delight"
+}
+
+### Get all recipes
+GET {{baseUrl}}/recipes
+Authorization: Bearer {{authToken}}
+
+### Get recipes with pagination
+GET {{baseUrl}}/recipes?page=1&limit=10
+Authorization: Bearer {{authToken}}
+
+### Search recipes
+GET {{baseUrl}}/recipes/search?q=pasta
+Authorization: Bearer {{authToken}}
+
+### Get recipes by difficulty
+GET {{baseUrl}}/recipes/difficulty/easy
+Authorization: Bearer {{authToken}}
+
+### Get recipe statistics
+GET {{baseUrl}}/recipes/stats
+Authorization: Bearer {{authToken}}
+
+### Create a new recipe
+POST {{baseUrl}}/recipes
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Spaghetti Carbonara",
+  "description": "Classic Italian pasta dish with eggs, cheese, and pancetta",
+  "ingredients": "400g spaghetti, 200g pancetta, 4 large eggs, 100g Pecorino Romano cheese, 100g Parmigiano-Reggiano, Black pepper, Salt",
+  "instructions": "1. Cook spaghetti in salted water until al dente\n2. Meanwhile, cook pancetta until crispy\n3. Beat eggs with grated cheese and pepper\n4. Drain pasta, add to pancetta pan\n5. Remove from heat, add egg mixture and toss quickly\n6. Serve immediately with extra cheese and pepper",
+  "prepTime": 10,
+  "cookTime": 15,
+  "difficulty": "medium",
+  "imageUrl": "https://example.com/carbonara.jpg"
+}
+
+### Create another recipe
+POST {{baseUrl}}/recipes
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Margherita Pizza",
+  "description": "Simple and delicious Neapolitan pizza",
+  "ingredients": "Pizza dough, San Marzano tomatoes, Fresh mozzarella, Fresh basil, Extra virgin olive oil, Salt",
+  "instructions": "1. Preheat oven to highest temperature\n2. Stretch dough into thin circle\n3. Add crushed tomatoes and salt\n4. Add torn mozzarella\n5. Bake until crust is golden\n6. Add fresh basil and drizzle with olive oil",
+  "prepTime": 20,
+  "cookTime": 8,
+  "difficulty": "easy",
+  "imageUrl": "https://example.com/margherita.jpg"
+}
+
+### Get recipe by ID (replace with actual ID)
+GET {{baseUrl}}/recipes/1
+Authorization: Bearer {{authToken}}
+
+### Update recipe
+PUT {{baseUrl}}/recipes/1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "description": "Updated description for Spaghetti Carbonara",
+  "prepTime": 12
+}
+
+### Upload recipe image
+POST {{baseUrl}}/recipes/1/image
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "imageUrl": "https://example.com/updated-carbonara.jpg"
+}
+
+### Create recipe suggestion
+POST {{baseUrl}}/recipes/suggestions
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "itemId": 1,
+  "recipeId": 1,
+  "aiGenerated": true,
+  "confidence": 0.85,
+  "suggestedPrice": 18.99
+}
+
+### Get recipe suggestions for an item
+GET {{baseUrl}}/recipes/suggestions/1
+Authorization: Bearer {{authToken}}
+
+### Delete recipe (soft delete)
+DELETE {{baseUrl}}/recipes/1
+Authorization: Bearer {{authToken}} 

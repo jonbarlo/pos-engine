@@ -247,6 +247,17 @@ export class SaleController {
 
       logger('API endpoint POST /sales/with-items was called...');
       const sale = await SaleService.createSaleWithItems(saleData, orderItems);
+      
+      // Update item tracking data after successful sale creation
+      try {
+        const { ItemTrackingService } = await import('../services/itemTrackingService');
+        await ItemTrackingService.updateItemTrackingOnSale(sale.id);
+        logger(`Item tracking updated for sale ${sale.id}`);
+      } catch (trackingError) {
+        logger(`Warning: Failed to update item tracking for sale ${sale.id}: ${trackingError}`);
+        // Don't fail the sale creation if tracking update fails
+      }
+      
       res.status(201).json({
         message: 'Sale with items created successfully',
         sale

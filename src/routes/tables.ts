@@ -5,7 +5,7 @@ import {
   ReservationModel
 } from '../models';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
-import { requireRestaurant } from '../middleware/restaurantCheck';
+// import { requireRestaurant } from '../middleware/restaurantCheck';
 import { logger } from '../utils/logger';
 import { Op } from 'sequelize';
 import { TableController } from '../controllers/tableController';

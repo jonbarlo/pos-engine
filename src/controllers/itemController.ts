@@ -141,7 +141,16 @@ export class ItemController {
                 unit: 'piece', // Add default unit
                 minStock: 0, // Add default minStock
                 maxStock: 1000, // Add default maxStock
-                businessId: req.user.businessId
+                businessId: req.user.businessId,
+                // Add dietary fields with defaults
+                isVegetarian: false,
+                isVegan: false,
+                isGlutenFree: false,
+                isSpicy: false,
+                // Add new inventory management fields with defaults
+                isPerishable: false,
+                isUnderperforming: false,
+                isExpiringSoon: false
             });
             res.status(201).json(newItem);
         } catch (error) {

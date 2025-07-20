@@ -11,7 +11,6 @@
     "dev:db": "NODE_ENV=development nodemon",
     "build": "tsc",
     "lint": "eslint src/**/*.{ts,tsx}",
-    "migrate": "ts-node src/scripts/run-migration.ts",
     "migrate:all": "ts-node src/scripts/run-all-migrations.ts",
     "migrate:init": "ts-node src/scripts/init-database.ts",
     "migrate:status": "ts-node src/scripts/migrate-status.ts",
@@ -24,7 +23,7 @@
     "deploy:mochahost": "ts-node src/scripts/deploy-mochahost.ts",
     "test": "cross-env NODE_ENV=test jest",
     "db:drop:tables": "ts-node src/scripts/drop-tables.ts",
-    "db:drop:records": "ts-node src/scripts/drop-records.ts",
+     "db:drop:records": "ts-node src/scripts/drop-records.ts",
     "db:reset": "npm run db:drop:tables && npm run migrate:all && npm run db:seed:dev"
   },
   "repository": {

@@ -13,6 +13,11 @@ import { initializeMenuItemModel } from './MenuItemModel';
 import { initializeMenuCategoryModel } from './MenuCategoryModel';
 import { initializeDeliveryModel } from './DeliveryModel';
 import { initializeKitchenOrderModel } from './KitchenOrderModel';
+import { initializeRecipeModel } from './RecipeModel';
+import { initializeRecipeSuggestionModel } from './RecipeSuggestionModel';
+import { initializePromotionModel } from './PromotionModel';
+import { initializePromotionItemModel } from './PromotionItemModel';
+import { initializeMobileNotificationModel } from './MobileNotificationModel';
 import { FloorPlanModel } from './FloorPlanModel';
 import { TablePositionModel } from './TablePositionModel';
 
@@ -31,6 +36,11 @@ import { MenuItemModel } from './MenuItemModel';
 import { MenuCategoryModel } from './MenuCategoryModel';
 import { DeliveryModel } from './DeliveryModel';
 import { KitchenOrderModel } from './KitchenOrderModel';
+import { RecipeModel } from './RecipeModel';
+import { RecipeSuggestionModel } from './RecipeSuggestionModel';
+import { PromotionModel } from './PromotionModel';
+import { PromotionItemModel } from './PromotionItemModel';
+import { MobileNotificationModel } from './MobileNotificationModel';
 import { StaffMessageModel } from './StaffMessageModel';
 
 export const initializeAllModels = (): void => {
@@ -49,6 +59,12 @@ export const initializeAllModels = (): void => {
   initializeMenuCategoryModel(sequelize);
   initializeDeliveryModel(sequelize);
   initializeKitchenOrderModel(sequelize);
+  // Recipe & Promotion System - initialize in dependency order
+  initializeRecipeModel(sequelize);
+  initializePromotionModel(sequelize);
+  initializeRecipeSuggestionModel(sequelize);
+  initializePromotionItemModel(sequelize);
+  initializeMobileNotificationModel(sequelize);
   
   // Floor plan models are already initialized via default export
   // StaffMessageModel is already initialized via default export
@@ -324,6 +340,93 @@ export const setupAssociations = (): void => {
     foreignKey: 'tableId',
     as: 'tablePositions'
   });
+
+  // Recipe associations
+  BusinessModel.hasMany(RecipeModel, {
+    foreignKey: 'businessId',
+    as: 'recipes',
+    onDelete: 'CASCADE'
+  });
+
+  RecipeModel.belongsTo(BusinessModel, {
+    foreignKey: 'businessId',
+    as: 'recipeBusiness'
+  });
+
+  // Recipe suggestion associations
+  BusinessModel.hasMany(RecipeSuggestionModel, {
+    foreignKey: 'businessId',
+    as: 'recipeSuggestions',
+    onDelete: 'CASCADE'
+  });
+
+  RecipeSuggestionModel.belongsTo(BusinessModel, {
+    foreignKey: 'businessId',
+    as: 'recipeSuggestionBusiness'
+  });
+  RecipeSuggestionModel.belongsTo(RecipeModel, {
+    foreignKey: 'recipeId',
+    as: 'recipe'
+  });
+
+  RecipeModel.hasMany(RecipeSuggestionModel, {
+    foreignKey: 'recipeId',
+    as: 'recipeSuggestions'
+  });
+
+  // Promotion associations
+  BusinessModel.hasMany(PromotionModel, {
+    foreignKey: 'businessId',
+    as: 'promotions',
+    onDelete: 'CASCADE'
+  });
+
+  PromotionModel.belongsTo(BusinessModel, {
+    foreignKey: 'businessId',
+    as: 'promotionBusiness'
+  });
+
+  // Promotion item associations
+  PromotionModel.hasMany(PromotionItemModel, {
+    foreignKey: 'promotionId',
+    as: 'promotionItems',
+    onDelete: 'CASCADE'
+  });
+
+  PromotionItemModel.belongsTo(PromotionModel, {
+    foreignKey: 'promotionId',
+    as: 'promotion'
+  });
+  PromotionItemModel.belongsTo(ItemModel, {
+    foreignKey: 'itemId',
+    as: 'item'
+  });
+  PromotionItemModel.belongsTo(RecipeModel, {
+    foreignKey: 'recipeId',
+    as: 'recipe'
+  });
+
+  ItemModel.hasMany(PromotionItemModel, {
+    foreignKey: 'itemId',
+    as: 'promotionItems'
+  });
+
+  RecipeModel.hasMany(PromotionItemModel, {
+    foreignKey: 'recipeId',
+    as: 'promotionItems'
+  });
+
+  // Mobile notification associations
+  BusinessModel.hasMany(MobileNotificationModel, {
+    foreignKey: 'businessId',
+    as: 'mobileNotifications',
+    onDelete: 'CASCADE'
+  });
+
+  MobileNotificationModel.belongsTo(BusinessModel, {
+    foreignKey: 'businessId',
+    as: 'mobileNotificationBusiness'
+  });
 };
 
 export { getSequelize };
@@ -344,6 +447,11 @@ export {
   MenuCategoryModel,
   DeliveryModel,
   KitchenOrderModel,
+  RecipeModel,
+  RecipeSuggestionModel,
+  PromotionModel,
+  PromotionItemModel,
+  MobileNotificationModel,
   StaffMessageModel,
   FloorPlanModel,
   TablePositionModel

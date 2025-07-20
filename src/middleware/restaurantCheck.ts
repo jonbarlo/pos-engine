@@ -70,4 +70,51 @@ export const addBusinessType = async (req: Request, res: Response, next: NextFun
     logger(`Error adding business type: ${error}`);
     next(); // Continue even if we can't get business type
   }
+};
+
+/**
+ * Middleware to check business access for authenticated users
+ * Ensures the user has access to the business they're trying to access
+ */
+export const checkBusinessAccess = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user = (req as any).user;
+    
+    if (!user) {
+      res.status(401).json({
+        success: false,
+        error: 'Authentication required'
+      });
+      return;
+    }
+
+    if (!user.businessId) {
+      res.status(401).json({
+        success: false,
+        error: 'Business ID not found in token'
+      });
+      return;
+    }
+
+    // Check if user is trying to access a different business
+    const requestedBusinessId = req.params.businessId || 
+                               req.query.businessId || 
+                               req.body.businessId;
+
+    if (requestedBusinessId && Number(requestedBusinessId) !== user.businessId) {
+      res.status(403).json({
+        success: false,
+        error: 'Access denied to this business'
+      });
+      return;
+    }
+
+    next();
+  } catch (error) {
+    logger(`Error checking business access: ${error}`);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
 }; 

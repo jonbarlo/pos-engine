@@ -1179,6 +1179,9 @@ Authorization: Bearer <your_jwt_token>
 **Request Body:**
 ```json
 {
+  "customerName": "John Smith",
+  "customerPhone": "+1-555-0101",
+  "customerEmail": "john@example.com",
   "partySize": 4,
   "serverId": 2,
   "notes": "Window seat preferred"
@@ -1189,13 +1192,16 @@ Authorization: Bearer <your_jwt_token>
 - `partySize` (integer) - Number of customers being seated
 
 **Optional Fields:**
+- `customerName` (string) - Customer name for walk-in customers
+- `customerPhone` (string) - Customer phone number
+- `customerEmail` (string) - Customer email address (used to link to existing customer record)
 - `serverId` (integer) - ID of the waiter/server assigned
 - `notes` (string) - Additional notes about the seating
 
 **Response:**
 ```json
 {
-  "data": {
+  "table": {
     "id": 1,
     "businessId": 1,
     "tableNumber": "A1",
@@ -1203,14 +1209,40 @@ Authorization: Bearer <your_jwt_token>
     "partySize": 4,
     "status": "occupied",
     "section": "Main Floor",
-    "currentOrderId": null,
+    "currentOrderId": 123,
     "serverId": 2,
+    "customerName": "John Smith",
+    "notes": "Window seat preferred",
     "isActive": true,
     "createdAt": "2025-01-01T00:00:00.000Z",
     "updatedAt": "2025-01-01T12:00:00.000Z"
+  },
+  "order": {
+    "id": 123,
+    "orderNumber": "ORDER-1704067200000-1",
+    "orderType": "dine_in",
+    "status": "pending",
+    "totalAmount": 0,
+    "customerId": 456,
+    "notes": "Window seat preferred"
+  },
+  "customer": {
+    "id": 456,
+    "name": "John Smith",
+    "email": "john@example.com",
+    "phone": "+1-555-0101",
+    "loyaltyPoints": 0,
+    "totalSpent": "0.00",
+    "visitCount": 1
   }
 }
 ```
+
+**Business Logic:**
+- If `customerEmail` is provided and matches an existing customer, the system links to that customer record
+- If no matching customer is found, a new customer record is created
+- Customer information is stored both in the customer record (for loyalty/reporting) and on the table (for immediate reference)
+- An order is automatically created for the seated customers
 
 ---
 

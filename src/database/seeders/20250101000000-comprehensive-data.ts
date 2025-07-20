@@ -1409,6 +1409,328 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     updatedAt: new Date()
   })));
 
+  // 16. Create Recipes
+  const recipeData = [
+    {
+      businessSlug: 'italian-delight',
+      name: 'Margherita Pizza',
+      description: 'Classic Italian pizza with fresh mozzarella, tomato sauce, and basil',
+      instructions: '1. Prepare dough\n2. Add tomato sauce\n3. Add mozzarella\n4. Add basil\n5. Bake at 450°F for 12-15 minutes',
+      prepTime: 20,
+      cookTime: 15,
+      servings: 4,
+      difficulty: 'medium',
+      cuisine: 'Italian',
+      category: 'Pizza',
+      ingredients: JSON.stringify([
+        { name: 'Pizza dough', amount: 1, unit: 'piece' },
+        { name: 'Tomato sauce', amount: 1, unit: 'cup' },
+        { name: 'Fresh mozzarella', amount: 8, unit: 'oz' },
+        { name: 'Fresh basil', amount: 10, unit: 'leaves' }
+      ]),
+      nutritionInfo: JSON.stringify({
+        calories: 285,
+        protein: 12,
+        carbs: 35,
+        fat: 10
+      }),
+      imageUrl: 'https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=400&h=300&fit=crop',
+      isActive: true
+    },
+    {
+      businessSlug: 'sushi-master',
+      name: 'California Roll',
+      description: 'Fresh sushi roll with crab, avocado, and cucumber',
+      instructions: '1. Prepare sushi rice\n2. Lay nori sheet\n3. Add rice\n4. Add crab, avocado, cucumber\n5. Roll tightly\n6. Cut into pieces',
+      prepTime: 30,
+      cookTime: 0,
+      servings: 2,
+      difficulty: 'hard',
+      cuisine: 'Japanese',
+      category: 'Rolls',
+      ingredients: JSON.stringify([
+        { name: 'Sushi rice', amount: 2, unit: 'cups' },
+        { name: 'Nori sheets', amount: 2, unit: 'pieces' },
+        { name: 'Crab meat', amount: 4, unit: 'oz' },
+        { name: 'Avocado', amount: 1, unit: 'piece' },
+        { name: 'Cucumber', amount: 1, unit: 'piece' }
+      ]),
+      nutritionInfo: JSON.stringify({
+        calories: 180,
+        protein: 8,
+        carbs: 25,
+        fat: 6
+      }),
+      imageUrl: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=300&fit=crop',
+      isActive: true
+    },
+    {
+      businessSlug: 'coffee-corner',
+      name: 'Perfect Cappuccino',
+      description: 'Classic Italian cappuccino with perfectly steamed milk',
+      instructions: '1. Grind coffee beans\n2. Pull espresso shot\n3. Steam milk to 150°F\n4. Pour milk over espresso\n5. Create latte art',
+      prepTime: 5,
+      cookTime: 3,
+      servings: 1,
+      difficulty: 'medium',
+      cuisine: 'Italian',
+      category: 'Coffee',
+      ingredients: JSON.stringify([
+        { name: 'Coffee beans', amount: 18, unit: 'g' },
+        { name: 'Whole milk', amount: 6, unit: 'oz' }
+      ]),
+      nutritionInfo: JSON.stringify({
+        calories: 80,
+        protein: 4,
+        carbs: 6,
+        fat: 4
+      }),
+      imageUrl: 'https://images.unsplash.com/photo-1534778101976-62847782c06b?w=400&h=300&fit=crop',
+      isActive: true
+    }
+  ];
+  await queryInterface.bulkInsert('recipes', recipeData.map(r => ({
+    businessId: businesses[r.businessSlug],
+    name: r.name,
+    description: r.description,
+    instructions: r.instructions,
+    prepTime: r.prepTime,
+    cookTime: r.cookTime,
+    servings: r.servings,
+    difficulty: r.difficulty,
+    cuisine: r.cuisine,
+    category: r.category,
+    ingredients: r.ingredients,
+    nutritionInfo: r.nutritionInfo,
+    imageUrl: r.imageUrl,
+    isActive: r.isActive,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  })));
+
+  // 17. Create Recipe Suggestions
+  const recipeSuggestionData = [
+    {
+      businessSlug: 'italian-delight',
+      recipeName: 'Margherita Pizza',
+      suggestionType: 'popular',
+      reason: 'Best seller this week',
+      priority: 'high',
+      targetAudience: 'all',
+      isActive: true
+    },
+    {
+      businessSlug: 'sushi-master',
+      recipeName: 'California Roll',
+      suggestionType: 'seasonal',
+      reason: 'Fresh ingredients available',
+      priority: 'medium',
+      targetAudience: 'sushi_lovers',
+      isActive: true
+    },
+    {
+      businessSlug: 'coffee-corner',
+      recipeName: 'Perfect Cappuccino',
+      suggestionType: 'weather',
+      reason: 'Perfect for cold weather',
+      priority: 'high',
+      targetAudience: 'coffee_drinkers',
+      isActive: true
+    }
+  ];
+  await queryInterface.bulkInsert('recipe_suggestions', recipeSuggestionData.map(rs => ({
+    businessId: businesses[rs.businessSlug],
+    recipeId: 1, // Will be updated after recipes are created
+    suggestionType: rs.suggestionType,
+    reason: rs.reason,
+    priority: rs.priority,
+    targetAudience: rs.targetAudience,
+    isActive: rs.isActive,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  })));
+
+  // 18. Create Promotions
+  const promotionData = [
+    {
+      businessSlug: 'italian-delight',
+      name: 'Pizza Week Special',
+      description: '20% off all pizzas this week',
+      type: 'discount',
+      discountType: 'percentage',
+      discountValue: 20,
+      startDate: new Date(),
+      endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      isActive: true,
+      conditions: JSON.stringify({
+        minOrder: 25,
+        validDays: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']
+      })
+    },
+    {
+      businessSlug: 'sushi-master',
+      name: 'Happy Hour Sushi',
+      description: '50% off all rolls from 3-6 PM',
+      type: 'discount',
+      discountType: 'percentage',
+      discountValue: 50,
+      startDate: new Date(),
+      endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      isActive: true,
+      conditions: JSON.stringify({
+        timeRange: '15:00-18:00',
+        validDays: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']
+      })
+    },
+    {
+      businessSlug: 'coffee-corner',
+      name: 'Buy One Get One Free',
+      description: 'Buy any coffee, get one free',
+      type: 'bogo',
+      discountType: 'free_item',
+      discountValue: 100,
+      startDate: new Date(),
+      endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+      isActive: true,
+      conditions: JSON.stringify({
+        minOrder: 5,
+        validDays: ['saturday', 'sunday']
+      })
+    }
+  ];
+  await queryInterface.bulkInsert('promotions', promotionData.map(p => ({
+    businessId: businesses[p.businessSlug],
+    name: p.name,
+    description: p.description,
+    type: p.type,
+    discountType: p.discountType,
+    discountValue: p.discountValue,
+    startDate: p.startDate,
+    endDate: p.endDate,
+    isActive: p.isActive,
+    conditions: p.conditions,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  })));
+
+  // 19. Create Promotion Items
+  const promotionItemData = [
+    {
+      businessSlug: 'italian-delight',
+      promotionName: 'Pizza Week Special',
+      itemSku: 'IT-PIZ-001',
+      discountType: 'percentage',
+      discountValue: 20
+    },
+    {
+      businessSlug: 'sushi-master',
+      promotionName: 'Happy Hour Sushi',
+      itemSku: 'SU-ROL-001',
+      discountType: 'percentage',
+      discountValue: 50
+    },
+    {
+      businessSlug: 'coffee-corner',
+      promotionName: 'Buy One Get One Free',
+      itemSku: 'CO-CAP-001',
+      discountType: 'free_item',
+      discountValue: 100
+    }
+  ];
+  await queryInterface.bulkInsert('promotion_items', promotionItemData.map(pi => ({
+    businessId: businesses[pi.businessSlug],
+    promotionId: 1, // Will be updated after promotions are created
+    itemId: items[pi.itemSku] || 1,
+    discountType: pi.discountType,
+    discountValue: pi.discountValue,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  })));
+
+  // 20. Create Mobile Notifications
+  const mobileNotificationData = [
+    {
+      businessSlug: 'italian-delight',
+      title: 'Pizza Week Special!',
+      message: 'Get 20% off all pizzas this week. Order now!',
+      type: 'promotion',
+      priority: 'high',
+      targetAudience: 'all_customers',
+      isActive: true
+    },
+    {
+      businessSlug: 'sushi-master',
+      title: 'Fresh Sushi Available',
+      message: 'Fresh salmon and tuna just arrived. Come try our new rolls!',
+      type: 'announcement',
+      priority: 'medium',
+      targetAudience: 'sushi_lovers',
+      isActive: true
+    },
+    {
+      businessSlug: 'coffee-corner',
+      title: 'New Seasonal Drinks',
+      message: 'Try our new Pumpkin Spice Latte and Apple Cider!',
+      type: 'new_item',
+      priority: 'high',
+      targetAudience: 'coffee_drinkers',
+      isActive: true
+    }
+  ];
+  await queryInterface.bulkInsert('mobile_notifications', mobileNotificationData.map(mn => ({
+    businessId: businesses[mn.businessSlug],
+    title: mn.title,
+    message: mn.message,
+    type: mn.type,
+    priority: mn.priority,
+    targetAudience: mn.targetAudience,
+    isActive: mn.isActive,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  })));
+
+  // Update existing tables with additional fields
+  console.log('🔍 DEBUG: Updating existing tables with additional fields...');
+
+  // Update items with additional fields
+  await queryInterface.sequelize.query(`
+    UPDATE items SET 
+      preparationTime = 15,
+      isVegetarian = 0,
+      isVegan = 0,
+      isGlutenFree = 0,
+      isSpicy = 0,
+      allergens = '[]',
+      nutritionInfo = '{"calories": 250, "protein": 10, "carbs": 30, "fat": 8}'
+    WHERE preparationTime IS NULL
+  `);
+
+  // Update sales with additional fields
+  await queryInterface.sequelize.query(`
+    UPDATE sales SET 
+      idempotencyKey = CONCAT('KEY-', id),
+      payments = JSON_OBJECT('amount', totalAmount, 'method', paymentMethod, 'status', 'completed'),
+      customerName = (SELECT name FROM customers WHERE customers.id = sales.customerId),
+      customerEmail = (SELECT email FROM customers WHERE customers.id = sales.customerId)
+    WHERE idempotencyKey IS NULL
+  `);
+
+  // Update orders with additional fields
+  await queryInterface.sequelize.query(`
+    UPDATE orders SET 
+      estimatedReadyTime = DATE_ADD(createdAt, INTERVAL 30 MINUTE),
+      actualReadyTime = CASE WHEN status = 'ready' OR status = 'served' THEN DATE_ADD(createdAt, INTERVAL 25 MINUTE) ELSE NULL END
+    WHERE estimatedReadyTime IS NULL
+  `);
+
+  // Update reservations with additional fields
+  await queryInterface.sequelize.query(`
+    UPDATE reservations SET 
+      source = 'phone',
+      specialRequests = 'None',
+      notes = CONCAT('Reservation for ', customerName)
+    WHERE source IS NULL
+  `);
 
 }
 

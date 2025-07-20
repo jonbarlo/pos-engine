@@ -108,19 +108,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     }
   });
 
-  // Add indexes
-  await queryInterface.addIndex('orders', ['businessId']);
-  await queryInterface.addIndex('orders', ['serverId']);
-  await queryInterface.addIndex('orders', ['customerId']);
-  await queryInterface.addIndex('orders', ['orderNumber'], { unique: true });
-  await queryInterface.addIndex('orders', ['tableId']);
-  await queryInterface.addIndex('orders', ['status']);
-  await queryInterface.addIndex('orders', ['createdAt']);
-  
-  // Add composite indexes for analytics performance
-  await queryInterface.addIndex('orders', ['businessId', 'createdAt', 'status'], {
-    name: 'orders_businessId_createdAt_status_idx',
-  });
+  // Indexes are handled by the model
 }
 
 export async function down(queryInterface: QueryInterface): Promise<void> {

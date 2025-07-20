@@ -102,18 +102,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     }
   });
 
-  // Add indexes
-  await queryInterface.addIndex('sales', ['businessId']);
-  await queryInterface.addIndex('sales', ['userId']);
-  await queryInterface.addIndex('sales', ['status']);
-  await queryInterface.addIndex('sales', ['createdAt']);
-  await queryInterface.addIndex('sales', ['idempotencyKey'], { unique: true });
-  
-  // Add composite indexes for analytics performance
-  await queryInterface.addIndex('sales', ['businessId', 'createdAt', 'status'], {
-    name: 'sales_businessId_createdAt_status_idx',
-  });
-
+  // Indexes are handled by the model
   // Add foreign key constraints
   // The foreign key constraints are now defined directly in the column definition
 }

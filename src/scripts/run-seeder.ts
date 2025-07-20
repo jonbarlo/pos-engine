@@ -12,23 +12,36 @@ const sequelize = new Sequelize(config);
 
 async function runSeeder() {
   try {
-    console.log('🌱 Starting seeder...');
+    console.log('🌱 Starting comprehensive seeder...');
     await sequelize.authenticate();
     console.log('✅ Database connection established.');
     
-    // Import the seeder
-    const seeder = await import('../database/seeders/20250101000000-comprehensive-data');
+    // Define all seeders in order
+    const seeders = [
+      '20250101000000-comprehensive-data',
+      '20250101000001-italian-delight-world-class',
+      '20250101000002-sushi-master-world-class',
+      '20250101000003-coffee-corner-world-class'
+    ];
     
-    // First run down function to clean up existing data
-    console.log('🧹 Cleaning up existing data...');
-    await seeder.down(sequelize.getQueryInterface());
-    console.log('✅ Data cleanup completed.');
+    for (const seederName of seeders) {
+      try {
+        console.log(`\n🔄 Running seeder: ${seederName}...`);
+        
+        // Import the seeder
+        const seeder = await import(`../database/seeders/${seederName}`);
+        
+        // Run the up function to insert data
+        await seeder.up(sequelize.getQueryInterface());
+        console.log(`✅ ${seederName} completed successfully!`);
+        
+      } catch (error) {
+        console.error(`❌ Error running seeder ${seederName}:`, error);
+        // Continue with other seeders even if one fails
+      }
+    }
     
-    // Then run up function to insert new data
-    console.log('🌱 Inserting new data...');
-    await seeder.up(sequelize.getQueryInterface());
-    console.log('✅ Seeder completed successfully!');
-    
+    console.log('\n🎉 All seeders completed!');
     process.exit(0);
   } catch (error) {
     console.error('❌ Seeder failed:', error);
