@@ -2769,6 +2769,230 @@ curl -X GET "http://localhost:3031/api/tables/1/reservations?date=2024-01-15&sta
 
 ---
 
+## Smart Recipe Suggestions Endpoints
+
+### Get Smart Recipe Suggestions
+**GET** `/smart/smart-suggestions`
+
+**Purpose:** Get AI-powered recipe suggestions based on inventory management
+
+**Headers:**
+- `Authorization: Bearer <token>`
+
+**Query Parameters:**
+- `includeExpiringItems` (boolean, optional, default: false) - Include items that are expiring soon
+- `includeUnderperformingItems` (boolean, optional, default: false) - Include items with low sales velocity
+- `maxDaysToExpiry` (integer, optional, default: 7) - Maximum days to expiry for items to consider
+- `minSalesVelocity` (number, optional, default: 0.1) - Minimum sales velocity threshold
+- `maxDaysSinceLastSale` (integer, optional, default: 30) - Maximum days since last sale
+- `limit` (integer, optional, default: 10) - Maximum number of suggestions to return
+
+**Request:**
+```bash
+curl -X GET "http://localhost:3031/api/smart/smart-suggestions?includeExpiringItems=true&includeUnderperformingItems=true&limit=5" \
+  -H "Authorization: Bearer <token>"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "suggestions": [
+    {
+      "recipeId": 4,
+      "recipeName": "Truffle Pizza",
+      "recipeDescription": "Luxury pizza with black truffle, mozzarella, parmesan, and arugula",
+      "recipeDifficulty": "medium",
+      "prepTime": 25,
+      "cookTime": 15,
+      "imageUrl": "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=400&h=300&fit=crop&crop=center",
+      "suggestedItems": [
+        {
+          "itemId": 33,
+          "itemName": "Fresh Mozzarella (Expiring Soon)",
+          "currentStock": 12,
+          "expirationDate": "2025-07-22T06:16:04.404Z",
+          "daysToExpiry": 2,
+          "salesVelocity": 0.08,
+          "daysSinceLastSale": 3,
+          "reason": "Expires in 2 days"
+        },
+        {
+          "itemId": 36,
+          "itemName": "Truffle Oil (Underperforming)",
+          "currentStock": 8,
+          "expirationDate": null,
+          "salesVelocity": 0.03,
+          "daysSinceLastSale": 35,
+          "reason": "Low sales velocity"
+        }
+      ],
+      "confidence": 0.95,
+      "totalPotentialSavings": 228.6,
+      "urgency": "high"
+    }
+  ],
+  "criteria": {
+    "businessId": 1,
+    "includeExpiringItems": true,
+    "includeUnderperformingItems": true,
+    "maxDaysToExpiry": 7,
+    "minSalesVelocity": 0.1,
+    "maxDaysSinceLastSale": 30,
+    "limit": 5
+  },
+  "totalSuggestions": 1
+}
+```
+
+**Status:** ✅ Working
+
+### Get Inventory Summary
+**GET** `/smart/inventory-summary`
+
+**Purpose:** Get inventory summary for dashboard
+
+**Headers:**
+- `Authorization: Bearer <token>`
+
+**Request:**
+```bash
+curl -X GET "http://localhost:3031/api/smart/inventory-summary" \
+  -H "Authorization: Bearer <token>"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "totalItems": 27,
+  "expiringSoon": 3,
+  "underperforming": 3,
+  "lowStockItems": 0,
+  "expiringPercentage": 11.11,
+  "underperformingPercentage": 11.11
+}
+```
+
+**Status:** ✅ Working
+
+### Get Expiring Items
+**GET** `/smart/expiring-items`
+
+**Purpose:** Get items that are expiring soon
+
+**Headers:**
+- `Authorization: Bearer <token>`
+
+**Query Parameters:**
+- `days` (integer, optional, default: 7) - Number of days to look ahead for expiring items
+
+**Request:**
+```bash
+curl -X GET "http://localhost:3031/api/smart/expiring-items?days=7" \
+  -H "Authorization: Bearer <token>"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "items": [
+    {
+      "id": 20,
+      "name": "Premium Black Truffle Pasta",
+      "stock": 5,
+      "expirationDate": "2025-07-21T06:15:58.830Z",
+      "daysToExpiry": 1,
+      "cost": 15,
+      "potentialLoss": 75
+    },
+    {
+      "id": 21,
+      "name": "Premium Lobster Ravioli",
+      "stock": 13,
+      "expirationDate": "2025-07-21T06:15:58.830Z",
+      "daysToExpiry": 1,
+      "cost": 16.5,
+      "potentialLoss": 214.5
+    }
+  ]
+}
+```
+
+**Status:** ✅ Working
+
+### Get Underperforming Items
+**GET** `/smart/underperforming-items`
+
+**Purpose:** Get underperforming items
+
+**Headers:**
+- `Authorization: Bearer <token>`
+
+**Request:**
+```bash
+curl -X GET "http://localhost:3031/api/smart/underperforming-items" \
+  -H "Authorization: Bearer <token>"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "items": [
+    {
+      "id": 35,
+      "name": "Premium Saffron (Underperforming)",
+      "stock": 5,
+      "salesVelocity": 0.02,
+      "daysSinceLastSale": 45,
+      "lastSoldDate": "2025-06-05T06:16:04.529Z",
+      "cost": 25,
+      "potentialLoss": 125
+    },
+    {
+      "id": 36,
+      "name": "Truffle Oil (Underperforming)",
+      "stock": 8,
+      "salesVelocity": 0.03,
+      "daysSinceLastSale": 35,
+      "lastSoldDate": "2025-06-15T06:16:04.529Z",
+      "cost": 18,
+      "potentialLoss": 144
+    }
+  ]
+}
+```
+
+**Status:** ✅ Working
+
+### Update Item Tracking
+**POST** `/smart/update-tracking`
+
+**Purpose:** Update item inventory tracking data
+
+**Headers:**
+- `Authorization: Bearer <token>`
+
+**Request:**
+```bash
+curl -X POST "http://localhost:3031/api/smart/update-tracking" \
+  -H "Authorization: Bearer <token>"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Inventory tracking data updated successfully"
+}
+```
+
+**Status:** ✅ Working
+
+---
+
 ## Error Responses
 
 All endpoints return errors in this format:
@@ -2865,3 +3089,11 @@ Common HTTP Status Codes:
     - Table positions are managed separately from table definitions
     - Table status updates automatically with order lifecycle
     - Reservation data is automatically included in table responses when applicable
+18. **Smart Recipe Suggestions**:
+    - AI-powered recipe suggestions based on inventory management
+    - Analyzes expiring items and underperforming inventory
+    - Provides confidence scores and potential savings calculations
+    - Supports filtering by expiring items, underperforming items, and custom criteria
+    - Returns detailed item information with reasons for suggestions
+    - Includes urgency levels (high, medium, low) based on expiration and sales data
+    - All suggestions are business-scoped and require authentication

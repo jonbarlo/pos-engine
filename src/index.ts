@@ -212,6 +212,172 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
  *         success:
  *           type: boolean
  *           description: Whether the operation was successful
+ *     
+ *     Item:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: Unique identifier for the item
+ *         businessId:
+ *           type: integer
+ *           description: ID of the business this item belongs to
+ *         name:
+ *           type: string
+ *           description: Item name
+ *         description:
+ *           type: string
+ *           description: Item description
+ *         price:
+ *           type: number
+ *           description: Selling price
+ *         cost:
+ *           type: number
+ *           description: Cost price
+ *         stock:
+ *           type: integer
+ *           description: Current stock level
+ *         category:
+ *           type: string
+ *           description: Item category
+ *         imageUrl:
+ *           type: string
+ *           description: URL to item image
+ *         isActive:
+ *           type: boolean
+ *           description: Whether the item is active
+ *         sku:
+ *           type: string
+ *           description: Stock keeping unit
+ *         barcode:
+ *           type: string
+ *           description: Barcode
+ *         unit:
+ *           type: string
+ *           description: Unit of measurement
+ *         minStock:
+ *           type: integer
+ *           description: Minimum stock level
+ *         maxStock:
+ *           type: integer
+ *           description: Maximum stock level
+ *         preparationTime:
+ *           type: integer
+ *           description: Preparation time in minutes
+ *         isVegetarian:
+ *           type: boolean
+ *           description: Whether the item is vegetarian
+ *         isVegan:
+ *           type: boolean
+ *           description: Whether the item is vegan
+ *         isGlutenFree:
+ *           type: boolean
+ *           description: Whether the item is gluten-free
+ *         isSpicy:
+ *           type: boolean
+ *           description: Whether the item is spicy
+ *         allergens:
+ *           type: string
+ *           description: Allergen information
+ *         nutritionInfo:
+ *           type: string
+ *           description: Nutrition information
+ *         expirationDate:
+ *           type: string
+ *           format: date-time
+ *           description: Expiration date for perishable items
+ *         manufacturingDate:
+ *           type: string
+ *           format: date-time
+ *           description: Manufacturing date
+ *         shelfLifeDays:
+ *           type: integer
+ *           description: Shelf life in days
+ *         lastSoldDate:
+ *           type: string
+ *           format: date-time
+ *           description: Date when item was last sold
+ *         salesVelocity:
+ *           type: number
+ *           description: Average daily sales rate
+ *         daysSinceLastSale:
+ *           type: integer
+ *           description: Number of days since last sale
+ *         isPerishable:
+ *           type: boolean
+ *           description: Whether item has expiration date
+ *         isUnderperforming:
+ *           type: boolean
+ *           description: Whether item is considered underperforming
+ *         isExpiringSoon:
+ *           type: boolean
+ *           description: Whether item is expiring within 7 days
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           description: Creation timestamp
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *           description: Last update timestamp
+ *     
+ *     Recipe:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: Unique identifier for the recipe
+ *         businessId:
+ *           type: integer
+ *           description: ID of the business this recipe belongs to
+ *         name:
+ *           type: string
+ *           description: Recipe name
+ *         description:
+ *           type: string
+ *           description: Recipe description
+ *         ingredients:
+ *           type: string
+ *           description: List of ingredients
+ *         instructions:
+ *           type: string
+ *           description: Cooking instructions
+ *         prepTime:
+ *           type: integer
+ *           description: Preparation time in minutes
+ *         cookTime:
+ *           type: integer
+ *           description: Cooking time in minutes
+ *         servings:
+ *           type: integer
+ *           description: Number of servings
+ *         difficulty:
+ *           type: string
+ *           enum: [easy, medium, hard]
+ *           description: Difficulty level
+ *         cuisine:
+ *           type: string
+ *           description: Cuisine type
+ *         category:
+ *           type: string
+ *           description: Recipe category
+ *         nutritionInfo:
+ *           type: string
+ *           description: Nutrition information
+ *         imageUrl:
+ *           type: string
+ *           description: URL to recipe image
+ *         isActive:
+ *           type: boolean
+ *           description: Whether the recipe is active
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           description: Creation timestamp
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *           description: Last update timestamp
  */
 
 /**
