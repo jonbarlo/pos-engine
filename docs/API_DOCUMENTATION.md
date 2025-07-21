@@ -2847,6 +2847,129 @@ curl -X GET "http://localhost:3031/api/smart/smart-suggestions?includeExpiringIt
 
 **Status:** ✅ Working
 
+### Cook Recipe
+**POST** `/smart/cook-recipe`
+
+**Purpose:** Cook a recipe and consume inventory items
+
+**Headers:**
+- `Authorization: Bearer <token>`
+- `Content-Type: application/json`
+
+**Request Body:**
+```json
+{
+  "recipeId": 4,
+  "quantity": 1
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "cookingResult": {
+    "recipeId": 4,
+    "recipeName": "Truffle Pizza",
+    "quantity": 1,
+    "consumedItems": [
+      {
+        "itemId": 33,
+        "itemName": "Fresh Mozzarella",
+        "quantityConsumed": 1,
+        "remainingStock": 11,
+        "originalStock": 12,
+        "unitCost": 0
+      }
+    ],
+    "costSavings": 228.6,
+    "wasteReduction": 171.45
+  },
+  "createdPromotion": {
+    "id": 15,
+    "name": "Chef's Special: Truffle Pizza",
+    "discountType": "percentage",
+    "discountValue": 15,
+    "expiresAt": "2025-07-22T23:59:59Z"
+  }
+}
+```
+
+**Status:** ✅ Working
+
+### Get Cooking History
+**GET** `/smart/cooking-history`
+
+**Purpose:** Get cooking history for the business
+
+**Headers:**
+- `Authorization: Bearer <token>`
+
+**Query Parameters:**
+- `limit` (integer, optional, default: 50) - Maximum number of records to return
+- `offset` (integer, optional, default: 0) - Number of records to skip
+
+**Request:**
+```bash
+curl -X GET "http://localhost:3031/api/smart/cooking-history?limit=10&offset=0" \
+  -H "Authorization: Bearer <token>"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "history": [
+    {
+      "id": 1,
+      "recipeId": 4,
+      "quantity": 1,
+      "cookedAt": "2025-07-20T20:30:00.000Z",
+      "wasteReduction": 171.45,
+      "costSavings": 228.6,
+      "createdPromotionId": 15
+    }
+  ],
+  "total": 1,
+  "pagination": {
+    "limit": 10,
+    "offset": 0,
+    "hasMore": false
+  }
+}
+```
+
+**Status:** ✅ Working
+
+### Get Cooking Analytics
+**GET** `/smart/cooking-analytics`
+
+**Purpose:** Get cooking analytics for the business
+
+**Headers:**
+- `Authorization: Bearer <token>`
+
+**Request:**
+```bash
+curl -X GET "http://localhost:3031/api/smart/cooking-analytics" \
+  -H "Authorization: Bearer <token>"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "analytics": {
+    "totalCooked": 5,
+    "totalWasteReduction": 857.25,
+    "totalCostSavings": 1143.0,
+    "averageEfficiency": 75.0
+  }
+}
+```
+
+**Status:** ✅ Working
+
 ### Get Inventory Summary
 **GET** `/smart/inventory-summary`
 

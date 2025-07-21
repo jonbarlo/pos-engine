@@ -11,6 +11,8 @@ export interface SmartSuggestionCriteria {
   minSalesVelocity?: number;
   maxDaysSinceLastSale?: number;
   limit?: number;
+  status?: 'pending' | 'cooked' | 'expired' | 'dismissed';
+  includeCooked?: boolean;
 }
 
 export interface RecipeSuggestion {
@@ -42,6 +44,97 @@ export class SmartRecipeSuggestionService {
    * Get smart recipe suggestions based on inventory management
    */
   static async getSmartSuggestions(criteria: SmartSuggestionCriteria): Promise<RecipeSuggestion[]> {
+    try {
+      const {
+        businessId,
+        includeExpiringItems = true,
+        includeUnderperformingItems = true,
+        maxDaysToExpiry = 7,
+        minSalesVelocity = 0.1,
+        maxDaysSinceLastSale = 30,
+        limit = 10,
+        status = 'pending',
+        includeCooked = false
+      } = criteria;
+
+      // First, check if we have existing suggestions in the database
+      const existingSuggestions = await this.getExistingSuggestions(businessId, {
+        status,
+        includeCooked,
+        limit
+      });
+
+      if (existingSuggestions.length > 0) {
+        console.log(`Found ${existingSuggestions.length} existing suggestions with status: ${status}`);
+        return existingSuggestions;
+      }
+
+      // If no existing suggestions, generate new ones
+      console.log('No existing suggestions found, generating new ones...');
+      return await this.generateNewSuggestions(criteria);
+    } catch (error) {
+      console.error('Error in getSmartSuggestions:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get existing suggestions from database with status filtering
+   */
+  private static async getExistingSuggestions(
+    businessId: number, 
+    options: { status: string; includeCooked: boolean; limit: number }
+  ): Promise<RecipeSuggestion[]> {
+    try {
+      const { status, includeCooked, limit } = options;
+      
+      // Build where clause for status filtering
+      const statusFilter = includeCooked 
+        ? { [Op.or]: [{ status: 'pending' }, { status: 'cooked' }] }
+        : { status };
+
+      const suggestions = await RecipeSuggestionModel.findAll({
+        where: {
+          businessId,
+          isActive: true,
+          ...statusFilter
+        },
+        include: [
+          {
+            model: RecipeModel,
+            as: 'recipe',
+            where: { isActive: true },
+            required: true
+          }
+        ],
+        order: [
+          ['priority', 'DESC'],
+          ['confidence', 'DESC'],
+          ['createdAt', 'DESC']
+        ],
+        limit
+      });
+
+      return suggestions.map(suggestion => this.mapSuggestionToRecipeSuggestion(suggestion));
+    } catch (error) {
+      console.error('Error getting existing suggestions:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Generate new suggestions based on current inventory
+   */
+  private static async generateNewSuggestions(criteria: SmartSuggestionCriteria): Promise<RecipeSuggestion[]> {
+    const {
+      businessId,
+      includeExpiringItems = true,
+      includeUnderperformingItems = true,
+      maxDaysToExpiry = 7,
+      minSalesVelocity = 0.1,
+      maxDaysSinceLastSale = 30,
+      limit = 10
+    } = criteria;
     try {
       const {
         businessId,
@@ -364,6 +457,25 @@ export class SmartRecipeSuggestionService {
         urgency: 'low'
       };
     }
+  }
+
+  /**
+   * Map database suggestion to RecipeSuggestion interface
+   */
+  private static mapSuggestionToRecipeSuggestion(suggestion: any): RecipeSuggestion {
+    return {
+      recipeId: suggestion.recipeId,
+      recipeName: suggestion.recipe?.name || 'Unknown Recipe',
+      recipeDescription: suggestion.recipe?.description || '',
+      recipeDifficulty: suggestion.recipe?.difficulty || 'medium',
+      prepTime: suggestion.recipe?.prepTime || 0,
+      cookTime: suggestion.recipe?.cookTime || 0,
+      imageUrl: suggestion.recipe?.imageUrl,
+      suggestedItems: [], // Will be populated when needed
+      confidence: suggestion.confidence || 0,
+      totalPotentialSavings: 0, // Will be calculated when needed
+      urgency: suggestion.priority || 'medium'
+    };
   }
 
   /**

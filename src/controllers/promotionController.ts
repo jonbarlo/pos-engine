@@ -13,8 +13,8 @@ export class PromotionController {
       const businessId = req.user!.businessId;
       
       // Validate required fields
-      if (!promotionData.name || !promotionData.discountType || !promotionData.discountValue) {
-        res.status(400).json({ error: 'Name, discount type, and discount value are required' });
+      if (!promotionData.name || !promotionData.type || !promotionData.discountType || !promotionData.discountValue) {
+        res.status(400).json({ error: 'Name, type, discount type, and discount value are required' });
         return;
       }
 

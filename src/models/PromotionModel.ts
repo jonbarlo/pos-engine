@@ -13,6 +13,10 @@ export interface PromotionAttributes {
   conditions?: string;
   isActive: boolean;
   imageUrl?: string;
+  totalQuantity?: number;
+  usedQuantity: number;
+  maxUsesPerCustomer?: number;
+  recipeId?: number;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -34,6 +38,10 @@ export class PromotionModel extends Model<PromotionAttributes, PromotionCreation
   public conditions?: string;
   public isActive!: boolean;
   public imageUrl?: string;
+  public totalQuantity?: number;
+  public usedQuantity!: number;
+  public maxUsesPerCustomer?: number;
+  public recipeId?: number;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 
@@ -84,7 +92,21 @@ export class PromotionModel extends Model<PromotionAttributes, PromotionCreation
     if (!this.isActive) return 'Inactive';
     if (new Date() < this.startDate) return 'Scheduled';
     if (new Date() > this.endDate) return 'Expired';
+    if (this.totalQuantity !== null && this.usedQuantity >= (this.totalQuantity || 0)) return 'Sold Out';
     return 'Active';
+  }
+
+  public isAvailable(): boolean {
+    const now = new Date();
+    return this.isActive && 
+           now >= this.startDate && 
+           now <= this.endDate && 
+           (this.totalQuantity === null || this.usedQuantity < (this.totalQuantity || 0));
+  }
+
+  public getRemainingQuantity(): number | null {
+    if (this.totalQuantity === null) return null; // Unlimited
+    return Math.max(0, (this.totalQuantity || 0) - this.usedQuantity);
   }
 
   public getConditions(): any {
@@ -183,6 +205,30 @@ export function initializePromotionModel(sequelize: Sequelize): void {
         validate: {
           isUrl: true,
         },
+      },
+      totalQuantity: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: null,
+        comment: 'Total quantity available for this promotion (null = unlimited)'
+      },
+      usedQuantity: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+        comment: 'Number of times this promotion has been used'
+      },
+      maxUsesPerCustomer: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: null,
+        comment: 'Maximum number of times a single customer can use this promotion (null = unlimited)'
+      },
+      recipeId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: null,
+        comment: 'Recipe ID if this promotion is linked to a cooked recipe'
       },
       createdAt: {
         type: DataTypes.DATE,

@@ -24,7 +24,7 @@ export class RecipeController {
         businessId,
         difficulty: difficulty as 'easy' | 'medium' | 'hard',
         search: search as string | undefined,
-        isActive: isActive === 'true',
+        isActive: isActive === undefined ? true : isActive === 'true',
         limit: parseInt(limit as string),
         offset
       });

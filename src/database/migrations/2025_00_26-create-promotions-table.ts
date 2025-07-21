@@ -65,6 +65,26 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       type: DataTypes.STRING(500),
       allowNull: true,
     },
+    totalQuantity: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: null
+    },
+    usedQuantity: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0
+    },
+    maxUsesPerCustomer: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: null
+    },
+    recipeId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: null
+    },
     createdAt: {
       type: DataTypes.DATE,
       allowNull: false,
@@ -83,6 +103,12 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   await queryInterface.addIndex('promotions', ['businessId', 'type']);
   await queryInterface.addIndex('promotions', ['discountType']);
   await queryInterface.addIndex('promotions', ['createdAt']);
+  await queryInterface.addIndex('promotions', ['businessId', 'isActive', 'totalQuantity', 'usedQuantity'], {
+    name: 'idx_promotions_availability'
+  });
+  await queryInterface.addIndex('promotions', ['recipeId'], {
+    name: 'idx_promotions_recipe'
+  });
 }
 
 export async function down(queryInterface: QueryInterface): Promise<void> {

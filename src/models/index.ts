@@ -16,6 +16,7 @@ import { initializeKitchenOrderModel } from './KitchenOrderModel';
 import { initializeRecipeModel } from './RecipeModel';
 import { initializeRecipeSuggestionModel } from './RecipeSuggestionModel';
 import { initializePromotionModel } from './PromotionModel';
+import { initializeRecipeCookingHistoryModel } from './RecipeCookingHistoryModel';
 import { initializePromotionItemModel } from './PromotionItemModel';
 import { initializeMobileNotificationModel } from './MobileNotificationModel';
 import { FloorPlanModel } from './FloorPlanModel';
@@ -39,6 +40,7 @@ import { KitchenOrderModel } from './KitchenOrderModel';
 import { RecipeModel } from './RecipeModel';
 import { RecipeSuggestionModel } from './RecipeSuggestionModel';
 import { PromotionModel } from './PromotionModel';
+import { RecipeCookingHistoryModel } from './RecipeCookingHistoryModel';
 import { PromotionItemModel } from './PromotionItemModel';
 import { MobileNotificationModel } from './MobileNotificationModel';
 import { StaffMessageModel } from './StaffMessageModel';
@@ -64,6 +66,7 @@ export const initializeAllModels = (): void => {
   initializePromotionModel(sequelize);
   initializeRecipeSuggestionModel(sequelize);
   initializePromotionItemModel(sequelize);
+  initializeRecipeCookingHistoryModel(sequelize);
   initializeMobileNotificationModel(sequelize);
   
   // Floor plan models are already initialized via default export

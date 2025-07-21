@@ -948,6 +948,8 @@ async function startServer() {
     const promotionRoutes = (await import('./routes/promotions')).default;
     const mobileNotificationRoutes = (await import('./routes/mobileNotifications')).default;
     const smartRecipeSuggestionRoutes = (await import('./routes/smartRecipeSuggestions')).default;
+    const recipeCookingRoutes = (await import('./routes/recipeCooking')).default;
+    const aiRecipeGenerationRoutes = (await import('./routes/aiRecipeGeneration')).default;
     // API routes
     app.use('/api/auth', authRoutes);
     app.use('/api/businesses', businessRoutes);
@@ -969,6 +971,8 @@ async function startServer() {
     app.use('/api/promotions', promotionRoutes);
     app.use('/api/mobile-notifications', mobileNotificationRoutes);
     app.use('/api/smart', smartRecipeSuggestionRoutes);
+    app.use('/api/smart', recipeCookingRoutes);
+    app.use('/api/ai', aiRecipeGenerationRoutes);
 
     // Mobile app compatibility routes
     // Alias for /api/messages to redirect to staff-messages

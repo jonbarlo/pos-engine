@@ -10,6 +10,7 @@ export interface RecipeSuggestionAttributes {
   targetAudience: string;
   isActive: boolean;
   aiGenerated: boolean;
+  status: 'pending' | 'cooked' | 'expired' | 'dismissed';
   confidence?: number;
   suggestedPrice?: number;
   createdAt?: Date;
@@ -31,6 +32,7 @@ export class RecipeSuggestionModel extends Model<RecipeSuggestionAttributes, Rec
   public targetAudience!: string;
   public isActive!: boolean;
   public aiGenerated!: boolean;
+  public status!: 'pending' | 'cooked' | 'expired' | 'dismissed';
   public confidence?: number;
   public suggestedPrice?: number;
   public readonly createdAt!: Date;
@@ -60,6 +62,32 @@ export class RecipeSuggestionModel extends Model<RecipeSuggestionAttributes, Rec
       case 'low': return 'Low';
       default: return 'Medium';
     }
+  }
+
+  public getStatusLabel(): string {
+    switch (this.status) {
+      case 'pending': return 'Pending';
+      case 'cooked': return 'Cooked';
+      case 'expired': return 'Expired';
+      case 'dismissed': return 'Dismissed';
+      default: return 'Pending';
+    }
+  }
+
+  public isPending(): boolean {
+    return this.status === 'pending';
+  }
+
+  public isCooked(): boolean {
+    return this.status === 'cooked';
+  }
+
+  public isExpired(): boolean {
+    return this.status === 'expired';
+  }
+
+  public isDismissed(): boolean {
+    return this.status === 'dismissed';
   }
 
   // Associations
@@ -123,6 +151,14 @@ export function initializeRecipeSuggestionModel(sequelize: Sequelize): void {
         allowNull: false,
         defaultValue: false,
       },
+      status: {
+        type: DataTypes.ENUM('pending', 'cooked', 'expired', 'dismissed'),
+        allowNull: false,
+        defaultValue: 'pending',
+        validate: {
+          isIn: [['pending', 'cooked', 'expired', 'dismissed']],
+        },
+      },
       confidence: {
         type: DataTypes.DECIMAL(3, 2),
         allowNull: true,
@@ -165,6 +201,9 @@ export function initializeRecipeSuggestionModel(sequelize: Sequelize): void {
         },
         {
           fields: ['businessId', 'suggestionType'],
+        },
+        {
+          fields: ['businessId', 'status'],
         },
         {
           fields: ['aiGenerated'],

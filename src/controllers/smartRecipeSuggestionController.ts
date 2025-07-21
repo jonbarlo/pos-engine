@@ -118,7 +118,9 @@ export const getSmartSuggestions: RequestHandler = async (req: Request, res: Res
     maxDaysToExpiry: req.query.maxDaysToExpiry ? parseInt(req.query.maxDaysToExpiry as string) : 7,
     minSalesVelocity: req.query.minSalesVelocity ? parseFloat(req.query.minSalesVelocity as string) : 0.1,
     maxDaysSinceLastSale: req.query.maxDaysSinceLastSale ? parseInt(req.query.maxDaysSinceLastSale as string) : 30,
-    limit: req.query.limit ? parseInt(req.query.limit as string) : 10
+    limit: req.query.limit ? parseInt(req.query.limit as string) : 10,
+    status: req.query.status as 'pending' | 'cooked' | 'expired' | 'dismissed' || 'pending',
+    includeCooked: req.query.includeCooked === 'true'
   };
 
   try {

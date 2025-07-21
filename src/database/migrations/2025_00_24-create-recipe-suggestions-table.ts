@@ -52,6 +52,11 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       allowNull: false,
       defaultValue: false,
     },
+    status: {
+      type: DataTypes.ENUM('pending', 'cooked', 'expired', 'dismissed'),
+      allowNull: false,
+      defaultValue: 'pending',
+    },
     confidence: {
       type: DataTypes.DECIMAL(3, 2),
       allowNull: true,
@@ -84,6 +89,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   await queryInterface.addIndex('recipe_suggestions', ['businessId', 'isActive']);
   await queryInterface.addIndex('recipe_suggestions', ['businessId', 'priority']);
   await queryInterface.addIndex('recipe_suggestions', ['businessId', 'suggestionType']);
+  await queryInterface.addIndex('recipe_suggestions', ['businessId', 'status']);
   await queryInterface.addIndex('recipe_suggestions', ['aiGenerated']);
   await queryInterface.addIndex('recipe_suggestions', ['confidence']);
   await queryInterface.addIndex('recipe_suggestions', ['createdAt']);
