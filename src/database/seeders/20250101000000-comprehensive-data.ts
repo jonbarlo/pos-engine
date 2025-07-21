@@ -1705,30 +1705,30 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     WHERE preparationTime IS NULL
   `);
 
-  // Update sales with additional fields
+  // Update sales with additional fields (SQL Server syntax)
   await queryInterface.sequelize.query(`
     UPDATE sales SET 
-      idempotencyKey = CONCAT('KEY-', id),
-      payments = JSON_OBJECT('amount', totalAmount, 'method', paymentMethod, 'status', 'completed'),
+      idempotencyKey = 'KEY-' + CAST(id AS VARCHAR(10)),
+      payments = '{"amount": ' + CAST(totalAmount AS VARCHAR(10)) + ', "method": "' + paymentMethod + '", "status": "completed"}',
       customerName = (SELECT name FROM customers WHERE customers.id = sales.customerId),
       customerEmail = (SELECT email FROM customers WHERE customers.id = sales.customerId)
     WHERE idempotencyKey IS NULL
   `);
 
-  // Update orders with additional fields
+  // Update orders with additional fields (SQL Server syntax)
   await queryInterface.sequelize.query(`
     UPDATE orders SET 
-      estimatedReadyTime = DATE_ADD(createdAt, INTERVAL 30 MINUTE),
-      actualReadyTime = CASE WHEN status = 'ready' OR status = 'served' THEN DATE_ADD(createdAt, INTERVAL 25 MINUTE) ELSE NULL END
+      estimatedReadyTime = DATEADD(MINUTE, 30, createdAt),
+      actualReadyTime = CASE WHEN status = 'ready' OR status = 'served' THEN DATEADD(MINUTE, 25, createdAt) ELSE NULL END
     WHERE estimatedReadyTime IS NULL
   `);
 
-  // Update reservations with additional fields
+  // Update reservations with additional fields (SQL Server syntax)
   await queryInterface.sequelize.query(`
     UPDATE reservations SET 
       source = 'phone',
       specialRequests = 'None',
-      notes = CONCAT('Reservation for ', customerName)
+      notes = 'Reservation for ' + customerName
     WHERE source IS NULL
   `);
 
