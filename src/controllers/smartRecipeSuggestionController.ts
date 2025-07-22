@@ -428,3 +428,143 @@ export const getUnderperformingItems: RequestHandler = async (req: Request, res:
     });
   }
 }; 
+
+/**
+ * @swagger
+ * /api/smart/waste-prevention-suggestions:
+ *   post:
+ *     summary: Generate recipe suggestions to prevent waste from expiring items
+ *     tags: [Smart Suggestions]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               maxDaysToExpiry:
+ *                 type: integer
+ *                 default: 7
+ *                 description: Maximum days to expiry for items to consider
+ *               limit:
+ *                 type: integer
+ *                 default: 10
+ *                 description: Maximum number of suggestions to generate
+ *     responses:
+ *       200:
+ *         description: Waste prevention recipe suggestions generated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 suggestions:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       recipeId:
+ *                         type: integer
+ *                       recipeName:
+ *                         type: string
+ *                       recipeDescription:
+ *                         type: string
+ *                       urgency:
+ *                         type: string
+ *                       expiringItems:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             itemId:
+ *                               type: integer
+ *                             itemName:
+ *                               type: string
+ *                             daysToExpiry:
+ *                               type: integer
+ *                             currentStock:
+ *                               type: integer
+ *                             potentialWaste:
+ *                               type: number
+ *       400:
+ *         description: Invalid request parameters
+ *       500:
+ *         description: Internal server error
+ */
+export const generateWastePreventionSuggestions: RequestHandler = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const businessId = (req as any).user?.businessId;
+    if (!businessId) {
+      res.status(401).json({ success: false, message: 'Business ID not found in token' });
+      return;
+    }
+
+    const { maxDaysToExpiry = 7, limit = 10 } = req.body;
+
+    console.log(`🔄 Generating waste prevention suggestions for business ${businessId}`);
+    console.log(`📅 Looking for items expiring within ${maxDaysToExpiry} days`);
+    console.log(`📊 Maximum suggestions: ${limit}`);
+
+    // Get expiring items
+    const expiringItems = await SmartRecipeSuggestionService.getExpiringItemsForWastePrevention(
+      businessId, 
+      maxDaysToExpiry
+    );
+
+    if (expiringItems.length === 0) {
+      res.status(200).json({
+        success: true,
+        message: 'No items expiring soon found',
+        suggestions: [],
+        summary: {
+          totalExpiringItems: 0,
+          potentialWasteValue: 0,
+          suggestionsGenerated: 0
+        }
+      });
+      return;
+    }
+
+    console.log(`⚠️ Found ${expiringItems.length} items expiring soon`);
+
+    // Generate recipe suggestions for waste prevention
+    const suggestions = await SmartRecipeSuggestionService.generateWastePreventionSuggestions(
+      businessId,
+      expiringItems,
+      limit
+    );
+
+    // Calculate summary
+    const totalExpiringItems = expiringItems.length;
+    const potentialWasteValue = expiringItems.reduce((sum: number, item: any) => sum + (item.cost * item.stock), 0);
+    const suggestionsGenerated = suggestions.length;
+
+    console.log(`✅ Generated ${suggestions.length} waste prevention suggestions`);
+    console.log(`💰 Potential waste value: $${potentialWasteValue.toFixed(2)}`);
+
+    res.status(200).json({
+      success: true,
+      message: 'Waste prevention suggestions generated successfully',
+      suggestions,
+      summary: {
+        totalExpiringItems,
+        potentialWasteValue: Math.round(potentialWasteValue * 100) / 100,
+        suggestionsGenerated
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Error generating waste prevention suggestions:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to generate waste prevention suggestions',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+}; 

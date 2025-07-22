@@ -3116,6 +3116,257 @@ curl -X POST "http://localhost:3031/api/smart/update-tracking" \
 
 ---
 
+## AI Recipe Generation Endpoints
+
+### Generate AI Recipe
+**POST** `/ai/generate-recipe`
+
+**Purpose:** Generate a new recipe using Claude API based on available ingredients and preferences
+
+**Headers:**
+- `Authorization: Bearer <token>`
+- `Content-Type: application/json`
+
+**Request Body:**
+```json
+{
+  "expiringItems": [
+    {
+      "name": "Fresh Basil",
+      "quantity": 2,
+      "category": "herbs"
+    },
+    {
+      "name": "Cherry Tomatoes",
+      "quantity": 1,
+      "category": "vegetables"
+    },
+    {
+      "name": "Mozzarella",
+      "quantity": 200,
+      "category": "dairy"
+    }
+  ],
+  "cuisine": "Italian",
+  "difficulty": "medium",
+  "servings": 4,
+  "dietaryRestrictions": ["vegetarian", "gluten-free"]
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "recipe": {
+    "recipeName": "Fresh Basil Caprese Salad",
+    "description": "A refreshing Italian salad using fresh basil and cherry tomatoes",
+    "ingredients": [
+      {
+        "name": "Fresh Basil",
+        "quantity": 2,
+        "unit": "cups",
+        "notes": "Freshly picked"
+      },
+      {
+        "name": "Cherry Tomatoes",
+        "quantity": 1,
+        "unit": "pint",
+        "notes": "Halved"
+      },
+      {
+        "name": "Mozzarella",
+        "quantity": 200,
+        "unit": "grams",
+        "notes": "Fresh, torn into pieces"
+      }
+    ],
+    "instructions": [
+      "Wash and dry the fresh basil leaves",
+      "Halve the cherry tomatoes",
+      "Tear the mozzarella into bite-sized pieces",
+      "Combine all ingredients in a large bowl",
+      "Drizzle with olive oil and balsamic vinegar",
+      "Season with salt and pepper to taste"
+    ],
+    "prepTime": 15,
+    "cookTime": 0,
+    "difficulty": "easy",
+    "estimatedCost": 12.50,
+    "confidence": 0.85
+  },
+  "validation": {
+    "isValid": true,
+    "confidence": 0.85,
+    "warnings": [],
+    "provider": "claude"
+  },
+  "approvalId": 123,
+  "aiProvider": "claude"
+}
+```
+
+**Status:** 🚧 Not Yet Implemented
+
+### Generate Batch Recipes
+**POST** `/ai/generate-batch-recipes`
+
+**Purpose:** Generate multiple recipes using AI for different ingredient combinations
+
+**Headers:**
+- `Authorization: Bearer <token>`
+- `Content-Type: application/json`
+
+**Request Body:**
+```json
+{
+  "requests": [
+    {
+      "expiringItems": [
+        {
+          "name": "Fresh Basil",
+          "quantity": 2,
+          "category": "herbs"
+        }
+      ],
+      "cuisine": "Italian",
+      "difficulty": "easy",
+      "servings": 2
+    },
+    {
+      "expiringItems": [
+        {
+          "name": "Cherry Tomatoes",
+          "quantity": 1,
+          "category": "vegetables"
+        }
+      ],
+      "cuisine": "Mediterranean",
+      "difficulty": "medium",
+      "servings": 4
+    }
+  ]
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "recipes": [
+    {
+      "recipeName": "Basil Pesto Pasta",
+      "description": "Simple pasta with fresh basil pesto",
+      "ingredients": [...],
+      "instructions": [...],
+      "prepTime": 10,
+      "cookTime": 15,
+      "difficulty": "easy",
+      "estimatedCost": 8.50,
+      "confidence": 0.90
+    },
+    {
+      "recipeName": "Mediterranean Tomato Salad",
+      "description": "Fresh tomato salad with Mediterranean flavors",
+      "ingredients": [...],
+      "instructions": [...],
+      "prepTime": 20,
+      "cookTime": 0,
+      "difficulty": "medium",
+      "estimatedCost": 15.00,
+      "confidence": 0.85
+    }
+  ],
+  "totalGenerated": 2,
+  "aiProvider": "claude"
+}
+```
+
+**Status:** 🚧 Not Yet Implemented
+
+### Approve AI Recipe
+**POST** `/ai/approve-recipe/{approvalId}`
+
+**Purpose:** Approve an AI-generated recipe to add it to the menu
+
+**Headers:**
+- `Authorization: Bearer <token>`
+- `Content-Type: application/json`
+
+**Path Parameters:**
+- `approvalId` (integer) - ID of the recipe approval record
+
+**Request Body:**
+```json
+{
+  "approved": true,
+  "notes": "Great recipe! Added some extra seasoning.",
+  "modifications": {
+    "addedIngredients": ["Extra virgin olive oil", "Balsamic vinegar"],
+    "modifiedInstructions": "Added step to drizzle with olive oil"
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "recipeId": 456,
+  "status": "approved"
+}
+```
+
+**Status:** 🚧 Not Yet Implemented
+
+### Get AI Usage Statistics
+**GET** `/ai/usage-stats`
+
+**Purpose:** Get statistics about AI recipe generation usage and costs
+
+**Headers:**
+- `Authorization: Bearer <token>`
+
+**Query Parameters:**
+- `startDate` (string, optional) - Start date for statistics (YYYY-MM-DD)
+- `endDate` (string, optional) - End date for statistics (YYYY-MM-DD)
+- `provider` (string, optional) - AI provider filter (claude, openai, all)
+
+**Request:**
+```bash
+curl -X GET "http://localhost:3031/api/ai/usage-stats?startDate=2025-01-01&endDate=2025-01-31&provider=claude" \
+  -H "Authorization: Bearer <token>"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "stats": {
+    "totalRecipesGenerated": 45,
+    "totalCost": 0.89,
+    "averageGenerationTime": 2.3,
+    "successRate": 0.96,
+    "chefApprovalRate": 0.87,
+    "popularCuisines": ["Italian", "Asian", "Mediterranean"],
+    "costTrends": [
+      {
+        "date": "2025-01-01",
+        "cost": 0.02
+      },
+      {
+        "date": "2025-01-02",
+        "cost": 0.03
+      }
+    ]
+  }
+}
+```
+
+**Status:** 🚧 Not Yet Implemented
+
+---
+
 ## Error Responses
 
 All endpoints return errors in this format:

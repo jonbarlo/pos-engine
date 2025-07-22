@@ -1,0 +1,43 @@
+### Test Waste Prevention Suggestions Endpoint
+
+# First, get a valid token (replace with actual login endpoint)
+POST http://localhost:3031/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@italian-delight.com",
+  "password": "password123"
+}
+
+###
+
+# Generate waste prevention suggestions
+POST http://localhost:3031/api/smart/waste-prevention-suggestions
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "maxDaysToExpiry": 7,
+  "limit": 10
+}
+
+###
+
+# Test with different parameters
+POST http://localhost:3031/api/smart/waste-prevention-suggestions
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "maxDaysToExpiry": 3,
+  "limit": 5
+}
+
+###
+
+# Test with default parameters
+POST http://localhost:3031/api/smart/waste-prevention-suggestions
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{} 

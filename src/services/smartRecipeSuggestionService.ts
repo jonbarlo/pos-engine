@@ -567,4 +567,209 @@ export class SmartRecipeSuggestionService {
       };
     }
   }
+
+  /**
+   * Get expiring items specifically for waste prevention
+   */
+  static async getExpiringItemsForWastePrevention(
+    businessId: number, 
+    maxDaysToExpiry: number = 7
+  ): Promise<any[]> {
+    try {
+      const expiryDate = new Date();
+      expiryDate.setDate(expiryDate.getDate() + maxDaysToExpiry);
+
+      const expiringItems = await ItemModel.findAll({
+        where: {
+          businessId,
+          isActive: true,
+          stock: { [Op.gt]: 0 },
+          expirationDate: {
+            [Op.lte]: expiryDate,
+            [Op.gt]: new Date() // Not already expired
+          }
+        },
+        attributes: [
+          'id',
+          'name',
+          'description',
+          'category',
+          'stock',
+          'cost',
+          'expirationDate',
+          [fn('DATEDIFF', 'day', fn('GETDATE'), col('expirationDate')), 'daysToExpiry']
+        ],
+        order: [
+          [col('daysToExpiry'), 'ASC'], // Most urgent first
+          ['stock', 'DESC'] // Higher stock first
+        ]
+      });
+
+      return expiringItems.map(item => {
+        const itemData = item.toJSON();
+        const daysToExpiry = parseInt((item as any).getDataValue('daysToExpiry') || '0');
+        return {
+          ...itemData,
+          daysToExpiry,
+          potentialWaste: itemData.cost * itemData.stock
+        };
+      });
+    } catch (error) {
+      console.error('Error getting expiring items for waste prevention:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Generate waste prevention suggestions based on expiring items
+   */
+  static async generateWastePreventionSuggestions(
+    businessId: number,
+    expiringItems: any[],
+    limit: number = 10
+  ): Promise<RecipeSuggestion[]> {
+    try {
+      if (expiringItems.length === 0) {
+        return [];
+      }
+
+      // Get all recipes for this business
+      const recipes = await RecipeModel.findAll({
+        where: {
+          businessId,
+          isActive: true
+        },
+        attributes: [
+          'id',
+          'name',
+          'description',
+          'difficulty',
+          'prepTime',
+          'cookTime',
+          'imageUrl',
+          'ingredients'
+        ]
+      });
+
+      const suggestions: RecipeSuggestion[] = [];
+
+      // For each expiring item, find recipes that use it
+      for (const expiringItem of expiringItems) {
+        const matchingRecipes = this.findRecipesUsingItem(recipes, expiringItem);
+        
+        for (const recipe of matchingRecipes) {
+          const urgency = this.calculateUrgency(expiringItem.daysToExpiry, expiringItem.stock);
+          const confidence = this.calculateConfidence(expiringItem, recipe);
+          
+          const suggestion: RecipeSuggestion = {
+            recipeId: recipe.id,
+            recipeName: recipe.name,
+            recipeDescription: recipe.description,
+            recipeDifficulty: recipe.difficulty,
+            prepTime: recipe.prepTime,
+            cookTime: recipe.cookTime,
+            imageUrl: recipe.imageUrl,
+            suggestedItems: [{
+              itemId: expiringItem.id,
+              itemName: expiringItem.name,
+              currentStock: expiringItem.stock,
+              expirationDate: expiringItem.expirationDate,
+              daysToExpiry: expiringItem.daysToExpiry,
+              reason: `Expiring in ${expiringItem.daysToExpiry} days - prevent waste`
+            }],
+            confidence,
+            totalPotentialSavings: expiringItem.potentialWaste,
+            urgency
+          };
+
+          suggestions.push(suggestion);
+
+          // Stop if we've reached the limit
+          if (suggestions.length >= limit) {
+            break;
+          }
+        }
+
+        // Stop if we've reached the limit
+        if (suggestions.length >= limit) {
+          break;
+        }
+      }
+
+      // Sort by urgency and confidence
+      return suggestions
+        .sort((a, b) => {
+          // First by urgency (high > medium > low)
+          const urgencyOrder = { high: 3, medium: 2, low: 1 };
+          const urgencyDiff = urgencyOrder[b.urgency] - urgencyOrder[a.urgency];
+          if (urgencyDiff !== 0) return urgencyDiff;
+          
+          // Then by confidence
+          return b.confidence - a.confidence;
+        })
+        .slice(0, limit);
+
+    } catch (error) {
+      console.error('Error generating waste prevention suggestions:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Find recipes that use a specific item
+   */
+  private static findRecipesUsingItem(recipes: any[], item: any): any[] {
+    const matchingRecipes: any[] = [];
+    const itemName = item.name.toLowerCase();
+    const itemCategory = item.category.toLowerCase();
+
+    for (const recipe of recipes) {
+      const ingredients = this.parseIngredients(recipe.ingredients);
+      
+      // Check if recipe ingredients contain the expiring item
+      const hasMatchingIngredient = ingredients.some(ingredient => {
+        const ingredientLower = ingredient.toLowerCase();
+        return ingredientLower.includes(itemName) || 
+               ingredientLower.includes(itemCategory) ||
+               itemName.includes(ingredientLower);
+      });
+
+      if (hasMatchingIngredient) {
+        matchingRecipes.push(recipe);
+      }
+    }
+
+    return matchingRecipes;
+  }
+
+  /**
+   * Calculate urgency based on days to expiry and stock level
+   */
+  private static calculateUrgency(daysToExpiry: number, stock: number): 'high' | 'medium' | 'low' {
+    if (daysToExpiry <= 2 || stock > 50) return 'high';
+    if (daysToExpiry <= 5 || stock > 20) return 'medium';
+    return 'low';
+  }
+
+  /**
+   * Calculate confidence score for the suggestion
+   */
+  private static calculateConfidence(item: any, recipe: any): number {
+    let confidence = 0.5; // Base confidence
+
+    // Higher confidence for items expiring very soon
+    if (item.daysToExpiry <= 1) confidence += 0.3;
+    else if (item.daysToExpiry <= 3) confidence += 0.2;
+    else if (item.daysToExpiry <= 7) confidence += 0.1;
+
+    // Higher confidence for higher stock levels
+    if (item.stock > 50) confidence += 0.2;
+    else if (item.stock > 20) confidence += 0.1;
+
+    // Higher confidence for higher value items
+    if (item.potentialWaste > 100) confidence += 0.1;
+    else if (item.potentialWaste > 50) confidence += 0.05;
+
+    return Math.min(confidence, 1.0); // Cap at 1.0
+  }
 } 

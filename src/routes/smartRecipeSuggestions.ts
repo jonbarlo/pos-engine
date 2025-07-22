@@ -6,7 +6,8 @@ import {
   getInventorySummary,
   updateTracking,
   getExpiringItems,
-  getUnderperformingItems
+  getUnderperformingItems,
+  generateWastePreventionSuggestions
 } from '../controllers/smartRecipeSuggestionController';
 
 const router = Router();
@@ -17,6 +18,9 @@ router.use(authenticateToken);
 
 // Smart recipe suggestions based on inventory management
 router.get('/smart-suggestions', getSmartSuggestions);
+
+// Generate waste prevention suggestions based on expiring items
+router.post('/waste-prevention-suggestions', generateWastePreventionSuggestions);
 
 // Inventory summary for dashboard
 router.get('/inventory-summary', getInventorySummary);
