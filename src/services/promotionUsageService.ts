@@ -1,4 +1,4 @@
-import { Transaction, Op } from 'sequelize';
+import { Op } from 'sequelize';
 import { getSequelize } from '../models/sequelize';
 import { PromotionModel } from '../models/PromotionModel';
 
@@ -149,7 +149,7 @@ export class PromotionUsageService {
           isActive: true,
           totalQuantity: { [Op.ne]: null },
           usedQuantity: { [Op.gte]: sequelize.col('totalQuantity') }
-        }
+        } as any
       }
     );
 
