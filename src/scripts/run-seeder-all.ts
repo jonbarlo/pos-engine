@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 
 // Load environment variables from the project root
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 import { Sequelize } from 'sequelize';
 import { getDatabaseConfig } from '../config/database';
@@ -59,6 +59,5 @@ async function runSeeder() {
   }
 }
 
-if (require.main === module) {
-  runSeeder();
-} 
+// Auto-run when called directly
+runSeeder(); 

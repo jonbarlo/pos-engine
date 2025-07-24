@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 
 // Load environment variables from the project root
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 import { Sequelize } from 'sequelize';
 import { getDatabaseConfig } from '../config/database';
@@ -18,10 +18,9 @@ async function runSeeder() {
     
     // Define all seeders in order
     const seeders = [
-      '20250101000000-comprehensive-data',
-      '20250101000001-italian-delight-world-class',
-      '20250101000002-sushi-master-world-class',
-      '20250101000003-coffee-corner-world-class'
+      '20250101000000-comprehensive-data',      
+      '20250101000005-comprehensive-items',
+      '20250101000004-comprehensive-recipes'
     ];
     
     for (const seederName of seeders) {
@@ -51,6 +50,5 @@ async function runSeeder() {
   }
 }
 
-if (require.main === module) {
-  runSeeder();
-} 
+// Auto-run when called directly
+runSeeder(); 

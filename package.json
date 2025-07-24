@@ -19,13 +19,13 @@
     "seed": "ts-node src/scripts/run-seeder.ts",
     "seed:test": "NODE_ENV=test ts-node src/scripts/run-seeder.ts",
     "db:seed:dev": "cross-env NODE_ENV=development ts-node src/scripts/run-seeder.ts",
-    "db:seed:dev:all": "cross-env NODE_ENV=development ts-node src/scripts/run-seeder-full.ts",
+    "db:seed:dev:all": "cross-env NODE_ENV=development ts-node src/scripts/run-seeder-all.ts",
     "db:seed:test": "cross-env NODE_ENV=test ts-node src/scripts/run-seeder.ts",
     "deploy:mochahost": "ts-node src/scripts/deploy-mochahost.ts",
     "test": "cross-env NODE_ENV=test jest",
     "db:drop:tables": "ts-node src/scripts/drop-tables.ts",
-     "db:drop:records": "ts-node src/scripts/drop-records.ts",
-    "db:reset": "cross-env NODE_ENV=development npm run migrate:all && npm run db:seed:dev",
+    "db:drop:records": "ts-node src/scripts/drop-records.ts",
+    "db:reset": "cross-env NODE_ENV=development npm run db:drop:tables && npm run migrate:all && npm run db:seed:dev",
     "db:reset:all": "cross-env NODE_ENV=development npm run db:drop:tables && npm run migrate:all && npm run db:seed:dev:all"
   },
   "repository": {
