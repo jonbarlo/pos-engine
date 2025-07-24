@@ -1,11 +1,12 @@
 import dotenv from 'dotenv';
 import path from 'path';
 
-// Load environment variables once at startup
-const envPath = path.resolve(process.cwd(), '.env');
-dotenv.config({ path: envPath });
-
-
+// Load environment variables once at startup - only in development
+// Railway provides environment variables directly in production
+if (process.env.NODE_ENV !== 'production') {
+  const envPath = path.resolve(process.cwd(), '.env');
+  dotenv.config({ path: envPath });
+}
 
 // Configuration interface
 interface AppConfig {
@@ -70,8 +71,6 @@ function validateConfig(): AppConfig {
 
 // Create and export the configuration
 const config = validateConfig();
-
-
 
 // Export the configuration
 export default config;

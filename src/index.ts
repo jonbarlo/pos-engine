@@ -14,9 +14,15 @@ import {
 } from './middleware/security';
 import cors from 'cors';
 
-// Load environment variables FIRST
-dotenv.config();
+// Load environment variables FIRST - only in development
+// Railway provides environment variables directly in production
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config();
+}
 logger(`Environment loaded: ${process.env.NODE_ENV || 'development'}`);
+
+// Debug: Log database connection info (without sensitive data)
+logger(`Database connection info - Host: ${process.env.DB_HOST || 'not set'}, Port: ${process.env.DB_PORT || 'not set'}, Name: ${process.env.DB_NAME || 'not set'}`);
 
 // Import models AFTER environment is loaded
 import { initializeAllModels, setupAssociations } from './models';
