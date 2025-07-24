@@ -1,9 +1,12 @@
 import dotenv from 'dotenv';
 import path from 'path';
 
-// Load environment variables once at startup - only in development
-// Railway provides environment variables directly in production
-if (process.env.NODE_ENV !== 'production') {
+// Load environment variables once at startup - only if we're not in Railway
+// Railway injects environment variables directly, no need for dotenv
+const isRailway = process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_ID;
+const isProduction = process.env.NODE_ENV === 'production';
+
+if (!isRailway && !isProduction) {
   const envPath = path.resolve(process.cwd(), '.env');
   dotenv.config({ path: envPath });
 }

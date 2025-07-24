@@ -14,15 +14,30 @@ import {
 } from './middleware/security';
 import cors from 'cors';
 
-// Load environment variables FIRST - only in development
-// Railway provides environment variables directly in production
-if (process.env.NODE_ENV !== 'production') {
+// Load environment variables FIRST - only if we're not in Railway production
+// Railway injects environment variables directly, no need for dotenv
+const isRailway = process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_ID;
+const isProduction = process.env.NODE_ENV === 'production';
+
+logger(`Starting app... Railway: ${isRailway ? 'Yes' : 'No'}, Production: ${isProduction ? 'Yes' : 'No'}, NODE_ENV: ${process.env.NODE_ENV || 'not set'}`);
+
+if (!isRailway && !isProduction) {
+  logger('Loading .env file for local development...');
   dotenv.config();
+} else {
+  logger('Using Railway environment variables (no .env file)');
 }
+
 logger(`Environment loaded: ${process.env.NODE_ENV || 'development'}`);
 
-// Debug: Log database connection info (without sensitive data)
-logger(`Database connection info - Host: ${process.env.DB_HOST || 'not set'}, Port: ${process.env.DB_PORT || 'not set'}, Name: ${process.env.DB_NAME || 'not set'}`);
+// Debug: Log all database environment variables (without sensitive data)
+logger(`DB Config Debug:
+  - DB_HOST: ${process.env.DB_HOST || 'NOT SET'}
+  - DB_PORT: ${process.env.DB_PORT || 'NOT SET'}  
+  - DB_NAME: ${process.env.DB_NAME || 'NOT SET'}
+  - DB_USERNAME: ${process.env.DB_USERNAME || 'NOT SET'}
+  - DB_PASSWORD: ${process.env.DB_PASSWORD ? 'SET' : 'NOT SET'}
+  - DATABASE_URL: ${process.env.DATABASE_URL ? 'SET' : 'NOT SET'}`);
 
 // Import models AFTER environment is loaded
 import { initializeAllModels, setupAssociations } from './models';
