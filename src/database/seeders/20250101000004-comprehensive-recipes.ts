@@ -1,645 +1,527 @@
+
+
 import { QueryInterface, QueryTypes } from 'sequelize';
-import dotenv from 'dotenv';
 
-dotenv.config();
-
-export async function up(queryInterface: QueryInterface): Promise<void> {
-  console.log('🌍 Starting comprehensive recipe seeder...');
-
-  // Get business IDs
-  const businesses: { [key: string]: number } = {};
-  const businessSlugs = ['italian-delight', 'sushi-master', 'coffee-corner', 'taco-fiesta', 'american-diner', 'golden-dragon', 'indian-spice-palace', 'peruvian-coastal-kitchen', 'argentinian-grill-house', 'colombian-cafe-bogota', 'costa-rican-tropical-grill'];
+// Nutritional database for ingredients (per 100g/serving)
+const ingredientNutrition: { [key: string]: { calories: number; protein: number; carbs: number; fat: number } } = {
+  // Italian Ingredients
+  'wagyu beef (premium)': { calories: 250, protein: 26, carbs: 0, fat: 17 },
+  'truffle oil (underperforming)': { calories: 884, protein: 0, carbs: 0, fat: 100 },
+  'premium black truffle pasta': { calories: 350, protein: 12, carbs: 70, fat: 2 },
+  'premium lobster ravioli': { calories: 280, protein: 18, carbs: 35, fat: 8 },
+  'fresh basil': { calories: 22, protein: 3, carbs: 2, fat: 0 },
+  'cherry tomatoes': { calories: 18, protein: 1, carbs: 4, fat: 0 },
+  'premium saffron (underperforming)': { calories: 310, protein: 11, carbs: 65, fat: 6 },
   
-  for (const slug of businessSlugs) {
-    const [biz] = await queryInterface.sequelize.query(
-      'SELECT id FROM businesses WHERE slug = ?',
-      { type: QueryTypes.SELECT, replacements: [slug] }
-    ) as any[];
-    if (biz) {
-      businesses[slug] = biz.id;
+  // Sushi Ingredients
+  'bluefin tuna otoro': { calories: 144, protein: 23, carbs: 0, fat: 5 },
+  'hokkaido uni': { calories: 125, protein: 16, carbs: 3, fat: 5 },
+  'soft shell crab': { calories: 87, protein: 18, carbs: 0, fat: 1 },
+  'nori sheets': { calories: 35, protein: 6, carbs: 5, fat: 0 },
+  'sushi rice': { calories: 130, protein: 3, carbs: 28, fat: 0 },
+  
+  // Coffee Ingredients
+  'ethiopian yirgacheffe beans': { calories: 2, protein: 0, carbs: 0, fat: 0 },
+  'colombian supremo beans': { calories: 2, protein: 0, carbs: 0, fat: 0 },
+  'matcha powder': { calories: 324, protein: 30, carbs: 39, fat: 5 },
+  'chai concentrate': { calories: 50, protein: 2, carbs: 10, fat: 1 },
+  'oat milk (expiring soon)': { calories: 80, protein: 3, carbs: 16, fat: 1.5 },
+  'almond milk': { calories: 17, protein: 0.6, carbs: 0.6, fat: 1.1 }
+};
+
+// Function to calculate nutrition based on ingredients
+function calculateNutrition(ingredients: string[], servings: number = 1): string {
+  let totalCalories = 0;
+  let totalProtein = 0;
+  let totalCarbs = 0;
+  let totalFat = 0;
+
+  for (const ingredient of ingredients) {
+    const nutritionData = ingredientNutrition[ingredient.toLowerCase()];
+    if (nutritionData) {
+      // Use typical serving sizes - adjust based on ingredient type
+      let servingMultiplier = 1;
+      if (ingredient.toLowerCase().includes('oil')) servingMultiplier = 0.15; // 15g (1 tbsp)
+      else if (ingredient.toLowerCase().includes('pasta') || ingredient.toLowerCase().includes('ravioli')) servingMultiplier = 1.5; // 150g
+      else if (ingredient.toLowerCase().includes('beef') || ingredient.toLowerCase().includes('tuna')) servingMultiplier = 1.2; // 120g
+      else if (ingredient.toLowerCase().includes('herb') || ingredient.toLowerCase().includes('basil')) servingMultiplier = 0.1; // 10g
+      else if (ingredient.toLowerCase().includes('tomato')) servingMultiplier = 0.8; // 80g
+      else if (ingredient.toLowerCase().includes('milk')) servingMultiplier = 2.4; // 240ml (1 cup)
+      else if (ingredient.toLowerCase().includes('matcha')) servingMultiplier = 0.02; // 2g (1 tsp)
+      else if (ingredient.toLowerCase().includes('coffee') || ingredient.toLowerCase().includes('beans')) servingMultiplier = 0.18; // 18g
+      
+      totalCalories += nutritionData.calories * servingMultiplier;
+      totalProtein += nutritionData.protein * servingMultiplier;
+      totalCarbs += nutritionData.carbs * servingMultiplier;
+      totalFat += nutritionData.fat * servingMultiplier;
     }
   }
 
-  // Comprehensive Recipe Database - Start with empty array, will be populated dynamically
+  // Calculate per serving
+  const caloriesPerServing = Math.round(totalCalories / servings);
+  const proteinPerServing = Math.round(totalProtein / servings);
+  const carbsPerServing = Math.round(totalCarbs / servings);
+  const fatPerServing = Math.round(totalFat / servings);
+
+  return `Calories: ${caloriesPerServing}, Protein: ${proteinPerServing}g, Carbs: ${carbsPerServing}g, Fat: ${fatPerServing}g`;
+}
+
+export async function up(queryInterface: QueryInterface): Promise<void> {
+  console.log('🍳 Starting comprehensive recipes seeder...');
+
+  // Get business IDs
+  const businesses = await queryInterface.sequelize.query(
+    'SELECT id, slug FROM businesses WHERE slug IN (?, ?, ?)',
+    { type: QueryTypes.SELECT, replacements: ['italian-delight', 'sushi-master', 'coffee-corner'] }
+    ) as any[];
+
+  const businessMap: { [slug: string]: number } = {};
+  for (const business of businesses) {
+    businessMap[business.slug] = business.id;
+  }
+
+  console.log(`🏢 Found ${businesses.length} businesses:`, businessMap);
+
+  // Get all existing items for mapping
+  const allItems = await queryInterface.sequelize.query(
+    'SELECT id, businessId, name, sku, category FROM items',
+    { type: QueryTypes.SELECT }
+  ) as any[];
+
+  console.log(`📦 Found ${allItems.length} existing items in database`);
+
+  // Create item lookup maps by business
+  const itemMaps: { [businessId: number]: { [name: string]: number } } = {};
+  for (const item of allItems) {
+    if (!item.businessId) continue;
+    const businessId = item.businessId as number;
+    if (!itemMaps[businessId]) {
+      itemMaps[businessId] = {};
+    }
+    if (item.name) {
+      itemMaps[businessId][(item.name as string).toLowerCase()] = item.id;
+    }
+    if (item.sku) {
+      itemMaps[businessId][(item.sku as string).toLowerCase()] = item.id;
+    }
+  }
+
+  // Create comprehensive recipes - THOUSANDS of REAL recipes using ACTUAL ingredients
   const comprehensiveRecipes: any[] = [];
 
-  // Hardcoded recipes (not templates)
-  const hardcodedRecipes = [
-    {
-      businessId: businesses['italian-delight'],
-      name: 'Quattro Formaggi Pizza',
-      description: 'Four cheese pizza with mozzarella, gorgonzola, parmesan, and ricotta',
-      ingredients: 'Pizza dough, mozzarella, gorgonzola, parmesan, ricotta, olive oil',
-      instructions: 'Stretch dough, add four cheeses, bake until golden',
-      prepTime: 20,
-      cookTime: 10,
-      servings: 4,
-      difficulty: 'medium',
-      cuisine: 'Italian',
-      category: 'pizza',
-      nutritionInfo: JSON.stringify({calories: 400, protein: 15, carbs: 50, fat: 12}),
-      imageUrl: 'https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=400&h=300&fit=crop&crop=center',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['italian-delight'],
-      name: 'Spaghetti Carbonara',
-      description: 'Classic Roman pasta with eggs, cheese, pancetta, and black pepper',
-      ingredients: 'Spaghetti, eggs, pecorino romano, pancetta, black pepper, salt',
-      instructions: 'Cook pasta, crisp pancetta, mix with eggs and cheese',
-      prepTime: 15,
-      cookTime: 12,
-      servings: 4,
-      difficulty: 'medium',
-      cuisine: 'Italian',
-      category: 'pasta',
-      nutritionInfo: JSON.stringify({calories: 400, protein: 15, carbs: 50, fat: 12}),
-      imageUrl: 'https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=400&h=300&fit=crop&crop=center',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['italian-delight'],
-      name: 'Black Truffle Pasta',
-      description: 'Luxury pasta with black truffle, parmesan, and butter',
-      ingredients: 'Fettuccine, black truffle, parmesan, butter, olive oil, salt',
-      instructions: 'Cook pasta, sauté truffle, combine with cheese and butter',
-      prepTime: 20,
-      cookTime: 15,
-      servings: 4,
-      difficulty: 'hard',
-      cuisine: 'Italian',
-      category: 'pasta',
-      nutritionInfo: JSON.stringify({calories: 400, protein: 15, carbs: 50, fat: 12}),
-      imageUrl: 'https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=400&h=300&fit=crop&crop=center',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['italian-delight'],
-      name: 'Lobster Ravioli',
-      description: 'Fresh ravioli filled with lobster and ricotta in cream sauce',
-      ingredients: 'Fresh pasta, lobster, ricotta, cream, parmesan, herbs',
-      instructions: 'Make ravioli, fill with lobster mixture, serve in cream sauce',
-      prepTime: 45,
-      cookTime: 8,
-      servings: 4,
-      difficulty: 'hard',
-      cuisine: 'Italian',
-      category: 'pasta',
-      nutritionInfo: JSON.stringify({calories: 400, protein: 15, carbs: 50, fat: 12}),
-      imageUrl: 'https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=400&h=300&fit=crop&crop=center',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['italian-delight'],
-      name: 'Wagyu Beef Carpaccio',
-      description: 'Ultra-premium beef carpaccio with truffle oil and parmesan',
-      ingredients: 'Wagyu beef, truffle oil, parmesan, arugula, lemon, olive oil',
-      instructions: 'Slice beef thinly, arrange, drizzle with truffle oil, garnish',
-      prepTime: 20,
-      cookTime: 0,
-      servings: 4,
-      difficulty: 'hard',
-      cuisine: 'Italian',
-      category: 'appetizer',
-      nutritionInfo: JSON.stringify({calories: 400, protein: 15, carbs: 50, fat: 12}),
-      imageUrl: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=400&h=300&fit=crop&crop=center',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['italian-delight'],
-      name: 'Chocolate Soufflé',
-      description: 'Classic French chocolate soufflé with vanilla ice cream',
-      ingredients: 'Dark chocolate, eggs, sugar, butter, vanilla, flour',
-      instructions: 'Melt chocolate, fold in egg whites, bake until risen',
-      prepTime: 30,
-      cookTime: 20,
-      servings: 4,
-      difficulty: 'hard',
-      cuisine: 'French',
-      category: 'dessert',
-      nutritionInfo: JSON.stringify({calories: 400, protein: 15, carbs: 50, fat: 12}),
-      imageUrl: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=400&h=300&fit=crop&crop=center',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-
-    // JAPANESE CUISINE (50+ recipes)
-    {
-      businessId: businesses['sushi-master'],
-      name: 'Premium Bluefin Tuna Otoro Nigiri',
-      description: 'Ultra-premium fatty tuna belly nigiri',
-      ingredients: 'Bluefin tuna otoro, sushi rice, wasabi, soy sauce',
-      instructions: 'Form rice, top with otoro, add wasabi, serve with soy',
-      prepTime: 15,
-      cookTime: 0,
-      servings: 4,
-      difficulty: 'hard',
-      cuisine: 'Japanese',
-      category: 'nigiri',
-      nutritionInfo: JSON.stringify({calories: 400, protein: 15, carbs: 50, fat: 12}),
-      imageUrl: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=300&fit=crop&crop=center',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['sushi-master'],
-      name: 'Premium Uni Nigiri',
-      description: 'Fresh Hokkaido sea urchin nigiri',
-      ingredients: 'Hokkaido uni, sushi rice, wasabi, nori',
-      instructions: 'Form rice, top with uni, wrap with nori strip',
-      prepTime: 12,
-      cookTime: 0,
-      servings: 4,
-      difficulty: 'hard',
-      cuisine: 'Japanese',
-      category: 'nigiri',
-      nutritionInfo: JSON.stringify({calories: 400, protein: 15, carbs: 50, fat: 12}),
-      imageUrl: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=300&fit=crop&crop=center',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['sushi-master'],
-      name: 'Premium Dragon Roll',
-      description: 'Classic eel and avocado roll with eel sauce',
-      ingredients: 'Sushi rice, nori, eel, avocado, cucumber, eel sauce',
-      instructions: 'Roll eel and avocado, top with avocado, drizzle sauce',
-      prepTime: 20,
-      cookTime: 0,
-      servings: 4,
-      difficulty: 'medium',
-      cuisine: 'Japanese',
-      category: 'rolls',
-      nutritionInfo: JSON.stringify({calories: 400, protein: 15, carbs: 50, fat: 12}),
-      imageUrl: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=300&fit=crop&crop=center',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['sushi-master'],
-      name: 'Premium Rainbow Roll',
-      description: 'Assorted premium fish selection roll',
-      ingredients: 'Sushi rice, nori, tuna, salmon, yellowtail, avocado, cucumber',
-      instructions: 'Roll fish and avocado, top with assorted fish',
-      prepTime: 25,
-      cookTime: 0,
-      servings: 4,
-      difficulty: 'hard',
-      cuisine: 'Japanese',
-      category: 'rolls',
-      nutritionInfo: JSON.stringify({calories: 400, protein: 15, carbs: 50, fat: 12}),
-      imageUrl: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=300&fit=crop&crop=center',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['sushi-master'],
-      name: 'Premium Spider Roll',
-      description: 'Soft shell crab specialty roll',
-      ingredients: 'Sushi rice, nori, soft shell crab, avocado, cucumber, spicy mayo',
-      instructions: 'Roll crab and vegetables, top with avocado, drizzle mayo',
-      prepTime: 22,
-      cookTime: 0,
-      servings: 4,
-      difficulty: 'medium',
-      cuisine: 'Japanese',
-      category: 'rolls',
-      nutritionInfo: JSON.stringify({calories: 400, protein: 15, carbs: 50, fat: 12}),
-      imageUrl: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=300&fit=crop&crop=center',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['sushi-master'],
-      name: 'Premium Volcano Roll',
-      description: 'Spicy tuna with tempura crunch',
-      ingredients: 'Sushi rice, nori, spicy tuna, tempura flakes, spicy mayo, eel sauce',
-      instructions: 'Roll spicy tuna, top with tempura, drizzle sauces',
-      prepTime: 18,
-      cookTime: 0,
-      servings: 4,
-      difficulty: 'medium',
-      cuisine: 'Japanese',
-      category: 'rolls',
-      nutritionInfo: JSON.stringify({calories: 400, protein: 15, carbs: 50, fat: 12}),
-      imageUrl: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=300&fit=crop&crop=center',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['sushi-master'],
-      name: 'Premium Ramen',
-      description: 'Rich pork broth ramen with chashu and egg',
-      ingredients: 'Ramen noodles, pork broth, chashu, soft boiled egg, nori, green onions',
-      instructions: 'Cook noodles, assemble with broth, chashu, egg, and toppings',
-      prepTime: 30,
-      cookTime: 15,
-      servings: 4,
-      difficulty: 'medium',
-      cuisine: 'Japanese',
-      category: 'noodles',
-      nutritionInfo: JSON.stringify({calories: 400, protein: 15, carbs: 50, fat: 12}),
-      imageUrl: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=400&h=300&fit=crop&crop=center',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-
-    // COFFEE & CAFE CUISINE (50+ recipes)
-    {
-      businessId: businesses['coffee-corner'],
-      name: 'Ethiopian Pour Over',
-      description: 'Single origin Ethiopian coffee with floral notes',
-      ingredients: 'Ethiopian coffee beans, filtered water, pour over equipment',
-      instructions: 'Grind beans, heat water, pour in circular motion',
-      prepTime: 5,
-      cookTime: 4,
-      servings: 4,
-      difficulty: 'medium',
-      cuisine: 'Coffee',
-      category: 'coffee',
-      nutritionInfo: JSON.stringify({calories: 400, protein: 15, carbs: 50, fat: 12}),
-      imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=300&fit=crop&crop=center',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['coffee-corner'],
-      name: 'Colombian French Press',
-      description: 'Full-bodied Colombian coffee with chocolate notes',
-      ingredients: 'Colombian coffee beans, hot water, French press',
-      instructions: 'Coarse grind, add hot water, steep 4 minutes, press',
-      prepTime: 5,
-      cookTime: 4,
-      servings: 4,
-      difficulty: 'easy',
-      cuisine: 'Coffee',
-      category: 'coffee',
-      nutritionInfo: JSON.stringify({calories: 400, protein: 15, carbs: 50, fat: 12}),
-      imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=300&fit=crop&crop=center',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['coffee-corner'],
-      name: 'Sumatra Cold Brew',
-      description: 'Smooth cold brew with earthy notes',
-      ingredients: 'Sumatra coffee beans, cold water, time',
-      instructions: 'Coarse grind, cold water, steep 18-24 hours, filter',
-      prepTime: 10,
-      cookTime: 1440, // 24 hours
-      servings: 4,
-      difficulty: 'easy',
-      cuisine: 'Coffee',
-      category: 'coffee',
-      nutritionInfo: JSON.stringify({calories: 400, protein: 15, carbs: 50, fat: 12}),
-      imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=300&fit=crop&crop=center',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['coffee-corner'],
-      name: 'Oat Milk Latte',
-      description: 'Smooth latte with creamy oat milk',
-      ingredients: 'Espresso, oat milk, steamed milk',
-      instructions: 'Pull espresso, steam oat milk, combine',
-      prepTime: 3,
-      cookTime: 2,
-      servings: 4,
-      difficulty: 'medium',
-      cuisine: 'Coffee',
-      category: 'coffee',
-      nutritionInfo: JSON.stringify({calories: 400, protein: 15, carbs: 50, fat: 12}),
-      imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=300&fit=crop&crop=center',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['coffee-corner'],
-      name: 'Matcha Latte',
-      description: 'Ceremonial grade matcha with steamed milk',
-      ingredients: 'Ceremonial matcha, hot water, steamed milk, honey',
-      instructions: 'Whisk matcha with water, add steamed milk, sweeten',
-      prepTime: 5,
-      cookTime: 3,
-      servings: 4,
-      difficulty: 'medium',
-      cuisine: 'Tea',
-      category: 'tea',
-      nutritionInfo: JSON.stringify({calories: 400, protein: 15, carbs: 50, fat: 12}),
-      imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=300&fit=crop&crop=center',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['coffee-corner'],
-      name: 'Chai Latte',
-      description: 'Spiced chai tea with steamed milk',
-      ingredients: 'Chai tea, steamed milk, honey, cinnamon',
-      instructions: 'Steep chai, add steamed milk, sweeten with honey',
-      prepTime: 5,
-      cookTime: 5,
-      servings: 4,
-      difficulty: 'easy',
-      cuisine: 'Tea',
-      category: 'tea',
-      nutritionInfo: JSON.stringify({calories: 400, protein: 15, carbs: 50, fat: 12}),
-      imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=300&fit=crop&crop=center',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['coffee-corner'],
-      name: 'Acai Bowl',
-      description: 'Fresh acai bowl with granola and fruits',
-      ingredients: 'Acai puree, granola, banana, berries, honey, coconut',
-      instructions: 'Blend acai, top with granola and fruits, drizzle honey',
-      prepTime: 10,
-      cookTime: 0,
-      servings: 4,
-      difficulty: 'easy',
-      cuisine: 'Breakfast',
-      category: 'breakfast',
-      nutritionInfo: JSON.stringify({calories: 400, protein: 15, carbs: 50, fat: 12}),
-      imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=300&fit=crop&crop=center',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['coffee-corner'],
-      name: 'Fresh Fruit Bowl',
-      description: 'Seasonal fresh fruit bowl with yogurt',
-      ingredients: 'Seasonal fruits, Greek yogurt, honey, mint',
-      instructions: 'Arrange fruits, add yogurt, drizzle honey, garnish',
-      prepTime: 8,
-      cookTime: 0,
-      servings: 4,
-      difficulty: 'easy',
-      cuisine: 'Breakfast',
-      category: 'breakfast',
-      nutritionInfo: JSON.stringify({calories: 400, protein: 15, carbs: 50, fat: 12}),
-      imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=300&fit=crop&crop=center',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
+  // Group items by business and category for REAL recipe creation
+  const itemsByBusiness: { [businessId: number]: any[] } = {};
+  for (const item of allItems) {
+    if (!item.businessId) continue;
+    const businessId = item.businessId as number;
+    if (!itemsByBusiness[businessId]) {
+      itemsByBusiness[businessId] = [];
     }
-  ];
+    itemsByBusiness[businessId].push(item);
+  }
 
-  // Add hardcoded recipes to comprehensive recipes
-  comprehensiveRecipes.push(...hardcodedRecipes);
+  // REAL RECIPE TEMPLATES using actual ingredients
+  const realRecipeTemplates = {
+    'italian-delight': [
+      {
+        name: 'Truffle Pasta with Wagyu Beef',
+        mainIngredients: ['Premium Black Truffle Pasta', 'Wagyu Beef (Premium)'],
+        supportingIngredients: ['Fresh Basil', 'Cherry Tomatoes', 'Truffle Oil (Underperforming)'],
+        instructions: 'Cook Premium Black Truffle Pasta al dente. Sear Wagyu Beef to medium-rare. Toss pasta with Fresh Basil, Cherry Tomatoes, and Truffle Oil. Top with sliced Wagyu Beef.',
+        prepTime: 15,
+        cookTime: 20,
+        servings: 2,
+        difficulty: 'hard',
+        cuisine: 'Italian',
+        category: 'Pasta',
+        nutritionInfo: 'Calories: 850, Protein: 45g, Carbs: 60g, Fat: 35g',
+        imageUrl: 'https://images.unsplash.com/photo-1621996346565-e3dbc353d946',
+        isActive: true
+      },
+      {
+        name: 'Lobster Ravioli with Saffron Sauce',
+        mainIngredients: ['Premium Lobster Ravioli'],
+        supportingIngredients: ['Premium Saffron (Underperforming)', 'Fresh Basil'],
+        instructions: 'Boil Premium Lobster Ravioli until floating. Create sauce with Premium Saffron, Fresh Basil, and butter. Toss ravioli in saffron sauce.',
+        prepTime: 10,
+        cookTime: 15,
+        servings: 4,
+        difficulty: 'medium',
+        cuisine: 'Italian',
+        category: 'Pasta',
+        nutritionInfo: 'Calories: 650, Protein: 28g, Carbs: 45g, Fat: 32g',
+        imageUrl: 'https://images.unsplash.com/photo-1563379091339-03246963d958',
+        isActive: true
+      },
+      {
+        name: 'Wagyu Beef Carpaccio',
+        mainIngredients: ['Wagyu Beef (Premium)'],
+        supportingIngredients: ['Truffle Oil (Underperforming)', 'Fresh Basil', 'Cherry Tomatoes'],
+        instructions: 'Thinly slice Wagyu Beef. Arrange on plate. Drizzle with Truffle Oil. Garnish with Fresh Basil and Cherry Tomatoes.',
+        prepTime: 20,
+        cookTime: 0,
+        servings: 6,
+        difficulty: 'medium',
+        cuisine: 'Italian',
+        category: 'Appetizer',
+        nutritionInfo: 'Calories: 320, Protein: 35g, Carbs: 5g, Fat: 18g',
+        imageUrl: 'https://images.unsplash.com/photo-1544025162-d76694265947',
+        isActive: true
+      }
+    ],
+    'sushi-master': [
+      {
+        name: 'Bluefin Tuna Otoro Nigiri',
+        mainIngredients: ['Bluefin Tuna Otoro'],
+        supportingIngredients: ['Nori Sheets'],
+        instructions: 'Form sushi rice into nigiri shape. Top with Bluefin Tuna Otoro. Wrap with Nori Sheets if desired.',
+        prepTime: 25,
+        cookTime: 0,
+        servings: 8,
+        difficulty: 'hard',
+        cuisine: 'Japanese',
+        category: 'Sushi',
+        nutritionInfo: 'Calories: 180, Protein: 22g, Carbs: 15g, Fat: 5g',
+        imageUrl: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351',
+        isActive: true
+      },
+      {
+        name: 'Hokkaido Uni Sushi',
+        mainIngredients: ['Hokkaido Uni'],
+        supportingIngredients: ['Nori Sheets'],
+        instructions: 'Form sushi rice into nigiri shape. Carefully place Hokkaido Uni on top. Serve immediately.',
+        prepTime: 20,
+        cookTime: 0,
+        servings: 6,
+        difficulty: 'hard',
+        cuisine: 'Japanese',
+        category: 'Sushi',
+        nutritionInfo: 'Calories: 145, Protein: 18g, Carbs: 12g, Fat: 3g',
+        imageUrl: 'https://images.unsplash.com/photo-1553621042-f6e147245754',
+        isActive: true
+      },
+      {
+        name: 'Soft Shell Crab Roll',
+        mainIngredients: ['Soft Shell Crab'],
+        supportingIngredients: ['Nori Sheets'],
+        instructions: 'Tempura fry Soft Shell Crab. Roll with sushi rice and Nori Sheets. Cut into pieces.',
+        prepTime: 30,
+        cookTime: 10,
+        servings: 8,
+        difficulty: 'medium',
+        cuisine: 'Japanese',
+        category: 'Sushi',
+        nutritionInfo: 'Calories: 280, Protein: 24g, Carbs: 18g, Fat: 12g',
+        imageUrl: 'https://images.unsplash.com/photo-1617196034796-73dfa7b1fd56',
+        isActive: true
+      }
+    ],
+    'coffee-corner': [
+      {
+        name: 'Ethiopian Yirgacheffe Pour Over',
+        mainIngredients: ['Ethiopian Yirgacheffe Beans'],
+        supportingIngredients: [],
+        instructions: 'Grind Ethiopian Yirgacheffe Beans medium-fine. Use pour over method with 200°F water. Brew for 3-4 minutes.',
+        prepTime: 5,
+        cookTime: 4,
+        servings: 1,
+        difficulty: 'medium',
+        cuisine: 'Ethiopian',
+        category: 'Coffee',
+        nutritionInfo: 'Calories: 5, Protein: 0g, Carbs: 1g, Fat: 0g',
+        imageUrl: 'https://images.unsplash.com/photo-1497935586351-b67a49e012bf',
+        isActive: true
+      },
+      {
+        name: 'Colombian Supremo Latte',
+        mainIngredients: ['Colombian Supremo Beans'],
+        supportingIngredients: ['Oat Milk (Expiring Soon)'],
+        instructions: 'Espresso with Colombian Supremo Beans. Steam Oat Milk to 140°F. Combine for perfect latte.',
+        prepTime: 3,
+        cookTime: 2,
+        servings: 1,
+        difficulty: 'easy',
+        cuisine: 'Colombian',
+        category: 'Coffee',
+        nutritionInfo: 'Calories: 150, Protein: 8g, Carbs: 15g, Fat: 5g',
+        imageUrl: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735',
+        isActive: true
+      },
+      {
+        name: 'Matcha Green Tea Latte',
+        mainIngredients: ['Matcha Powder'],
+        supportingIngredients: ['Almond Milk'],
+        instructions: 'Whisk Matcha Powder with hot water. Steam Almond Milk. Combine for smooth matcha latte.',
+        prepTime: 5,
+        cookTime: 3,
+        servings: 1,
+        difficulty: 'medium',
+        cuisine: 'Japanese',
+        category: 'Coffee',
+        nutritionInfo: 'Calories: 120, Protein: 6g, Carbs: 12g, Fat: 4g',
+        imageUrl: 'https://images.unsplash.com/photo-1515823064-d6e0c04616a7',
+        isActive: true
+      },
+      {
+        name: 'Chai Spiced Latte',
+        mainIngredients: ['Chai Concentrate'],
+        supportingIngredients: ['Oat Milk (Expiring Soon)'],
+        instructions: 'Heat Chai Concentrate. Steam Oat Milk. Combine for aromatic chai latte.',
+        prepTime: 3,
+        cookTime: 2,
+        servings: 1,
+        difficulty: 'easy',
+        cuisine: 'Indian',
+        category: 'Coffee',
+        nutritionInfo: 'Calories: 140, Protein: 7g, Carbs: 18g, Fat: 4g',
+        imageUrl: 'https://images.unsplash.com/photo-1571934811356-5cc061b6821f',
+        isActive: true
+      }
+    ]
+  };
 
-  // Add hundreds more recipes with variations
-  const recipeTemplates = [
-    // Italian variations
-    { base: 'Pizza', variations: ['Pepperoni', 'Hawaiian', 'BBQ Chicken', 'Veggie Supreme', 'Meat Lovers', 'Buffalo Chicken', 'Greek', 'Mediterranean', 'Pesto', 'White Pizza'] },
-    { base: 'Pasta', variations: ['Bolognese', 'Alfredo', 'Pesto', 'Arrabbiata', 'Puttanesca', 'Amatriciana', 'Cacio e Pepe', 'Gnocchi', 'Lasagna', 'Fettuccine'] },
-    { base: 'Risotto', variations: ['Mushroom', 'Seafood', 'Truffle', 'Saffron', 'Parmesan', 'Asparagus', 'Butternut Squash', 'Wild Mushroom', 'Lobster', 'Truffle'] },
-    { base: 'Salad', variations: ['Caprese', 'Caesar', 'Greek', 'Mediterranean', 'Arugula', 'Spinach', 'Kale', 'Mixed Greens', 'Antipasto', 'Insalata'] },
-    
-    // Japanese variations
-    { base: 'Nigiri', variations: ['Salmon', 'Tuna', 'Yellowtail', 'Eel', 'Scallop', 'Shrimp', 'Mackerel', 'Octopus', 'Tamago', 'Uni'] },
-    { base: 'Roll', variations: ['California', 'Spicy Tuna', 'Dragon', 'Rainbow', 'Spider', 'Volcano', 'Tiger', 'Dynamite', 'Caterpillar', 'Philadelphia'] },
-    { base: 'Sashimi', variations: ['Salmon', 'Tuna', 'Yellowtail', 'Scallop', 'Mackerel', 'Octopus', 'Uni', 'Toro', 'Hamachi', 'Amaebi'] },
-    { base: 'Ramen', variations: ['Tonkotsu', 'Shoyu', 'Miso', 'Shio', 'Spicy', 'Vegetarian', 'Chicken', 'Beef', 'Seafood', 'Truffle'] },
-    
-    // Coffee variations
-    { base: 'Coffee', variations: ['Americano', 'Cappuccino', 'Latte', 'Mocha', 'Macchiato', 'Flat White', 'Cortado', 'Piccolo', 'Long Black', 'Ristretto'] },
-    { base: 'Tea', variations: ['Green', 'Black', 'Herbal', 'Chai', 'Matcha', 'Earl Grey', 'Jasmine', 'Oolong', 'Rooibos', 'Chamomile'] },
-    { base: 'Smoothie', variations: ['Berry', 'Green', 'Tropical', 'Protein', 'Acai', 'Mango', 'Strawberry', 'Banana', 'Pineapple', 'Mixed Fruit'] },
-    { base: 'Bowl', variations: ['Acai', 'Poke', 'Buddha', 'Grain', 'Fruit', 'Yogurt', 'Smoothie', 'Breakfast', 'Lunch', 'Dinner'] },
-    
-    // Mexican variations
-    { base: 'Taco', variations: ['Carne Asada', 'Al Pastor', 'Carnitas', 'Fish', 'Shrimp', 'Chicken', 'Veggie', 'Bean', 'Lengua', 'Tripa'] },
-    { base: 'Burrito', variations: ['California', 'Mission', 'Wet', 'Breakfast', 'Veggie', 'Bean', 'Chicken', 'Steak', 'Carnitas', 'Shrimp'] },
-    { base: 'Quesadilla', variations: ['Chicken', 'Steak', 'Veggie', 'Bean', 'Shrimp', 'Mushroom', 'Spinach', 'Cheese', 'Mixed', 'Special'] },
-    { base: 'Enchilada', variations: ['Red', 'Green', 'Mole', 'Cheese', 'Chicken', 'Beef', 'Veggie', 'Bean', 'Shrimp', 'Mixed'] },
-    
-    // American variations
-    { base: 'Burger', variations: ['Classic', 'Bacon', 'Cheese', 'Veggie', 'Turkey', 'Chicken', 'Mushroom', 'BBQ', 'Jalapeño', 'Deluxe'] },
-    { base: 'Sandwich', variations: ['Club', 'BLT', 'Reuben', 'Pastrami', 'Turkey', 'Chicken', 'Veggie', 'Tuna', 'Egg', 'Grilled Cheese'] },
-    { base: 'Steak', variations: ['Ribeye', 'Filet Mignon', 'Strip', 'T-Bone', 'Porterhouse', 'Flank', 'Skirt', 'Hanger', 'Flat Iron', 'Tomahawk'] },
-    { base: 'Salad', variations: ['Caesar', 'Cobb', 'Garden', 'Greek', 'Wedge', 'Spinach', 'Kale', 'Mixed Greens', 'Potato', 'Macaroni'] },
-    
-    // Asian variations
-    { base: 'Dim Sum', variations: ['Har Gow', 'Char Siu Bao', 'Siu Mai', 'Xiao Long Bao', 'Turnip Cake', 'Rice Noodle Roll', 'Egg Tart', 'Phoenix Claws', 'Beef Ball', 'Shrimp Toast'] },
-    { base: 'Noodle', variations: ['Chow Mein', 'Lo Mein', 'Pad Thai', 'Pho', 'Ramen', 'Udon', 'Soba', 'Rice Noodles', 'Glass Noodles', 'Wonton Noodles'] },
-    { base: 'Rice', variations: ['Fried Rice', 'Steamed Rice', 'Sticky Rice', 'Bibimbap', 'Curry Rice', 'Teriyaki Rice', 'Kimchi Rice', 'Coconut Rice', 'Jasmine Rice', 'Brown Rice'] },
-    { base: 'Stir Fry', variations: ['Kung Pao', 'Sweet and Sour', 'General Tso', 'Orange', 'Lemon', 'Garlic', 'Ginger', 'Szechuan', 'Teriyaki', 'Mongolian'] }
-  ];
-
-  // Generate additional recipes (limited to prevent overwhelming the database)
-  let recipeId = comprehensiveRecipes.length + 1;
+    // Generate LOTS of recipes using templates + available items
   
-  for (const businessSlug of businessSlugs) {
-    const businessId = businesses[businessSlug];
-    if (!businessId) continue;
+  for (const [businessSlug, businessId] of Object.entries(businessMap)) {
+    const businessIdNum = businessId as number;
+    const businessItems = itemsByBusiness[businessIdNum] || [];
+    
+    if (businessItems.length === 0) {
+      console.log(`⚠️ No items found for business ${businessSlug}, skipping...`);
+      continue;
+    }
 
-    // Limit to first 2-3 variations per template to keep it manageable
-    for (const template of recipeTemplates) {
-      const limitedVariations = template.variations.slice(0, 2 + Math.floor(Math.random() * 2)); // 2-3 variations
-      for (const variation of limitedVariations) {
-        const recipeName = `${variation} ${template.base}`;
+    // Get templates for this business
+    const templates = realRecipeTemplates[businessSlug as keyof typeof realRecipeTemplates] || [];
+    
+    // Create MANY recipes (800+ per business)
+    const recipesPerBusiness = Math.min(800, businessItems.length * 2);
+    
+    for (let i = 0; i < recipesPerBusiness; i++) {
+      let recipe;
+      
+      // First create template-based recipes
+      if (i < templates.length) {
+        const template = templates[i];
         
-        // Skip if already exists (check both name and businessId)
-        const existingRecipe = comprehensiveRecipes.find(r => r.name === recipeName && r.businessId === businessId);
-        if (existingRecipe) {
-          console.log(`   ⚠️ Skipping duplicate recipe: ${recipeName} for business ${businessSlug}`);
-          continue;
+        if (template) {
+          // Get all template ingredients
+          const allTemplateIngredients = [...template.mainIngredients, ...template.supportingIngredients];
+          
+          // Find actual items that match template ingredients
+          const matchedIngredients = allTemplateIngredients
+            .map(ingredientName => {
+              const item = businessItems.find(item => 
+                item.name && item.name.toLowerCase().includes(ingredientName.toLowerCase())
+              );
+              return item;
+            })
+            .filter(Boolean);
+          
+          if (matchedIngredients.length > 0) {
+            // Create recipe from template - ALL COLUMNS EXPLICITLY DEFINED
+            recipe = {
+              businessId: businessIdNum,
+              name: template.name,
+              description: `Authentic ${businessSlug === 'italian-delight' ? 'Italian' : businessSlug === 'sushi-master' ? 'Japanese' : 'Coffee'} recipe using premium ingredients.`,
+              ingredients: matchedIngredients.map(item => item.name).join(', '),
+              instructions: template.instructions,
+              prepTime: template.prepTime,
+              cookTime: template.cookTime,
+              servings: template.servings || 2,
+              difficulty: template.difficulty || 'medium',
+              cuisine: template.cuisine || (businessSlug === 'italian-delight' ? 'Italian' : businessSlug === 'sushi-master' ? 'Japanese' : 'Coffee'),
+              category: template.category || (businessSlug === 'italian-delight' ? 'Pasta' : businessSlug === 'sushi-master' ? 'Sushi' : 'Coffee'),
+              nutritionInfo: template.nutritionInfo || calculateNutrition([...template.mainIngredients, ...template.supportingIngredients], template.servings || 2),
+              imageUrl: template.imageUrl || 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b',
+              isActive: template.isActive !== undefined ? template.isActive : true,
+              createdAt: new Date(),
+              updatedAt: new Date()
+            };
+          }
         }
-
-        // Generate recipe based on business type
-        let category = template.base.toLowerCase();
-        let price = 15.00 + Math.random() * 25; // $15-40 range
-        let difficulty = Math.random() > 0.7 ? 'hard' : Math.random() > 0.4 ? 'medium' : 'easy';
-        let prepTime = 10 + Math.floor(Math.random() * 30);
-        let cookTime = 5 + Math.floor(Math.random() * 25);
-
-        // Adjust for business type
-        if (businessSlug === 'italian-delight') {
-          if (template.base === 'Pizza') price = 18.00 + Math.random() * 15;
-          if (template.base === 'Pasta') price = 20.00 + Math.random() * 12;
-        } else if (businessSlug === 'sushi-master') {
-          if (template.base === 'Nigiri') price = 8.00 + Math.random() * 8;
-          if (template.base === 'Roll') price = 16.00 + Math.random() * 12;
-          if (template.base === 'Sashimi') price = 22.00 + Math.random() * 15;
-        } else if (businessSlug === 'coffee-corner') {
-          if (template.base === 'Coffee') price = 4.50 + Math.random() * 4;
-          if (template.base === 'Tea') price = 5.00 + Math.random() * 3;
-          if (template.base === 'Smoothie') price = 8.00 + Math.random() * 4;
-        }
-
-        const recipe = {
-          businessId,
-          name: recipeName,
-          description: `Delicious ${variation.toLowerCase()} ${template.base.toLowerCase()} made with premium ingredients`,
-          ingredients: `Premium ${variation.toLowerCase()} ingredients, fresh herbs, quality spices`,
-          instructions: `Prepare ${variation.toLowerCase()} ingredients, combine with ${template.base.toLowerCase()} base, serve fresh`,
-          prepTime,
-          cookTime,
-          servings: 4,
-          difficulty,
-          cuisine: 'International',
-          category,
-          nutritionInfo: JSON.stringify({
-            calories: Math.floor(Math.random() * 500) + 200,
-            protein: Math.floor(Math.random() * 30) + 10,
-            carbs: Math.floor(Math.random() * 50) + 20,
-            fat: Math.floor(Math.random() * 20) + 5
-          }),
-          imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=300&fit=crop&crop=center',
+      }
+      
+      // If no template recipe created, create one from available items
+      if (!recipe) {
+        const availableItems = businessItems.filter(item => item.category && item.category !== 'beverages');
+        const mainItem = availableItems[Math.floor(Math.random() * availableItems.length)];
+        const supportingItems = availableItems.filter(item => item.id !== mainItem.id).slice(0, 3);
+        
+        if (!mainItem) continue;
+        
+        // Create diverse recipe names based on cuisine
+        const cuisineSuffixes = {
+          'italian-delight': ['Pasta', 'Risotto', 'Pizza', 'Antipasto', 'Primi Piatti'],
+          'sushi-master': ['Sushi', 'Nigiri', 'Maki', 'Sashimi', 'Temaki'],
+          'coffee-corner': ['Latte', 'Cappuccino', 'Espresso', 'Pour Over', 'Specialty']
+        };
+        
+        const suffixes = cuisineSuffixes[businessSlug as keyof typeof cuisineSuffixes] || ['Specialty'];
+        const suffix = suffixes[Math.floor(Math.random() * suffixes.length)];
+        const servings = 1 + Math.floor(Math.random() * 4);
+        
+        // Create random recipe - ALL COLUMNS EXPLICITLY DEFINED
+        recipe = {
+          businessId: businessIdNum,
+          name: `${mainItem.name} ${suffix}`,
+          description: `Authentic ${businessSlug === 'italian-delight' ? 'Italian' : businessSlug === 'sushi-master' ? 'Japanese' : 'Coffee'} recipe using premium ingredients.`,
+          ingredients: [mainItem, ...supportingItems].map(item => item.name).join(', '),
+          instructions: `Prepare ${mainItem.name} with ${supportingItems.map(item => item.name).join(', ')}. Cook to perfection.`,
+          prepTime: 10 + Math.floor(Math.random() * 20),
+          cookTime: 15 + Math.floor(Math.random() * 30),
+          servings: servings,
+          difficulty: ['easy', 'medium', 'hard'][Math.floor(Math.random() * 3)] as 'easy' | 'medium' | 'hard',
+          cuisine: businessSlug === 'italian-delight' ? 'Italian' : businessSlug === 'sushi-master' ? 'Japanese' : 'Coffee',
+          category: businessSlug === 'italian-delight' ? 'Pasta' : businessSlug === 'sushi-master' ? 'Sushi' : 'Coffee',
+          nutritionInfo: calculateNutrition([mainItem, ...supportingItems].map(item => item.name), servings),
+          imageUrl: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b',
           isActive: true,
           createdAt: new Date(),
           updatedAt: new Date()
         };
-
-        comprehensiveRecipes.push(recipe);
-        recipeId++;
       }
+      
+      comprehensiveRecipes.push(recipe);
     }
   }
 
-  // Insert all recipes in chunks
-  console.log(`📝 Inserting ${comprehensiveRecipes.length} comprehensive recipes in chunks...`);
-  
-  const chunkSize = 1; // Insert 1 recipe at a time (minimal to prevent SQL Server issues)
-  for (let i = 0; i < comprehensiveRecipes.length; i += chunkSize) {
-    const chunk = comprehensiveRecipes.slice(i, i + chunkSize);
-    console.log(`📦 Inserting chunk ${Math.floor(i / chunkSize) + 1}/${Math.ceil(comprehensiveRecipes.length / chunkSize)} (${chunk.length} recipes)...`);
-    await queryInterface.bulkInsert('recipes', chunk);
+  console.log(`🍳 Total recipes created: ${comprehensiveRecipes.length}`);
+
+  // Insert recipes in chunks
+  if (comprehensiveRecipes.length > 0) {
+    console.log(`🍳 Inserting ${comprehensiveRecipes.length} recipes in chunks...`);
+    
+    const chunkSize = 100;
+    for (let i = 0; i < comprehensiveRecipes.length; i += chunkSize) {
+      const chunk = comprehensiveRecipes.slice(i, i + chunkSize);
+      await queryInterface.bulkInsert('recipes', chunk);
+      console.log(`🍳 Inserted recipe chunk ${Math.floor(i / chunkSize) + 1}/${Math.ceil(comprehensiveRecipes.length / chunkSize)}`);
+    }
   }
 
-  // Create recipe suggestions for smart recommendations
-  console.log('🧠 Creating recipe suggestions for smart recommendations...');
-  
-  const recipeSuggestions = [];
-  for (const recipe of comprehensiveRecipes) {
-    // Create multiple suggestions per recipe
-    const suggestionTypes = ['popular', 'seasonal', 'premium', 'comfort', 'healthy', 'quick'];
-    const reasons = [
-      'High customer demand',
-      'Seasonal ingredients available',
-      'Premium quality ingredients',
-      'Comfort food favorite',
-      'Healthy option',
-      'Quick preparation time',
-      'Chef recommendation',
-      'Staff favorite',
-      'Customer favorite',
-      'New addition to menu'
-    ];
-    const priorities = ['high', 'medium', 'low'];
-    const targetAudiences = [
-      'general_customers',
-      'food_enthusiasts',
-      'health_conscious',
-      'luxury_diners',
-      'quick_service',
-      'family_diners',
-      'date_night',
-      'business_lunch',
-      'casual_dining',
-      'fine_dining'
-    ];
+  // 🔗 Create Recipe Ingredients (N:N relationship) for comprehensive recipes
+  console.log('🔗 Creating recipe-ingredient relationships for comprehensive recipes...');
 
-    // Create 1-2 suggestions per recipe (reduced to prevent overwhelming)
-    const numSuggestions = 1 + Math.floor(Math.random() * 2);
-    for (let i = 0; i < numSuggestions; i++) {
-      const suggestion = {
-        businessId: recipe.businessId,
-        recipeId: recipeId,
-        suggestionType: suggestionTypes[Math.floor(Math.random() * suggestionTypes.length)],
-        reason: reasons[Math.floor(Math.random() * reasons.length)],
-        priority: priorities[Math.floor(Math.random() * priorities.length)],
-        targetAudience: targetAudiences[Math.floor(Math.random() * targetAudiences.length)],
-        status: 'pending',
+  // Get all existing items for mapping
+  const allItemsForIngredients = await queryInterface.sequelize.query(
+    'SELECT id, businessId, name, sku FROM items WHERE businessId IS NOT NULL',
+    { type: QueryTypes.SELECT }
+  ) as any[];
+
+  // Create item lookup maps by business
+  const itemMapsForIngredients: { [businessId: number]: { [name: string]: number } } = {};
+  for (const item of allItemsForIngredients) {
+    if (!item.businessId) continue;
+    const businessId = item.businessId as number;
+    if (!itemMapsForIngredients[businessId]) {
+      itemMapsForIngredients[businessId] = {};
+    }
+    if (item.name) {
+      itemMapsForIngredients[businessId][(item.name as string).toLowerCase()] = item.id;
+    }
+    if (item.sku) {
+      itemMapsForIngredients[businessId][(item.sku as string).toLowerCase()] = item.id;
+    }
+  }
+
+  // Get the recipes we just created with their business info
+  const createdRecipes = await queryInterface.sequelize.query(
+    `SELECT r.id, r.businessId, r.name, r.ingredients, b.slug as businessSlug 
+     FROM recipes r 
+     JOIN businesses b ON r.businessId = b.id 
+     WHERE r.createdAt >= ? AND b.slug IN (?, ?, ?)`,
+    { type: QueryTypes.SELECT, replacements: [new Date(Date.now() - 60000), 'italian-delight', 'sushi-master', 'coffee-corner'] }
+  ) as any[];
+
+  // Create recipe ingredients using the actual ingredients from recipe creation
+  const recipeIngredients: any[] = [];
+
+  for (const recipe of createdRecipes) {
+    const businessId = recipe.businessId;
+    const itemMap = itemMapsForIngredients[businessId];
+    
+    if (!itemMap) {
+      console.log(`⚠️ No item map for business ${businessId}, skipping recipe ${recipe.id}`);
+      continue;
+    }
+
+    // Parse the ingredients string from the recipe to get the actual items used
+    const ingredientNames = recipe.ingredients.split(', ').map((name: string) => name.trim());
+    
+    // Find the actual item IDs for each ingredient
+    for (const ingredientName of ingredientNames) {
+      const itemId = itemMap[ingredientName.toLowerCase()];
+      
+      if (!itemId) {
+        console.log(`⚠️ Item "${ingredientName}" not found for recipe "${recipe.name}"`);
+        continue;
+      }
+
+      const recipeIngredient = {
+        recipeId: recipe.id,
+        itemId: itemId,
+        quantity: 1 + Math.floor(Math.random() * 3), // 1-3 pieces
+        unit: 'pieces',
+        notes: `Essential ingredient for ${recipe.name}`,
         createdAt: new Date(),
         updatedAt: new Date()
       };
-      recipeSuggestions.push(suggestion);
+      recipeIngredients.push(recipeIngredient);
     }
   }
 
-  // Get recipe IDs for suggestions
-  const recipeIds: { [key: string]: number } = {};
-  for (const recipe of comprehensiveRecipes) {
-    const [dbRecipe] = await queryInterface.sequelize.query(
-      'SELECT id FROM recipes WHERE name = ? AND businessId = ?',
-      { type: QueryTypes.SELECT, replacements: [recipe.name, recipe.businessId] }
-    ) as any[];
-    if (dbRecipe) {
-      recipeIds[`${recipe.name}-${recipe.businessId}`] = dbRecipe.id;
-    }
-  }
-
-  // Update recipe suggestions with actual recipe IDs
-  for (const suggestion of recipeSuggestions) {
-    const recipe = comprehensiveRecipes.find(r => r.businessId === suggestion.businessId);
-    if (recipe) {
-      const recipeId = recipeIds[`${recipe.name}-${recipe.businessId}`];
-      if (recipeId) {
-        suggestion.recipeId = recipeId;
+  // Insert recipe ingredients in chunks with error handling
+  if (recipeIngredients.length > 0) {
+    console.log(`🔗 Inserting ${recipeIngredients.length} recipe-ingredient relationships in chunks...`);
+    
+    const ingredientChunkSize = 100;
+    for (let i = 0; i < recipeIngredients.length; i += ingredientChunkSize) {
+      const chunk = recipeIngredients.slice(i, i + ingredientChunkSize);
+      try {
+        await queryInterface.bulkInsert('recipe_ingredients', chunk);
+        console.log(`🔗 Inserted ingredient chunk ${Math.floor(i / ingredientChunkSize) + 1}/${Math.ceil(recipeIngredients.length / ingredientChunkSize)}`);
+      } catch (error) {
+        console.log(`⚠️ Error inserting ingredient chunk ${Math.floor(i / ingredientChunkSize) + 1}, trying individual inserts...`);
+        console.log(`Error details: ${error}`);
+        
+        // Fallback to individual inserts with error handling
+        for (const ingredient of chunk) {
+          try {
+            await queryInterface.bulkInsert('recipe_ingredients', [ingredient]);
+          } catch (individualError: any) {
+            // Check if it's a unique constraint violation (duplicate recipe-ingredient)
+            const errorMessage = individualError.toString();
+            if (errorMessage.includes('UQ_recipe_ingredient') || errorMessage.includes('duplicate')) {
+              console.log(`ℹ️ Skipping duplicate recipe-ingredient combination: recipeId ${ingredient.recipeId}, itemId ${ingredient.itemId}`);
+            } else if (errorMessage.includes('foreign key') || errorMessage.includes('FK_')) {
+              console.log(`⚠️ Skipping ingredient with itemId ${ingredient.itemId} - item may not exist`);
+            } else {
+              console.log(`⚠️ Error inserting ingredient: ${errorMessage}`);
+            }
+          }
+        }
       }
     }
   }
 
-  // Filter out suggestions without valid recipe IDs
-  const validSuggestions = recipeSuggestions.filter(s => s.recipeId && typeof s.recipeId === 'number');
-
-  // Insert recipe suggestions in chunks
-  console.log(`💡 Inserting ${validSuggestions.length} recipe suggestions in chunks...`);
-  
-  const suggestionChunkSize = 20; // Insert 20 suggestions at a time (reduced to prevent SQL Server issues)
-  for (let i = 0; i < validSuggestions.length; i += suggestionChunkSize) {
-    const chunk = validSuggestions.slice(i, i + suggestionChunkSize);
-    console.log(`💡 Inserting suggestion chunk ${Math.floor(i / suggestionChunkSize) + 1}/${Math.ceil(validSuggestions.length / suggestionChunkSize)} (${chunk.length} suggestions)...`);
-    await queryInterface.bulkInsert('recipe_suggestions', chunk);
-  }
-
-  console.log('✅ Comprehensive recipe seeder completed successfully!');
-  console.log(`📊 Summary:`);
-  console.log(`   - Total recipes created: ${comprehensiveRecipes.length}`);
-  console.log(`   - Total recipe suggestions: ${validSuggestions.length}`);
-  console.log(`   - Italian Delight recipes: ${comprehensiveRecipes.filter(r => r.businessId === businesses['italian-delight']).length}`);
-  console.log(`   - Sushi Master recipes: ${comprehensiveRecipes.filter(r => r.businessId === businesses['sushi-master']).length}`);
-  console.log(`   - Coffee Corner recipes: ${comprehensiveRecipes.filter(r => r.businessId === businesses['coffee-corner']).length}`);
+  console.log('✅ Comprehensive recipes seeder completed successfully!');
 }
 
 export async function down(queryInterface: QueryInterface): Promise<void> {
-  console.log('🗑️ Rolling back comprehensive recipe seeder...');
-  
-  // Delete recipe suggestions first (due to foreign key)
-  await queryInterface.sequelize.query('DELETE FROM recipe_suggestions WHERE createdAt >= ?', {
-    replacements: [new Date('2025-01-01')]
-  });
+  console.log('🔄 Rolling back comprehensive recipes seeder...');
+
+  // Delete recipe ingredients first (due to foreign key constraints)
+  await queryInterface.sequelize.query(
+    'DELETE FROM recipe_ingredients WHERE recipeId IN (SELECT id FROM recipes WHERE businessId IN (SELECT id FROM businesses WHERE slug IN (?, ?, ?)))',
+    { replacements: ['italian-delight', 'sushi-master', 'coffee-corner'] }
+  );
 
   // Delete recipes
-  await queryInterface.sequelize.query('DELETE FROM recipes WHERE createdAt >= ?', {
-    replacements: [new Date('2025-01-01')]
-  });
+  await queryInterface.sequelize.query(
+    'DELETE FROM recipes WHERE businessId IN (SELECT id FROM businesses WHERE slug IN (?, ?, ?))',
+    { replacements: ['italian-delight', 'sushi-master', 'coffee-corner'] }
+  );
 
-  console.log('✅ Comprehensive recipe seeder rolled back successfully!');
-} 
+  console.log('✅ Comprehensive recipes seeder rolled back successfully!');
+}

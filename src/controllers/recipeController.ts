@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { RecipeService, RecipeData } from '../services/recipeService';
 import { logger } from '../utils/logger';
 import { AuthRequest } from '../middleware/auth';
@@ -316,13 +316,42 @@ export class RecipeController {
   static async getRecipeStats(req: AuthRequest, res: Response): Promise<void> {
     try {
       const businessId = req.user!.businessId;
-
+      
       const stats = await RecipeService.getRecipeStats(businessId);
-
+      
       res.status(200).json({ data: stats });
     } catch (error) {
       logger(`Error in getRecipeStats: ${error}`);
       res.status(500).json({ error: 'Failed to get recipe statistics' });
+    }
+  }
+
+  /**
+   * Bulk link recipes to items efficiently
+   * Scans items table, reads recipes table, and links them in recipe_ingredients
+   */
+  static async bulkLinkRecipesToItems(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const businessId = req.user!.businessId;
+      const { force = false } = req.query; // force = true to overwrite existing links
+      
+      logger(`Starting bulk recipe-item linking for business ${businessId}`);
+      
+      const result = await RecipeService.bulkLinkRecipesToItems(businessId, force === 'true');
+      
+      res.status(200).json({
+        message: 'Bulk linking completed successfully',
+        data: {
+          totalRecipes: result.totalRecipes,
+          totalItems: result.totalItems,
+          linksCreated: result.linksCreated,
+          linksSkipped: result.linksSkipped,
+          processingTime: result.processingTime
+        }
+      });
+    } catch (error) {
+      logger(`Error in bulkLinkRecipesToItems: ${error}`);
+      res.status(500).json({ error: 'Failed to bulk link recipes to items' });
     }
   }
 } 

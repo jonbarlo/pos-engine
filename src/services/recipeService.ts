@@ -1,6 +1,6 @@
 import { RecipeModel, RecipeSuggestionModel, ItemModel } from '../models';
 import { logger } from '../utils/logger';
-import { Op } from 'sequelize';
+import { Op, QueryTypes } from 'sequelize';
 
 export interface RecipeData {
   businessId: number;
@@ -363,6 +363,136 @@ export class RecipeService {
       return stats;
     } catch (error) {
       logger(`Error getting recipe stats: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Bulk link recipes to items efficiently
+   * Performance optimized with bulk operations and minimal database queries
+   */
+  static async bulkLinkRecipesToItems(businessId: number, force: boolean = false): Promise<{
+    totalRecipes: number;
+    totalItems: number;
+    linksCreated: number;
+    linksSkipped: number;
+    processingTime: number;
+  }> {
+    const startTime = Date.now();
+    
+    try {
+      logger(`Starting bulk recipe-item linking for business ${businessId}`);
+      
+      // 1. Get all items for this business (single query)
+      const items = await ItemModel.findAll({
+        where: { businessId },
+        attributes: ['id', 'name', 'sku'],
+        raw: true
+      });
+      
+      // 2. Get all recipes for this business (single query)
+      const recipes = await RecipeModel.findAll({
+        where: { businessId },
+        attributes: ['id', 'name', 'ingredients'],
+        raw: true
+      });
+      
+      // 3. Create efficient lookup maps
+      const itemMap = new Map<string, number>();
+      items.forEach(item => {
+        if (item.name) itemMap.set(item.name.toLowerCase(), item.id);
+        if (item.sku) itemMap.set(item.sku.toLowerCase(), item.id);
+      });
+      
+      // 4. Check existing recipe_ingredients to avoid duplicates
+      let existingLinks = new Set<string>();
+      if (!force) {
+        const existing = await RecipeModel.sequelize!.query(
+          'SELECT recipeId, itemId FROM recipe_ingredients WHERE recipeId IN (SELECT id FROM recipes WHERE businessId = ?)',
+          { 
+            type: QueryTypes.SELECT,
+            replacements: [businessId]
+          }
+        ) as any[];
+        
+        existingLinks = new Set(existing.map(link => `${link.recipeId}-${link.itemId}`));
+      }
+      
+      // 5. Process recipes and create links efficiently
+      const linksToCreate: any[] = [];
+      let linksSkipped = 0;
+      
+      for (const recipe of recipes) {
+        if (!recipe.ingredients) continue;
+        
+        // Parse ingredients (comma-separated string)
+        const ingredientNames = recipe.ingredients.split(',').map(name => name.trim());
+        
+        for (const ingredientName of ingredientNames) {
+          const itemId = itemMap.get(ingredientName.toLowerCase());
+          
+          if (!itemId) {
+            logger(`Item not found: "${ingredientName}" for recipe "${recipe.name}"`);
+            continue;
+          }
+          
+          const linkKey = `${recipe.id}-${itemId}`;
+          
+          if (existingLinks.has(linkKey)) {
+            linksSkipped++;
+            continue;
+          }
+          
+          linksToCreate.push({
+            recipeId: recipe.id,
+            itemId: itemId,
+            quantity: 1,
+            unit: 'pieces',
+            notes: `Auto-linked ingredient for ${recipe.name}`,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          });
+        }
+      }
+      
+      // 6. Bulk insert all links in chunks (SQL Server limit: 1000 row values)
+      let linksCreated = 0;
+      if (linksToCreate.length > 0) {
+        const chunkSize = 100; // 100 rows * 7 columns = 700 values (under 1000 limit)
+        
+        for (let i = 0; i < linksToCreate.length; i += chunkSize) {
+          const chunk = linksToCreate.slice(i, i + chunkSize);
+          
+          await RecipeModel.sequelize!.query(
+            'INSERT INTO recipe_ingredients (recipeId, itemId, quantity, unit, notes, createdAt, updatedAt) VALUES ' +
+            chunk.map(() => '(?, ?, ?, ?, ?, ?, ?)').join(', '),
+            {
+              type: QueryTypes.INSERT,
+              replacements: chunk.flatMap(link => [
+                link.recipeId, link.itemId, link.quantity, link.unit, link.notes, link.createdAt, link.updatedAt
+              ])
+            }
+          );
+          
+          linksCreated += chunk.length;
+          logger(`Inserted chunk ${Math.floor(i / chunkSize) + 1}/${Math.ceil(linksToCreate.length / chunkSize)}`);
+        }
+      }
+      
+      const processingTime = Date.now() - startTime;
+      
+      logger(`Bulk linking completed: ${linksCreated} links created, ${linksSkipped} skipped in ${processingTime}ms`);
+      
+      return {
+        totalRecipes: recipes.length,
+        totalItems: items.length,
+        linksCreated,
+        linksSkipped,
+        processingTime
+      };
+      
+    } catch (error) {
+      logger(`Error in bulkLinkRecipesToItems: ${error}`);
       throw error;
     }
   }

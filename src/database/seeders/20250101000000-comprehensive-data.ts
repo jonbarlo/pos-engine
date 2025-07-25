@@ -1423,10 +1423,9 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       cuisine: 'Italian',
       category: 'Pizza',
       ingredients: JSON.stringify([
-        { name: 'Pizza dough', amount: 1, unit: 'piece' },
-        { name: 'Tomato sauce', amount: 1, unit: 'cup' },
-        { name: 'Fresh mozzarella', amount: 8, unit: 'oz' },
-        { name: 'Fresh basil', amount: 10, unit: 'leaves' }
+        { name: 'Margherita Pizza Base', amount: 1, unit: 'piece' },
+        { name: 'Spaghetti Pasta', amount: 1, unit: 'piece' },
+        { name: 'Tiramisu Mix', amount: 1, unit: 'piece' }
       ]),
       nutritionInfo: JSON.stringify({
         calories: 285,
@@ -1449,11 +1448,9 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       cuisine: 'Japanese',
       category: 'Rolls',
       ingredients: JSON.stringify([
-        { name: 'Sushi rice', amount: 2, unit: 'cups' },
-        { name: 'Nori sheets', amount: 2, unit: 'pieces' },
-        { name: 'Crab meat', amount: 4, unit: 'oz' },
-        { name: 'Avocado', amount: 1, unit: 'piece' },
-        { name: 'Cucumber', amount: 1, unit: 'piece' }
+        { name: 'California Roll Mix', amount: 1, unit: 'piece' },
+        { name: 'Salmon Sashimi', amount: 2, unit: 'piece' },
+        { name: 'Miso Soup Base', amount: 1, unit: 'bowl' }
       ]),
       nutritionInfo: JSON.stringify({
         calories: 180,
@@ -1476,8 +1473,8 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       cuisine: 'Italian',
       category: 'Coffee',
       ingredients: JSON.stringify([
-        { name: 'Coffee beans', amount: 18, unit: 'g' },
-        { name: 'Whole milk', amount: 6, unit: 'oz' }
+        { name: 'Espresso Beans', amount: 1, unit: 'shot' },
+        { name: 'Milk for Cappuccino', amount: 1, unit: 'cup' }
       ]),
       nutritionInfo: JSON.stringify({
         calories: 80,
@@ -1507,6 +1504,91 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     createdAt: new Date(),
     updatedAt: new Date()
   })));
+
+  // 16.5. Create Recipe Ingredients (N:N relationship)
+  console.log('🔗 Creating recipe-ingredient relationships...');
+  
+  // Get all items for mapping
+  const allItems = await queryInterface.sequelize.query(
+    'SELECT id, businessId, name, sku FROM items WHERE businessId IS NOT NULL',
+    { type: QueryTypes.SELECT }
+  ) as any[];
+
+  // Create item lookup maps by business
+  const itemMaps: { [businessId: number]: { [name: string]: number } } = {};
+  for (const item of allItems) {
+    if (!item.businessId) continue;
+    const businessId = item.businessId as number;
+    if (!itemMaps[businessId]) {
+      itemMaps[businessId] = {};
+    }
+    // Map by name (case insensitive) and SKU
+    if (item.name) {
+      itemMaps[businessId][(item.name as string).toLowerCase()] = item.id;
+    }
+    if (item.sku) {
+      itemMaps[businessId][(item.sku as string).toLowerCase()] = item.id;
+    }
+  }
+
+  // Get all recipes to create ingredient relationships
+  const allRecipes = await queryInterface.sequelize.query(
+    'SELECT id, businessId, name, ingredients FROM recipes WHERE ingredients IS NOT NULL',
+    { type: QueryTypes.SELECT }
+  ) as any[];
+
+  const recipeIngredients: any[] = [];
+
+  for (const recipe of allRecipes) {
+    const businessItems = itemMaps[recipe.businessId] || {};
+    
+    try {
+      // Parse ingredients JSON
+      const ingredients = JSON.parse(recipe.ingredients as string);
+      
+      for (const ingredient of ingredients) {
+        if (!ingredient.name) continue;
+
+        // Try to find matching item
+        let itemId: number | null = null;
+        const ingredientName = ingredient.name.toLowerCase();
+        
+        // Direct name match
+        if (businessItems[ingredientName]) {
+          itemId = businessItems[ingredientName];
+        } else {
+          // Partial matches
+          for (const [itemName, id] of Object.entries(businessItems)) {
+            if (itemName.includes(ingredientName) || ingredientName.includes(itemName)) {
+              itemId = id as number;
+              break;
+            }
+          }
+        }
+
+        if (itemId) {
+          recipeIngredients.push({
+            recipeId: recipe.id,
+            itemId: itemId,
+            quantity: ingredient.amount || 1,
+            unit: ingredient.unit || 'piece',
+            isOptional: false,
+            notes: ingredient.name,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          });
+        }
+      }
+    } catch {
+      console.log(`⚠️ Could not parse ingredients for recipe: ${recipe.name}`);
+    }
+  }
+
+  // Insert recipe ingredients
+  if (recipeIngredients.length > 0) {
+    await queryInterface.bulkInsert('recipe_ingredients', recipeIngredients);
+    console.log(`✅ Created ${recipeIngredients.length} recipe-ingredient relationships`);
+  }
 
   // 17. Create Recipe Suggestions
   const recipeSuggestionData = [
@@ -1736,6 +1818,9 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
 
 export async function down(queryInterface: QueryInterface): Promise<void> {
   // Delete in reverse order to handle foreign key constraints
+  await queryInterface.bulkDelete('recipe_ingredients', {});
+  await queryInterface.bulkDelete('recipe_suggestions', {});
+  await queryInterface.bulkDelete('recipes', {});
   await queryInterface.bulkDelete('table_positions', {});
   await queryInterface.bulkDelete('floor_plans', {});
   await queryInterface.bulkDelete('sale_items', {});
@@ -1755,29 +1840,4 @@ export async function down(queryInterface: QueryInterface): Promise<void> {
   await queryInterface.bulkDelete('businesses', {});
 }
 
-// Main execution
-if (require.main === module) {
-  const { Sequelize } = require('sequelize');
-  const { getDatabaseConfig } = require('../../config/database');
-  
-  const config = getDatabaseConfig();
-  const sequelize = new Sequelize(config);
-  
-  async function runSeeder() {
-    try {
-      console.log('🌱 Starting comprehensive data seeder...');
-      await sequelize.authenticate();
-      console.log('✅ Database connection established.');
-      
-      await up(sequelize.getQueryInterface());
-      console.log('✅ Comprehensive data seeded successfully!');
-      
-      process.exit(0);
-    } catch (error) {
-      console.error('❌ Seeder failed:', error);
-      process.exit(1);
-    }
-  }
-  
-  runSeeder();
-} 
+ 

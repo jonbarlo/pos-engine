@@ -16,11 +16,12 @@ import { initializeKitchenOrderModel } from './KitchenOrderModel';
 import { initializeRecipeModel } from './RecipeModel';
 import { initializeRecipeSuggestionModel } from './RecipeSuggestionModel';
 import { initializePromotionModel } from './PromotionModel';
-import { initializeRecipeCookingHistoryModel } from './RecipeCookingHistoryModel';
+
 import { initializePromotionItemModel } from './PromotionItemModel';
 import { initializeMobileNotificationModel } from './MobileNotificationModel';
 import { FloorPlanModel } from './FloorPlanModel';
 import { TablePositionModel } from './TablePositionModel';
+import RecipeIngredientModel from './RecipeIngredientModel';
 
 // Import models for associations
 import { BusinessModel } from './BusinessModel';
@@ -40,7 +41,7 @@ import { KitchenOrderModel } from './KitchenOrderModel';
 import { RecipeModel } from './RecipeModel';
 import { RecipeSuggestionModel } from './RecipeSuggestionModel';
 import { PromotionModel } from './PromotionModel';
-import { RecipeCookingHistoryModel } from './RecipeCookingHistoryModel';
+
 import { PromotionItemModel } from './PromotionItemModel';
 import { MobileNotificationModel } from './MobileNotificationModel';
 import { StaffMessageModel } from './StaffMessageModel';
@@ -66,7 +67,7 @@ export const initializeAllModels = (): void => {
   initializePromotionModel(sequelize);
   initializeRecipeSuggestionModel(sequelize);
   initializePromotionItemModel(sequelize);
-  initializeRecipeCookingHistoryModel(sequelize);
+
   initializeMobileNotificationModel(sequelize);
   
   // Floor plan models are already initialized via default export
@@ -375,6 +376,21 @@ export const setupAssociations = (): void => {
   RecipeModel.hasMany(RecipeSuggestionModel, {
     foreignKey: 'recipeId',
     as: 'recipeSuggestions'
+  });
+
+  // Recipe-Ingredient associations (many-to-many through RecipeIngredientModel)
+  RecipeModel.belongsToMany(ItemModel, {
+    through: RecipeIngredientModel,
+    foreignKey: 'recipeId',
+    otherKey: 'itemId',
+    as: 'recipeIngredients'
+  });
+
+  ItemModel.belongsToMany(RecipeModel, {
+    through: RecipeIngredientModel,
+    foreignKey: 'itemId',
+    otherKey: 'recipeId',
+    as: 'itemRecipes'
   });
 
   // Promotion associations

@@ -1,7 +1,8 @@
-import { Op, fn, col } from 'sequelize';
+import { Op, fn, col, QueryTypes } from 'sequelize';
 import { ItemModel } from '../models/ItemModel';
 import { RecipeModel } from '../models/RecipeModel';
 import { RecipeSuggestionModel } from '../models/RecipeSuggestionModel';
+//import RecipeIngredientModel from '../models/RecipeIngredientModel';
 
 export interface SmartSuggestionCriteria {
   businessId: number;
@@ -32,6 +33,9 @@ export interface RecipeSuggestion {
     salesVelocity?: number | undefined;
     daysSinceLastSale?: number | undefined;
     reason: string;
+    quantity?: number;
+    unit?: string;
+    isOptional?: boolean;
   }>;
   confidence: number;
   totalPotentialSavings: number;
@@ -47,31 +51,30 @@ export class SmartRecipeSuggestionService {
     try {
       const {
         businessId,
-        includeExpiringItems = true,
-        includeUnderperformingItems = true,
-        maxDaysToExpiry = 7,
-        minSalesVelocity = 0.1,
-        maxDaysSinceLastSale = 30,
         limit = 10,
         status = 'pending',
         includeCooked = false
       } = criteria;
 
       // First, check if we have existing suggestions in the database
+      console.log(`Checking for existing suggestions for business ${businessId} with status: ${status}`);
       const existingSuggestions = await this.getExistingSuggestions(businessId, {
         status,
         includeCooked,
         limit
       });
 
+      console.log(`Found ${existingSuggestions.length} existing suggestions`);
       if (existingSuggestions.length > 0) {
-        console.log(`Found ${existingSuggestions.length} existing suggestions with status: ${status}`);
+        console.log(`Returning ${existingSuggestions.length} existing suggestions with status: ${status}`);
         return existingSuggestions;
       }
 
       // If no existing suggestions, generate new ones
       console.log('No existing suggestions found, generating new ones...');
-      return await this.generateNewSuggestions(criteria);
+      const newSuggestions = await this.generateNewSuggestions(criteria);
+      console.log(`Generated ${newSuggestions.length} new suggestions`);
+      return newSuggestions;
     } catch (error) {
       console.error('Error in getSmartSuggestions:', error);
       return [];
@@ -99,19 +102,12 @@ export class SmartRecipeSuggestionService {
           isActive: true,
           ...statusFilter
         },
-        include: [
-          {
-            model: RecipeModel,
-            as: 'recipe',
-            where: { isActive: true },
-            required: true
-          }
-        ],
-        order: [
-          ['priority', 'DESC'],
-          ['confidence', 'DESC'],
-          ['createdAt', 'DESC']
-        ],
+        include: [{
+          model: RecipeModel,
+          as: 'recipe',
+          attributes: ['id', 'name', 'description', 'difficulty', 'prepTime', 'cookTime', 'imageUrl']
+        }],
+        order: [['priority', 'DESC'], ['confidence', 'DESC']],
         limit
       });
 
@@ -123,18 +119,9 @@ export class SmartRecipeSuggestionService {
   }
 
   /**
-   * Generate new suggestions based on current inventory
+   * Generate new smart suggestions based on inventory analysis
    */
   private static async generateNewSuggestions(criteria: SmartSuggestionCriteria): Promise<RecipeSuggestion[]> {
-    const {
-      businessId,
-      includeExpiringItems = true,
-      includeUnderperformingItems = true,
-      maxDaysToExpiry = 7,
-      minSalesVelocity = 0.1,
-      maxDaysSinceLastSale = 30,
-      limit = 10
-    } = criteria;
     try {
       const {
         businessId,
@@ -147,7 +134,7 @@ export class SmartRecipeSuggestionService {
       } = criteria;
 
       // Get items that need attention
-      const itemsToUse = await this.getItemsNeedingAttention(businessId, {
+      const itemsNeedingAttention = await this.getItemsNeedingAttention(businessId, {
         includeExpiringItems,
         includeUnderperformingItems,
         maxDaysToExpiry,
@@ -155,60 +142,57 @@ export class SmartRecipeSuggestionService {
         maxDaysSinceLastSale
       });
 
-      if (itemsToUse.length === 0) {
-        console.log(`No items needing attention found for business ${businessId}`);
+      if (itemsNeedingAttention.length === 0) {
+        console.log('No items need attention for smart suggestions');
         return [];
       }
 
-      // Get all recipes for the business
-      console.log(`Looking for recipes for business ${businessId}`);
-      let recipes = [];
-      try {
-        recipes = await RecipeModel.findAll({
-          where: { businessId, isActive: true }
-        });
-      } catch (dbError) {
-        console.error('Database error getting recipes:', dbError);
-        return [];
-      }
+      console.log(`Found ${itemsNeedingAttention.length} items needing attention`);
 
-      console.log(`Found ${recipes.length} recipes for business ${businessId}`);
-      if (recipes.length === 0) {
-        console.log(`No active recipes found for business ${businessId}`);
-        return [];
-      }
+      // Get all recipes for this business with their ingredients
+      const recipes = await RecipeModel.findAll({
+        where: { businessId, isActive: true },
+        include: [{
+          model: ItemModel,
+          as: 'recipeIngredients',
+          through: { 
+            attributes: ['quantity', 'unit', 'isOptional']
+          },
+          where: {
+            id: { [Op.in]: itemsNeedingAttention.map(item => item.id) }
+          }
+        }],
+        order: [['name', 'ASC']]
+      });
+
+      console.log(`Found ${recipes.length} recipes that use items needing attention`);
 
       const suggestions: RecipeSuggestion[] = [];
 
-      // Analyze each recipe for potential matches
+      // Generate suggestions for each recipe
       for (const recipe of recipes) {
-        try {
-          const recipeIngredients = this.parseIngredients(recipe.ingredients);
-          const matchingItems = this.findMatchingItems(itemsToUse, recipeIngredients);
-          
-          if (matchingItems.length > 0) {
-            const suggestion = await this.createSuggestion(recipe, matchingItems);
-            suggestions.push(suggestion);
-          }
-        } catch (recipeError) {
-          console.error(`Error processing recipe ${recipe.id}:`, recipeError);
-          // Continue with other recipes instead of failing completely
-          continue;
+        const matchingItems = (recipe as any).recipeIngredients?.filter((ingredient: any) => 
+          itemsNeedingAttention.some(item => item.id === ingredient.id)
+        ) || [];
+
+        if (matchingItems.length > 0) {
+          const suggestion = await this.createSuggestion(recipe, matchingItems);
+          suggestions.push(suggestion);
         }
       }
 
-      // Sort by urgency and confidence
-      suggestions.sort((a, b) => {
-        const urgencyOrder = { high: 3, medium: 2, low: 1 };
-        const urgencyDiff = urgencyOrder[b.urgency] - urgencyOrder[a.urgency];
-        if (urgencyDiff !== 0) return urgencyDiff;
-        return b.confidence - a.confidence;
-      });
+      // Sort by urgency and confidence, then limit
+      return suggestions
+        .sort((a, b) => {
+          const urgencyOrder = { high: 3, medium: 2, low: 1 };
+          const urgencyDiff = urgencyOrder[b.urgency] - urgencyOrder[a.urgency];
+          if (urgencyDiff !== 0) return urgencyDiff;
+          return b.confidence - a.confidence;
+        })
+        .slice(0, limit);
 
-      return suggestions.slice(0, limit);
     } catch (error) {
-      console.error('Error in getSmartSuggestions:', error);
-      // Return empty array instead of throwing error
+      console.error('Error generating new suggestions:', error);
       return [];
     }
   }
@@ -246,10 +230,10 @@ export class SmartRecipeSuggestionService {
       const filteredItems = allItems.filter(item => {
         const orConditions = [];
 
-        if (options.includeExpiringItems && item.isExpiringSoon) {
+        if (options.includeExpiringItems) {
           if (item.expirationDate) {
             const daysToExpiry = Math.ceil((new Date(item.expirationDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-            if (daysToExpiry <= options.maxDaysToExpiry) {
+            if (daysToExpiry <= options.maxDaysToExpiry && daysToExpiry >= 0) {
               orConditions.push(true);
             }
           }
@@ -267,9 +251,15 @@ export class SmartRecipeSuggestionService {
 
       // Sort items
       filteredItems.sort((a, b) => {
-        // Sort by expiring soon first
-        if (a.isExpiringSoon && !b.isExpiringSoon) return -1;
-        if (!a.isExpiringSoon && b.isExpiringSoon) return 1;
+        // Sort by expiring soon first (using runtime calculation)
+        const aDaysToExpiry = a.expirationDate ? Math.ceil((new Date(a.expirationDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : Infinity;
+        const bDaysToExpiry = b.expirationDate ? Math.ceil((new Date(b.expirationDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : Infinity;
+        
+        const aIsExpiringSoon = aDaysToExpiry <= 7 && aDaysToExpiry >= 0;
+        const bIsExpiringSoon = bDaysToExpiry <= 7 && bDaysToExpiry >= 0;
+        
+        if (aIsExpiringSoon && !bIsExpiringSoon) return -1;
+        if (!aIsExpiringSoon && bIsExpiringSoon) return 1;
         
         // Then by expiration date
         if (a.expirationDate && b.expirationDate) {
@@ -297,73 +287,6 @@ export class SmartRecipeSuggestionService {
   }
 
   /**
-   * Parse recipe ingredients into searchable terms
-   */
-  private static parseIngredients(ingredients: string | null | undefined): string[] {
-    if (!ingredients || typeof ingredients !== 'string') {
-      return [];
-    }
-    
-    return ingredients
-      .toLowerCase()
-      .split(/[,;]/)
-      .map(ingredient => ingredient.trim())
-      .filter(ingredient => ingredient.length > 0)
-      .map(ingredient => {
-        // Remove common words and quantities
-        return ingredient
-          .replace(/\d+\s*(g|kg|ml|l|oz|lb|cup|tbsp|tsp)/g, '')
-          .replace(/\b(a|an|the|of|with|and|or)\b/g, '')
-          .trim();
-      })
-      .filter(ingredient => ingredient.length > 2);
-  }
-
-  /**
-   * Find items that match recipe ingredients
-   */
-  private static findMatchingItems(items: any[], recipeIngredients: string[]): any[] {
-    const matchingItems: any[] = [];
-
-    for (const item of items) {
-      const itemName = item.name.toLowerCase();
-      const itemDescription = (item.description || '').toLowerCase();
-      
-      for (const ingredient of recipeIngredients) {
-        if (itemName.includes(ingredient) || itemDescription.includes(ingredient)) {
-          matchingItems.push({
-            ...item.toJSON(),
-            reason: this.getReasonForInclusion(item)
-          });
-          break; // Only include each item once per recipe
-        }
-      }
-    }
-
-    return matchingItems;
-  }
-
-  /**
-   * Get reason why item is being suggested
-   */
-  private static getReasonForInclusion(item: any): string {
-    if (item.isExpiringSoon && item.expirationDate) {
-      const daysToExpiry = Math.ceil((new Date(item.expirationDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-      return `Expires in ${daysToExpiry} days`;
-    }
-    
-    if (item.salesVelocity < 0.1) {
-      return 'Low sales velocity';
-    }
-    
-    if (item.daysSinceLastSale > 30) {
-      return `Not sold in ${item.daysSinceLastSale} days`;
-    }
-    
-    return 'Inventory optimization';
-  }
-
-  /**
    * Create a recipe suggestion with confidence scoring
    */
   private static async createSuggestion(recipe: any, matchingItems: any[]): Promise<RecipeSuggestion> {
@@ -376,6 +299,12 @@ export class SmartRecipeSuggestionService {
         let itemConfidence = 0.5; // Base confidence
         let itemSavings = 0;
         let itemUrgency = 0;
+
+        // Get quantity and unit from recipe-ingredient relationship
+        const recipeIngredient = (recipe as any).recipeIngredients?.find((ing: any) => ing.id === item.id);
+        const quantity = recipeIngredient?.RecipeIngredient?.quantity || 1;
+        const unit = recipeIngredient?.RecipeIngredient?.unit || 'piece';
+        const isOptional = recipeIngredient?.RecipeIngredient?.isOptional || false;
 
         // Calculate confidence based on item characteristics
         if (item.isExpiringSoon && item.expirationDate) {
@@ -401,35 +330,41 @@ export class SmartRecipeSuggestionService {
           itemSavings += (item.cost || 0) * (item.stock || 0) * 0.6; // Potential loss from stale inventory
         }
 
+        // Reduce confidence for optional ingredients
+        if (isOptional) {
+          itemConfidence *= 0.7;
+        }
+
         confidence += itemConfidence;
         totalPotentialSavings += itemSavings;
         urgencyScore += itemUrgency;
 
         return {
-          itemId: item.id || 0,
-          itemName: item.name || 'Unknown Item',
+          itemId: item.id,
+          itemName: item.name,
           currentStock: item.stock || 0,
           expirationDate: item.expirationDate,
           daysToExpiry: item.expirationDate ? 
             Math.ceil((new Date(item.expirationDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : 
             undefined,
-          salesVelocity: item.salesVelocity || 0,
-          daysSinceLastSale: item.daysSinceLastSale || 0,
-          reason: item.reason || 'Inventory optimization'
+          salesVelocity: item.salesVelocity,
+          daysSinceLastSale: item.daysSinceLastSale,
+          quantity: quantity,
+          unit: unit,
+          isOptional: isOptional,
+          reason: this.getReasonForInclusion(item)
         };
       });
 
-      // Normalize confidence
-      confidence = matchingItems.length > 0 ? Math.min(1.0, confidence / matchingItems.length) : 0;
+      // Calculate overall urgency
+      const urgency = urgencyScore > 2 ? 'high' : urgencyScore > 1 ? 'medium' : 'low';
 
-      // Determine urgency level
-      let urgency: 'high' | 'medium' | 'low' = 'low';
-      if (urgencyScore > 0.5) urgency = 'high';
-      else if (urgencyScore > 0.2) urgency = 'medium';
+      // Normalize confidence
+      confidence = Math.min(confidence / suggestedItems.length, 1.0);
 
       return {
-        recipeId: recipe.id || 0,
-        recipeName: recipe.name || 'Unknown Recipe',
+        recipeId: recipe.id,
+        recipeName: recipe.name,
         recipeDescription: recipe.description || '',
         recipeDifficulty: recipe.difficulty || 'medium',
         prepTime: recipe.prepTime || 0,
@@ -442,21 +377,28 @@ export class SmartRecipeSuggestionService {
       };
     } catch (error) {
       console.error('Error creating suggestion:', error);
-      // Return a basic suggestion instead of failing
-      return {
-        recipeId: recipe.id || 0,
-        recipeName: recipe.name || 'Unknown Recipe',
-        recipeDescription: recipe.description || '',
-        recipeDifficulty: recipe.difficulty || 'medium',
-        prepTime: recipe.prepTime || 0,
-        cookTime: recipe.cookTime || 0,
-        imageUrl: recipe.imageUrl,
-        suggestedItems: [],
-        confidence: 0,
-        totalPotentialSavings: 0,
-        urgency: 'low'
-      };
+      throw error;
     }
+  }
+
+  /**
+   * Get reason why item is being suggested
+   */
+  private static getReasonForInclusion(item: any): string {
+    if (item.isExpiringSoon && item.expirationDate) {
+      const daysToExpiry = Math.ceil((new Date(item.expirationDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+      return `Expires in ${daysToExpiry} days`;
+    }
+    
+    if (item.salesVelocity < 0.1) {
+      return 'Low sales velocity';
+    }
+    
+    if (item.daysSinceLastSale > 30) {
+      return `Not sold in ${item.daysSinceLastSale} days`;
+    }
+    
+    return 'Inventory optimization';
   }
 
   /**
@@ -490,7 +432,7 @@ export class SmartRecipeSuggestionService {
         'UPDATE items SET daysSinceLastSale = DATEDIFF(day, lastSoldDate, GETDATE()) WHERE businessId = :businessId AND lastSoldDate IS NOT NULL',
         {
           replacements: { businessId },
-          type: require('sequelize').QueryTypes.UPDATE
+          type: QueryTypes.UPDATE
         }
       );
 
@@ -499,7 +441,7 @@ export class SmartRecipeSuggestionService {
         'UPDATE items SET isExpiringSoon = CASE WHEN expirationDate <= DATEADD(day, 7, GETDATE()) THEN 1 ELSE 0 END WHERE businessId = :businessId AND expirationDate IS NOT NULL',
         {
           replacements: { businessId },
-          type: require('sequelize').QueryTypes.UPDATE
+          type: QueryTypes.UPDATE
         }
       );
 
@@ -508,7 +450,7 @@ export class SmartRecipeSuggestionService {
         'UPDATE items SET isUnderperforming = CASE WHEN salesVelocity < 0.1 OR daysSinceLastSale > 30 THEN 1 ELSE 0 END WHERE businessId = :businessId',
         {
           replacements: { businessId },
-          type: require('sequelize').QueryTypes.UPDATE
+          type: QueryTypes.UPDATE
         }
       );
     } catch (error) {
@@ -659,7 +601,7 @@ export class SmartRecipeSuggestionService {
         
         for (const recipe of matchingRecipes) {
           const urgency = this.calculateUrgency(expiringItem.daysToExpiry, expiringItem.stock);
-          const confidence = this.calculateConfidence(expiringItem, recipe);
+          const confidence = this.calculateConfidence(expiringItem);
           
           const suggestion: RecipeSuggestion = {
             recipeId: recipe.id,
@@ -724,10 +666,10 @@ export class SmartRecipeSuggestionService {
     const itemCategory = item.category.toLowerCase();
 
     for (const recipe of recipes) {
-      const ingredients = this.parseIngredients(recipe.ingredients);
+      const ingredients = (recipe as any).ingredients?.map((ing: any) => ing.name.toLowerCase()) || [];
       
       // Check if recipe ingredients contain the expiring item
-      const hasMatchingIngredient = ingredients.some(ingredient => {
+      const hasMatchingIngredient = ingredients?.some((ingredient: string) => {
         const ingredientLower = ingredient.toLowerCase();
         return ingredientLower.includes(itemName) || 
                ingredientLower.includes(itemCategory) ||
@@ -754,7 +696,7 @@ export class SmartRecipeSuggestionService {
   /**
    * Calculate confidence score for the suggestion
    */
-  private static calculateConfidence(item: any, recipe: any): number {
+  private static calculateConfidence(item: any): number {
     let confidence = 0.5; // Base confidence
 
     // Higher confidence for items expiring very soon

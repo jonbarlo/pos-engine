@@ -649,4 +649,54 @@ router.delete('/:id', RecipeController.deleteRecipe);
  */
 router.post('/:id/image', RecipeController.uploadImage);
 
+/**
+ * @swagger
+ * /api/recipes/bulk-link-items:
+ *   post:
+ *     summary: Bulk link recipes to items efficiently
+ *     tags: [Recipes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: force
+ *         schema:
+ *           type: boolean
+ *           default: false
+ *         description: Force overwrite existing links
+ *     responses:
+ *       200:
+ *         description: Bulk linking completed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     totalRecipes:
+ *                       type: integer
+ *                       description: Total recipes processed
+ *                     totalItems:
+ *                       type: integer
+ *                       description: Total items available
+ *                     linksCreated:
+ *                       type: integer
+ *                       description: Number of new links created
+ *                     linksSkipped:
+ *                       type: integer
+ *                       description: Number of links skipped (already exist)
+ *                     processingTime:
+ *                       type: integer
+ *                       description: Processing time in milliseconds
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+router.post('/bulk-link-items', RecipeController.bulkLinkRecipesToItems);
+
 export default router; 
