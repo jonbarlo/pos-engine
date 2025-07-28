@@ -110,8 +110,16 @@ salesRouter.get('/', SaleController.getAllSales);
  *         application/json:
  *           schema:
  *             type: object
- *             required: [customerName, totalAmount]
+ *             required: [userId, businessId, totalAmount]
  *             properties:
+ *               userId:
+ *                 type: integer
+ *                 description: User ID creating the sale
+ *                 example: 1
+ *               businessId:
+ *                 type: integer
+ *                 description: Business ID
+ *                 example: 4
  *               customerName:
  *                 type: string
  *                 example: "John Doe"
@@ -139,13 +147,23 @@ salesRouter.get('/', SaleController.getAllSales);
  *                 type: string
  *                 enum: [pending, completed, cancelled]
  *                 example: "completed"
+ *               existingOrderId:
+ *                 type: integer
+ *                 description: Optional order ID to link this sale to an existing order. If provided, the order status will be updated to 'completed' and table will be freed up.
+ *                 example: 13
  *     responses:
  *       201:
  *         description: Sale created successfully
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Sale'
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Sale created successfully"
+ *                 sale:
+ *                   $ref: '#/components/schemas/Sale'
  *       400:
  *         description: Bad request
  *         content:
@@ -175,8 +193,16 @@ salesRouter.post('/', SaleController.createSale);
  *         application/json:
  *           schema:
  *             type: object
- *             required: [customerName, totalAmount, orderItems]
+ *             required: [userId, businessId, orderItems]
  *             properties:
+ *               userId:
+ *                 type: integer
+ *                 description: User ID creating the sale
+ *                 example: 1
+ *               businessId:
+ *                 type: integer
+ *                 description: Business ID
+ *                 example: 4
  *               customerName:
  *                 type: string
  *                 example: "John Doe"
@@ -204,6 +230,10 @@ salesRouter.post('/', SaleController.createSale);
  *                 type: string
  *                 enum: [pending, completed, cancelled]
  *                 example: "completed"
+ *               existingOrderId:
+ *                 type: integer
+ *                 description: Optional order ID to link this sale to an existing order. If provided, the order status will be updated to 'completed' and table will be freed up.
+ *                 example: 13
  *               orderItems:
  *                 type: array
  *                 items:
@@ -212,6 +242,7 @@ salesRouter.post('/', SaleController.createSale);
  *                   properties:
  *                     itemId:
  *                       type: integer
+ *                       description: Menu item ID (will be converted to inventory item ID)
  *                       example: 1
  *                     quantity:
  *                       type: integer
@@ -225,7 +256,13 @@ salesRouter.post('/', SaleController.createSale);
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Sale'
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Sale with items created successfully"
+ *                 sale:
+ *                   $ref: '#/components/schemas/Sale'
  *       400:
  *         description: Bad request
  *         content:

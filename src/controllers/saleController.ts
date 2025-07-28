@@ -9,7 +9,7 @@ export class SaleController {
    */
   public static createSale = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-      const saleData = req.body;
+      const { existingOrderId, ...saleData } = req.body;
       
       if (!saleData.userId || saleData.totalAmount === undefined || !saleData.businessId) {
         res.status(400).json({ error: 'User ID, business ID, and total amount are required' });
@@ -17,7 +17,8 @@ export class SaleController {
       }
 
       logger(`API endpoint POST /sales was called...`);
-      const sale = await SaleService.createSale(saleData);
+      logger(`DEBUG: Existing order ID: ${existingOrderId}`);
+      const sale = await SaleService.createSale(saleData, existingOrderId);
       
       res.status(201).json({
         message: 'Sale created successfully',
@@ -218,11 +219,12 @@ export class SaleController {
    */
   public static createSaleWithItems = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-      const { orderItems, ...saleData } = req.body;
+      const { orderItems, existingOrderId, ...saleData } = req.body;
       // Log the incoming data for debugging
       logger(`DEBUG: Incoming request body: ${JSON.stringify(req.body)}`);
       logger(`DEBUG: Extracted saleData: ${JSON.stringify(saleData)}`);
       logger(`DEBUG: Extracted orderItems: ${JSON.stringify(orderItems)}`);
+      logger(`DEBUG: Existing order ID: ${existingOrderId}`);
 
       if (!orderItems || !Array.isArray(orderItems) || orderItems.length === 0) {
         res.status(400).json({ error: 'Order items are required and must be an array' });
@@ -246,7 +248,7 @@ export class SaleController {
       }
 
       logger('API endpoint POST /sales/with-items was called...');
-      const sale = await SaleService.createSaleWithItems(saleData, orderItems);
+      const sale = await SaleService.createSaleWithItems(saleData, orderItems, existingOrderId);
       
       // Update item tracking data after successful sale creation
       try {

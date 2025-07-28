@@ -1,4 +1,4 @@
-import { Model, QueryTypes } from 'sequelize';
+import { QueryTypes, Op } from 'sequelize';
 import { SaleModel, SaleAttributes, SaleCreationAttributes } from '../models/SaleModel';
 import { SaleItemModel } from '../models/SaleItemModel';
 import { ItemModel } from '../models/ItemModel';
@@ -7,6 +7,7 @@ import { UserModel } from '../models/UserModel';
 import { OrderModel, OrderStatus, OrderType } from '../models/OrderModel';
 import { OrderItemModel } from '../models/OrderItemModel';
 import { KitchenOrderModel } from '../models/KitchenOrderModel';
+import { TableModel, TableStatus } from '../models/TableModel';
 import { getSaleRepository } from '../repositories/RepositoryFactory';
 import { logger } from '../utils/logger';
 import { v4 as uuidv4 } from 'uuid';
@@ -29,7 +30,7 @@ export interface SalesStats {
 }
 
 export class SaleService {
-  static async createSale(saleData: SaleCreationAttributes): Promise<SaleAttributes> {
+  static async createSale(saleData: SaleCreationAttributes, existingOrderId?: number): Promise<SaleAttributes> {
     try {
       if (!saleData.userId || saleData.totalAmount === undefined || !saleData.businessId) {
         throw new Error('Missing required fields: userId, businessId, totalAmount');
@@ -54,8 +55,58 @@ export class SaleService {
         logger(`DEBUG: Generated sale number: ${saleData.saleNumber}`);
       }
       
-      const saleRepository = getSaleRepository();
-      return await saleRepository.create(saleData);
+      const sequelize = SaleModel.sequelize;
+      if (!sequelize) {
+        throw new Error('Sequelize instance not available');
+      }
+      
+      const transaction = await sequelize.transaction();
+      try {
+        // Create the sale
+        const saleRepository = getSaleRepository();
+        const sale = await saleRepository.create(saleData);
+        
+        // Update existing order status if provided
+        if (existingOrderId) {
+          logger(`DEBUG: Updating existing order ${existingOrderId} status to completed`);
+          await OrderModel.update(
+            { 
+              status: OrderStatus.COMPLETED,
+              notes: `Paid via sale ${sale.id} - ${sale.notes || ''}`
+            },
+            { 
+              where: { id: existingOrderId, businessId: saleData.businessId },
+              transaction 
+            }
+          );
+          logger(`DEBUG: Updated existing order ${existingOrderId} status to completed`);
+          
+          // Update table status to available if order was associated with a table
+          const order = await OrderModel.findByPk(existingOrderId, { transaction });
+          if (order && order.tableId) {
+            logger(`DEBUG: Updating table ${order.tableId} status to available`);
+            await TableModel.update(
+              { 
+                status: TableStatus.AVAILABLE,
+                currentOrderId: null,
+                customerName: null,
+                notes: null
+              },
+              { 
+                where: { id: order.tableId, businessId: saleData.businessId },
+                transaction 
+              }
+            );
+            logger(`DEBUG: Updated table ${order.tableId} status to available`);
+          }
+        }
+        
+        await transaction.commit();
+        return sale;
+      } catch (error) {
+        await transaction.rollback();
+        throw error;
+      }
     } catch (error) {
       logger(`Error creating sale: ${error}`);
       throw error;
@@ -194,7 +245,8 @@ export class SaleService {
       itemId: number;
       quantity: number;
       unitPrice: number;
-    }>
+    }>,
+    existingOrderId?: number
   ): Promise<SaleAttributes> {
     try {
       logger(`DEBUG: Service received saleData: ${JSON.stringify(saleData)}`);
@@ -236,7 +288,7 @@ export class SaleService {
           const saleItemData = {
             businessId: saleData.businessId,
             saleId: sale.id,
-            itemId: item.itemId,
+            itemId: item.itemId, // Use the menu item ID directly (original logic)
             quantity: item.quantity,
             unitPrice: item.unitPrice,
             totalPrice: finalPrice,
@@ -248,34 +300,77 @@ export class SaleService {
           return SaleItemModel.create(saleItemData, { transaction });
         });
 
-        await Promise.all(saleItemPromises);
-        logger(`DEBUG: All sale items created successfully`);
+        const saleItemResults = await Promise.all(saleItemPromises);
+        const successfulItems = saleItemResults.filter(item => item !== null);
+        logger(`DEBUG: Created ${successfulItems.length} sale items successfully (${saleItemResults.length - successfulItems.length} items skipped)`);
 
         // Update item stock - now using menu item's associated inventory item
         const stockUpdatePromises = orderItems.map(async item => {
           // First, get the menu item to find its associated inventory item
           const menuItem = await MenuItemModel.findByPk(item.itemId);
-          if (menuItem && menuItem.itemId) {
-            const itemModel = await ItemModel.findByPk(menuItem.itemId);
-            if (itemModel) {
-              const newStock = Math.max(0, itemModel.stock - item.quantity);
-              await itemModel.update({ stock: newStock }, { transaction });
-              logger(`DEBUG: Updated stock for inventory item ${menuItem.itemId} (from menu item ${item.itemId}) to ${newStock}`);
-            } else {
-              logger(`WARNING: Inventory item ${menuItem.itemId} not found for stock update`);
-            }
+          if (!menuItem) {
+            logger(`WARNING: Menu item ${item.itemId} not found for stock update, skipping`);
+            return;
+          }
+          
+          if (!menuItem.itemId) {
+            logger(`WARNING: Menu item ${item.itemId} has no associated inventory item for stock update, skipping`);
+            return;
+          }
+          
+          const itemModel = await ItemModel.findByPk(menuItem.itemId);
+          if (itemModel) {
+            const newStock = Math.max(0, itemModel.stock - item.quantity);
+            await itemModel.update({ stock: newStock }, { transaction });
+            logger(`DEBUG: Updated stock for inventory item ${menuItem.itemId} (from menu item ${item.itemId}) to ${newStock}`);
           } else {
-            logger(`WARNING: Menu item ${item.itemId} not found or has no associated inventory item`);
+            logger(`WARNING: Inventory item ${menuItem.itemId} not found for stock update`);
           }
         });
 
         await Promise.all(stockUpdatePromises);
 
-        // Create order and kitchen order within the same transaction
-        // This ensures data consistency - if order creation fails, the entire sale is rolled back
-        logger(`DEBUG: Creating order and kitchen order within transaction for sale ${sale.id}`);
-        await this.createOrderAndKitchenOrderFromSale(sale, orderItems, transaction);
-        logger(`DEBUG: Order and kitchen order created successfully within transaction`);
+        // Handle existing order or create new order
+        if (existingOrderId) {
+          // Update existing order status to paid/completed
+          logger(`DEBUG: Updating existing order ${existingOrderId} status to paid`);
+          await OrderModel.update(
+            { 
+              status: OrderStatus.COMPLETED,
+              notes: `Paid via sale ${sale.id} - ${sale.notes || ''}`
+            },
+            { 
+              where: { id: existingOrderId, businessId: saleData.businessId },
+              transaction 
+            }
+          );
+          logger(`DEBUG: Updated existing order ${existingOrderId} status to completed`);
+          
+          // Update table status to available if order was associated with a table
+          const order = await OrderModel.findByPk(existingOrderId, { transaction });
+          if (order && order.tableId) {
+            logger(`DEBUG: Updating table ${order.tableId} status to available`);
+            await TableModel.update(
+              { 
+                status: TableStatus.AVAILABLE,
+                currentOrderId: null,
+                customerName: null,
+                notes: null
+              },
+              { 
+                where: { id: order.tableId, businessId: saleData.businessId },
+                transaction 
+              }
+            );
+            logger(`DEBUG: Updated table ${order.tableId} status to available`);
+          }
+        } else {
+          // Create new order and kitchen order within the same transaction
+          // This ensures data consistency - if order creation fails, the entire sale is rolled back
+          logger(`DEBUG: Creating order and kitchen order within transaction for sale ${sale.id}`);
+          await this.createOrderAndKitchenOrderFromSale(sale, orderItems, transaction);
+          logger(`DEBUG: Order and kitchen order created successfully within transaction`);
+        }
 
         await transaction.commit();
         logger(`DEBUG: Transaction committed successfully - sale, items, stock updates, order, and kitchen order all created`);
@@ -594,7 +689,7 @@ export class SaleService {
           const existingOrder = await OrderModel.findOne({
             where: { 
               businessId,
-              notes: { [require('sequelize').Op.like]: `%Auto-generated from sale ${sale.id}%` }
+              notes: { [Op.like]: `%Auto-generated from sale ${sale.id}%` }
             }
           });
 
