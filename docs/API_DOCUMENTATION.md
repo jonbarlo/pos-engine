@@ -467,6 +467,7 @@ Authorization: Bearer <your_jwt_token>
 - `paymentMethod` (string: "cash", "card", "mobile", "other")
 - `status` (string: "pending", "completed", "cancelled", "refunded")
 - `notes` (string)
+- `existingOrderId` (integer) - **NEW**: Optional order ID to link this sale to an existing order. If provided, the order status will be updated to 'completed' and table will be freed up.
 
 **Request Body:**
 ```json
@@ -481,7 +482,8 @@ Authorization: Bearer <your_jwt_token>
   "totalAmount": 1193.49,
   "paymentMethod": "card",
   "status": "completed",
-  "notes": "Customer requested extra napkins"
+  "notes": "Customer requested extra napkins",
+  "existingOrderId": 13
 }
 ```
 
@@ -494,12 +496,13 @@ Authorization: Bearer <your_jwt_token>
 - `userId` (integer) - User ID who created the sale (required by database schema)
 
 **Order Item Required Fields:**
-- `itemId` (integer) - Menu item ID
+- `itemId` (integer) - Menu item ID (will be converted to inventory item ID)
 - `quantity` (integer) - Quantity ordered
 - `unitPrice` (number) - Unit price (REQUIRED - this was missing!)
 
 **Optional Fields:**
 - `customerName`, `customerEmail`, `subtotal`, `tax`, `discount`, `totalAmount`, `paymentMethod`, `status`
+- `existingOrderId` (integer) - **NEW**: Optional order ID to link this sale to an existing order. If provided, the order status will be updated to 'completed' and table will be freed up.
 
 **Request Body:**
 ```json
@@ -508,6 +511,7 @@ Authorization: Bearer <your_jwt_token>
   "businessId": 1,
   "customerName": "John Doe",
   "totalAmount": 1193.49,
+  "existingOrderId": 13,
   "orderItems": [
     {
       "itemId": 1,
@@ -2476,7 +2480,6 @@ Authorization: Bearer <your_jwt_token>
       "height": 800,
       "backgroundImage": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&h=800&fit=crop",
       "isActive": true,
-      "tableCount": 12,
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2025-01-01T00:00:00.000Z"
     }
@@ -3384,6 +3387,126 @@ Common HTTP Status Codes:
 - `409` - Conflict (e.g., duplicate SKU/barcode)
 - `500` - Internal Server Error
 
+## PDF Menu Generation
+
+### Get Available Templates
+**GET** `/api/menu/pdf/templates`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "elegant",
+      "name": "Elegant",
+      "description": "Sophisticated design with serif fonts and gold accents"
+    },
+    {
+      "id": "modern",
+      "name": "Modern", 
+      "description": "Clean and contemporary design with sans-serif fonts"
+    },
+    {
+      "id": "classic",
+      "name": "Classic",
+      "description": "Traditional restaurant menu style"
+    },
+    {
+      "id": "minimal",
+      "name": "Minimal",
+      "description": "Clean and simple design with focus on content"
+    }
+  ]
+}
+```
+
+### Preview Menu Data
+**GET** `/api/menu/pdf/{businessId}/preview`
+
+**Headers:**
+- `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "business": {
+      "name": "Italian Delight",
+      "description": "Authentic Italian cuisine",
+      "logo": "https://example.com/logo.png",
+      "address": "123 Main St, City, State",
+      "phone": "+1-555-0123",
+      "website": "https://italiandelight.com"
+    },
+    "categories": [
+      {
+        "id": 1,
+        "name": "Appetizers",
+        "description": "Start your meal right",
+        "colorCode": "#FF6B6B",
+        "itemCount": 5,
+        "items": [
+          {
+            "id": 1,
+            "name": "Bruschetta",
+            "description": "Toasted bread with tomatoes and herbs",
+            "price": 8.99,
+            "isVegetarian": true,
+            "isVegan": false,
+            "isGlutenFree": false,
+            "isSpicy": false
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### Generate PDF Menu
+**POST** `/api/menu/pdf/{businessId}/pdf`
+
+**Headers:**
+- `Authorization: Bearer <token>`
+- `Content-Type: application/json`
+
+**Request Body (Optional):**
+```json
+{
+  "template": "elegant",
+  "includePrices": true,
+  "includeDescriptions": true,
+  "includeAllergens": true,
+  "includeCalories": true,
+  "orientation": "portrait",
+  "fontSize": "medium",
+  "colorScheme": "light"
+}
+```
+
+**PDF Options:**
+- `template`: elegant, modern, classic, minimal (default: elegant)
+- `includePrices`: Include item prices (default: true)
+- `includeDescriptions`: Include item descriptions (default: true)
+- `includeAllergens`: Include allergen information (default: true)
+- `includeCalories`: Include calorie information (default: true)
+- `orientation`: portrait, landscape (default: portrait)
+- `fontSize`: small, medium, large (default: medium)
+- `colorScheme`: dark, light, auto (default: light)
+
+**Response:**
+- Content-Type: `application/pdf`
+- File download with filename: `menu-{businessId}-{timestamp}.pdf`
+
+**Error Responses:**
+- `400` - Business ID required
+- `401` - Unauthorized
+- `403` - Access denied or not a restaurant business
+- `404` - Business not found
+- `500` - Internal server error
+
 ---
 
 ## Important Notes
@@ -3471,3 +3594,303 @@ Common HTTP Status Codes:
     - Returns detailed item information with reasons for suggestions
     - Includes urgency levels (high, medium, low) based on expiration and sales data
     - All suggestions are business-scoped and require authentication
+19. **Menu Management**:
+    - Complete CRUD operations for menu categories and menu items
+    - Business-scoped menu management for restaurant businesses
+    - Support for dietary restrictions (vegetarian, vegan, gluten-free, spicy)
+    - Nutritional information tracking (calories, allergens, ingredients)
+    - Preparation time and pricing management
+    - SKU and barcode support for inventory integration
+    - Image URLs for menu item photos
+    - Category organization with display order and color coding
+    - Availability status management
+    - All endpoints require authentication and business access
+20. **PDF Menu Generation**:
+    - Generate professional PDF menus for restaurant businesses
+    - Multiple template options: elegant, modern, classic, minimal
+    - Customizable content: prices, descriptions, allergens, calories
+    - Configurable layout: portrait/landscape, font sizes, color schemes
+    - Business-scoped and requires authentication
+    - Perfect for printing and distributing to customers at tables
+    - Includes dietary badges (vegetarian, vegan, gluten-free, spicy)
+    - Automatic business information inclusion (name, address, phone, website)
+
+## PDF Menu Generation
+
+## Menu Management
+
+### Get Menu Categories
+**GET** `/api/menu/categories`
+
+**Headers:**
+- `Authorization: Bearer <token>`
+
+**Query Parameters:**
+- `businessId` (integer, required) - Business ID
+- `active` (boolean, optional) - Filter by active status
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "businessId": 1,
+      "name": "Appetizers",
+      "description": "Start your meal right",
+      "displayOrder": 1,
+      "isActive": true,
+      "imageUrl": "https://example.com/appetizers.jpg",
+      "colorCode": "#FF6B6B",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z"
+    }
+  ]
+}
+```
+
+### Create Menu Category
+**POST** `/api/menu/categories`
+
+**Headers:**
+- `Authorization: Bearer <token>`
+- `Content-Type: application/json`
+
+**Request Body:**
+```json
+{
+  "businessId": 1,
+  "name": "Appetizers",
+  "description": "Start your meal right",
+  "displayOrder": 1,
+  "imageUrl": "https://example.com/appetizers.jpg",
+  "colorCode": "#FF6B6B"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "businessId": 1,
+    "name": "Appetizers",
+    "description": "Start your meal right",
+    "displayOrder": 1,
+    "isActive": true,
+    "imageUrl": "https://example.com/appetizers.jpg",
+    "colorCode": "#FF6B6B",
+    "createdAt": "2025-01-01T00:00:00.000Z",
+    "updatedAt": "2025-01-01T00:00:00.000Z"
+  }
+}
+```
+
+### Update Menu Category
+**PUT** `/api/menu/categories/{id}`
+
+**Headers:**
+- `Authorization: Bearer <token>`
+- `Content-Type: application/json`
+
+**Request Body:**
+```json
+{
+  "name": "Updated Appetizers",
+  "description": "Updated description",
+  "displayOrder": 2,
+  "isActive": true,
+  "imageUrl": "https://example.com/updated-appetizers.jpg",
+  "colorCode": "#FF8E8E"
+}
+```
+
+### Delete Menu Category
+**DELETE** `/api/menu/categories/{id}`
+
+**Headers:**
+- `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Category deleted successfully"
+}
+```
+
+### Get Menu Items
+**GET** `/api/menu/items`
+
+**Headers:**
+- `Authorization: Bearer <token>`
+
+**Query Parameters:**
+- `businessId` (integer, required) - Business ID
+- `categoryId` (integer, optional) - Filter by category ID
+- `available` (boolean, optional) - Filter by availability
+- `vegetarian` (boolean, optional) - Filter by vegetarian status
+- `vegan` (boolean, optional) - Filter by vegan status
+- `glutenFree` (boolean, optional) - Filter by gluten-free status
+- `spicy` (boolean, optional) - Filter by spicy status
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "businessId": 1,
+      "categoryId": 1,
+      "itemId": 101,
+      "name": "Bruschetta",
+      "description": "Toasted bread with tomatoes and herbs",
+      "price": 8.99,
+      "cost": 3.50,
+      "sku": "IT-MI-APP-001",
+      "barcode": "123456789012",
+      "imageUrl": "https://example.com/bruschetta.jpg",
+      "ingredients": ["bread", "tomatoes", "olive oil", "basil"],
+      "allergens": ["gluten"],
+      "nutritionalInfo": {
+        "calories": 120,
+        "protein": 3,
+        "carbs": 15,
+        "fat": 6
+      },
+      "preparationTime": 10,
+      "isAvailable": true,
+      "isVegetarian": true,
+      "isVegan": false,
+      "isGlutenFree": false,
+      "isSpicy": false,
+      "spiceLevel": null,
+      "calories": 120,
+      "tags": ["popular", "starter"],
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z"
+    }
+  ]
+}
+```
+
+### Create Menu Item
+**POST** `/api/menu/items`
+
+**Headers:**
+- `Authorization: Bearer <token>`
+- `Content-Type: application/json`
+
+**Request Body:**
+```json
+{
+  "businessId": 1,
+  "categoryId": 1,
+  "name": "Margherita Pizza",
+  "description": "Fresh mozzarella, tomato sauce, basil",
+  "price": 18.99,
+  "cost": 8.50,
+  "imageUrl": "https://example.com/pizza.jpg",
+  "ingredients": ["dough", "tomato sauce", "mozzarella", "basil"],
+  "allergens": ["gluten", "dairy"],
+  "preparationTime": 15,
+  "isVegetarian": true,
+  "isVegan": false,
+  "isGlutenFree": false,
+  "isSpicy": false,
+  "spiceLevel": null,
+  "calories": 250,
+  "tags": ["popular", "vegetarian"]
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "businessId": 1,
+    "categoryId": 1,
+    "itemId": null,
+    "name": "Margherita Pizza",
+    "description": "Fresh mozzarella, tomato sauce, basil",
+    "price": 18.99,
+    "cost": 8.50,
+    "sku": "IT-ABC123-001",
+    "barcode": "123456789123456",
+    "imageUrl": "https://example.com/pizza.jpg",
+    "ingredients": ["dough", "tomato sauce", "mozzarella", "basil"],
+    "allergens": ["gluten", "dairy"],
+    "nutritionalInfo": null,
+    "preparationTime": 15,
+    "isAvailable": true,
+    "isVegetarian": true,
+    "isVegan": false,
+    "isGlutenFree": false,
+    "isSpicy": false,
+    "spiceLevel": null,
+    "calories": 250,
+    "tags": ["popular", "vegetarian"],
+    "createdAt": "2025-01-01T00:00:00.000Z",
+    "updatedAt": "2025-01-01T00:00:00.000Z"
+  }
+}
+```
+
+### Update Menu Item
+**PUT** `/api/menu/items/{id}`
+
+**Headers:**
+- `Authorization: Bearer <token>`
+- `Content-Type: application/json`
+
+**Request Body:**
+```json
+{
+  "name": "Updated Bruschetta",
+  "description": "Updated description",
+  "price": 9.99,
+  "cost": 4.00,
+  "sku": "IT-MI-APP-001-UPD",
+  "barcode": "123456789013",
+  "imageUrl": "https://example.com/updated-bruschetta.jpg",
+  "ingredients": ["bread", "tomatoes", "olive oil", "basil", "garlic"],
+  "allergens": ["gluten"],
+  "preparationTime": 12,
+  "isAvailable": true,
+  "isVegetarian": true,
+  "isVegan": false,
+  "isGlutenFree": false,
+  "isSpicy": false,
+  "spiceLevel": null,
+  "calories": 130,
+  "tags": ["popular", "starter", "updated"]
+}
+```
+
+### Delete Menu Item
+**DELETE** `/api/menu/items/{id}`
+
+**Headers:**
+- `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Item deleted successfully"
+}
+```
+
+**Error Responses:**
+- `400` - Bad request (missing required fields)
+- `401` - Unauthorized
+- `403` - Forbidden (not a restaurant business)
+- `404` - Category or item not found
+- `500` - Internal server error
+
+## PDF Menu Generation

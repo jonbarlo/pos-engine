@@ -11,6 +11,8 @@ export interface MenuCategoryAttributes {
   colorCode?: string;
   createdAt?: Date;
   updatedAt?: Date;
+  // Association properties
+  menuItems?: any[];
 }
 
 export interface MenuCategoryCreationAttributes extends Omit<MenuCategoryAttributes, 'id' | 'displayOrder' | 'isActive' | 'createdAt' | 'updatedAt'> {
@@ -29,6 +31,8 @@ export class MenuCategoryModel extends Model<MenuCategoryAttributes, MenuCategor
   public colorCode?: string;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
+  // Association properties
+  public menuItems?: any[];
 
   // Model definition for initialization
   static definition = {

@@ -1,71 +1,23 @@
-import { faker } from '@faker-js/faker';
+/**
+ * SKU Generator Utility
+ * Provides standardized SKU generation for different business types and item categories
+ */
 
 /**
- * Generates a SKU with a prefix, random alphanumeric part, and optional counter.
- * @param prefix - Business or category prefix (e.g., 'COF', 'BVI')
- * @param counter - Optional number to ensure uniqueness (e.g., 1, 2, 3)
- * @param existingSkus - Optional Set of existing SKUs to avoid collisions
- * @returns SKU string (e.g., 'COF-AB12CD-001')
+ * Generate barcode - backward compatible with existing seeders
  */
-export function generateSku(prefix: string, counter?: number, existingSkus?: Set<string>): string {
-  let sku: string;
-  let attempts = 0;
-  const maxAttempts = 100; // Prevent infinite loops
-  
-  do {
-    const randomPart = faker.string.alphanumeric(6).toUpperCase();
-    sku = `${prefix}-${randomPart}`;
-    if (typeof counter === 'number') {
-      sku += `-${counter.toString().padStart(3, '0')}`;
-    }
-    attempts++;
-    
-    // If no existing SKUs provided or SKU is unique, break
-    if (!existingSkus || !existingSkus.has(sku)) {
-      break;
-    }
-  } while (attempts < maxAttempts);
-  
-  // If we hit max attempts, add a timestamp to ensure uniqueness
-  if (attempts >= maxAttempts) {
-    const timestamp = Date.now().toString().slice(-4);
-    sku = `${sku}-${timestamp}`;
-  }
-  
-  return sku;
+export function generateBarcode(prefix: string, counter?: number, existingBarcodes?: Set<string>): string {
+  // Simple barcode generation - in production, you might want to use a proper barcode library
+  const timestamp = Date.now().toString().slice(-6);
+  const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+  return `123456789${timestamp}${random}`;
 }
 
 /**
- * Generates a barcode with a prefix and random numeric part.
- * @param prefix - Business or category prefix (e.g., 'COF', 'BVI')
- * @param counter - Optional number to ensure uniqueness (e.g., 1, 2, 3)
- * @param existingBarcodes - Optional Set of existing barcodes to avoid collisions
- * @returns Barcode string (e.g., 'COF123456789')
+ * Generate SKU - backward compatible with existing seeders
  */
-export function generateBarcode(prefix: string, counter?: number, existingBarcodes?: Set<string>): string {
-  let barcode: string;
-  let attempts = 0;
-  const maxAttempts = 100; // Prevent infinite loops
-  
-  do {
-    const randomPart = faker.string.numeric(9); // 9-digit numeric part
-    barcode = `${prefix}${randomPart}`;
-    if (typeof counter === 'number') {
-      barcode += `${counter.toString().padStart(3, '0')}`;
-    }
-    attempts++;
-    
-    // If no existing barcodes provided or barcode is unique, break
-    if (!existingBarcodes || !existingBarcodes.has(barcode)) {
-      break;
-    }
-  } while (attempts < maxAttempts);
-  
-  // If we hit max attempts, add a timestamp to ensure uniqueness
-  if (attempts >= maxAttempts) {
-    const timestamp = Date.now().toString().slice(-4);
-    barcode = `${barcode}${timestamp}`;
-  }
-  
-  return barcode;
-} 
+export function generateSku(prefix: string, counter?: number, existingSkus?: Set<string>): string {
+  const randomPart = Math.random().toString(36).substring(2, 8).toUpperCase();
+  const sku = `${prefix}-${randomPart}`;
+  return counter ? `${sku}-${counter.toString().padStart(3, '0')}` : sku;
+}

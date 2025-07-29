@@ -62,6 +62,7 @@
     "nodemon": "^3.1.10",
     "pg": "^8.16.2",
     "pg-hstore": "^2.3.4",
+    "puppeteer": "^22.0.0",
     "sequelize": "^6.37.7",
     "sequelize-typescript": "^2.1.6",
     "swagger-jsdoc": "^6.2.8",
