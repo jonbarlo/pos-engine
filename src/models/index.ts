@@ -16,9 +16,10 @@ import { initializeKitchenOrderModel } from './KitchenOrderModel';
 import { initializeRecipeModel } from './RecipeModel';
 import { initializeRecipeSuggestionModel } from './RecipeSuggestionModel';
 import { initializePromotionModel } from './PromotionModel';
-
 import { initializePromotionItemModel } from './PromotionItemModel';
 import { initializeMobileNotificationModel } from './MobileNotificationModel';
+import { initializeCustomMenuTemplateModel } from './CustomMenuTemplateModel';
+
 import { FloorPlanModel } from './FloorPlanModel';
 import { TablePositionModel } from './TablePositionModel';
 import RecipeIngredientModel from './RecipeIngredientModel';
@@ -41,10 +42,10 @@ import { KitchenOrderModel } from './KitchenOrderModel';
 import { RecipeModel } from './RecipeModel';
 import { RecipeSuggestionModel } from './RecipeSuggestionModel';
 import { PromotionModel } from './PromotionModel';
-
 import { PromotionItemModel } from './PromotionItemModel';
 import { MobileNotificationModel } from './MobileNotificationModel';
 import { StaffMessageModel } from './StaffMessageModel';
+import { CustomMenuTemplateModel } from './CustomMenuTemplateModel';
 
 export const initializeAllModels = (): void => {
   const sequelize = getSequelize();
@@ -67,8 +68,8 @@ export const initializeAllModels = (): void => {
   initializePromotionModel(sequelize);
   initializeRecipeSuggestionModel(sequelize);
   initializePromotionItemModel(sequelize);
-
   initializeMobileNotificationModel(sequelize);
+  initializeCustomMenuTemplateModel(sequelize);
   
   // Floor plan models are already initialized via default export
   // StaffMessageModel is already initialized via default export
@@ -446,6 +447,18 @@ export const setupAssociations = (): void => {
     foreignKey: 'businessId',
     as: 'mobileNotificationBusiness'
   });
+
+  // Custom menu template associations
+  BusinessModel.hasMany(CustomMenuTemplateModel, {
+    foreignKey: 'businessId',
+    as: 'customMenuTemplates',
+    onDelete: 'CASCADE'
+  });
+
+  CustomMenuTemplateModel.belongsTo(BusinessModel, {
+    foreignKey: 'businessId',
+    as: 'business'
+  });
 };
 
 export { getSequelize };
@@ -473,7 +486,8 @@ export {
   MobileNotificationModel,
   StaffMessageModel,
   FloorPlanModel,
-  TablePositionModel
+  TablePositionModel,
+  CustomMenuTemplateModel
 };
 
 // Export enums

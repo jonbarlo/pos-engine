@@ -3387,29 +3387,56 @@ Common HTTP Status Codes:
 - `409` - Conflict (e.g., duplicate SKU/barcode)
 - `500` - Internal Server Error
 
-## PDF Menu Generation
+## 📄 PDF Menu Generation
 
-### Get Available Templates
-**GET** `/api/menu/pdf/templates`
+The API provides comprehensive PDF menu generation capabilities with professional templates and custom theming options.
 
-**Response:**
+### Available Templates
+
+The system includes 4 professionally designed templates based on Apple HIG and Material UI principles:
+
+#### 1. **Elegant** - Sophisticated Fine Dining
+- **Style**: Premium design with serif fonts and gold accents
+- **Best for**: High-end restaurants, fine dining, upscale establishments
+- **Features**: Playfair Display serif font, gold gradient accents, elegant typography, sophisticated layout
+
+#### 2. **Modern** - Contemporary Design
+- **Style**: Clean and contemporary with sans-serif fonts
+- **Best for**: Contemporary restaurants, cafes, modern dining concepts
+- **Features**: Inter font, iOS-style colors, clean layout, Material Design principles
+
+#### 3. **Classic** - Traditional Restaurant Style
+- **Style**: Traditional restaurant menu with refined typography
+- **Best for**: Traditional restaurants, family establishments, classic dining
+- **Features**: Crimson Text serif font, traditional layout, elegant borders
+
+#### 4. **Minimal** - Clean and Simple
+- **Style**: Minimalist design focusing on content
+- **Best for**: Minimalist restaurants, cafes, content-focused menus
+- **Features**: Inter font, clean layout, focus on readability, subtle accents
+
+### Built-in Template Endpoints
+
+#### GET /api/menu/pdf/templates
+**Purpose**: Get available built-in templates
+
+**Response**:
 ```json
 {
-  "success": true,
-  "data": [
+  "templates": [
     {
       "id": "elegant",
       "name": "Elegant",
       "description": "Sophisticated design with serif fonts and gold accents"
     },
     {
-      "id": "modern",
-      "name": "Modern", 
+      "id": "modern", 
+      "name": "Modern",
       "description": "Clean and contemporary design with sans-serif fonts"
     },
     {
       "id": "classic",
-      "name": "Classic",
+      "name": "Classic", 
       "description": "Traditional restaurant menu style"
     },
     {
@@ -3421,58 +3448,26 @@ Common HTTP Status Codes:
 }
 ```
 
-### Preview Menu Data
-**GET** `/api/menu/pdf/{businessId}/preview`
+#### GET /api/menu/pdf/{businessId}/preview
+**Purpose**: Preview menu with specific template
 
-**Headers:**
-- `Authorization: Bearer <token>`
+**Parameters**:
+- `template` (optional): Template name (elegant, modern, classic, minimal)
+- `includePrices` (optional): Include prices in preview
+- `includeDescriptions` (optional): Include item descriptions
+- `includeAllergens` (optional): Include allergen information
+- `includeCalories` (optional): Include calorie information
 
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "business": {
-      "name": "Italian Delight",
-      "description": "Authentic Italian cuisine",
-      "logo": "https://example.com/logo.png",
-      "address": "123 Main St, City, State",
-      "phone": "+1-555-0123",
-      "website": "https://italiandelight.com"
-    },
-    "categories": [
-      {
-        "id": 1,
-        "name": "Appetizers",
-        "description": "Start your meal right",
-        "colorCode": "#FF6B6B",
-        "itemCount": 5,
-        "items": [
-          {
-            "id": 1,
-            "name": "Bruschetta",
-            "description": "Toasted bread with tomatoes and herbs",
-            "price": 8.99,
-            "isVegetarian": true,
-            "isVegan": false,
-            "isGlutenFree": false,
-            "isSpicy": false
-          }
-        ]
-      }
-    ]
-  }
-}
+**Example Request**:
+```bash
+curl -X GET "http://localhost:3031/api/menu/pdf/1/preview?template=elegant&includePrices=true" \
+  -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
-### Generate PDF Menu
-**POST** `/api/menu/pdf/{businessId}/pdf`
+#### POST /api/menu/pdf/{businessId}/pdf
+**Purpose**: Generate PDF menu with specific template
 
-**Headers:**
-- `Authorization: Bearer <token>`
-- `Content-Type: application/json`
-
-**Request Body (Optional):**
+**Request Body**:
 ```json
 {
   "template": "elegant",
@@ -3480,417 +3475,67 @@ Common HTTP Status Codes:
   "includeDescriptions": true,
   "includeAllergens": true,
   "includeCalories": true,
+  "includeImages": true,
+  "includeBusinessLogo": true,
   "orientation": "portrait",
   "fontSize": "medium",
-  "colorScheme": "light"
+  "colorScheme": "light",
+  "categoryLayout": "same-page",
+  "categoryBackgroundColor": "#f8f9fa",
+  "maxItemsPerPage": 8,
+  "showCategoryTitles": true
 }
 ```
 
-**PDF Options:**
-- `template`: elegant, modern, classic, minimal (default: elegant)
-- `includePrices`: Include item prices (default: true)
-- `includeDescriptions`: Include item descriptions (default: true)
-- `includeAllergens`: Include allergen information (default: true)
-- `includeCalories`: Include calorie information (default: true)
-- `orientation`: portrait, landscape (default: portrait)
-- `fontSize`: small, medium, large (default: medium)
-- `colorScheme`: dark, light, auto (default: light)
+**Category Layout Options**:
+- `categoryLayout`: How to organize categories in the PDF
+  - `"same-page"` (default): Category title + items on same page
+  - `"separate-page"`: Dedicated category title page + items pages without category headers
+- `categoryBackgroundColor`: Background color for category sections (default: "#f8f9fa")
+- `maxItemsPerPage`: Maximum number of items per page (default: 8)
+- `showCategoryTitles`: Whether to show category titles (default: true)
 
-**Response:**
-- Content-Type: `application/pdf`
-- File download with filename: `menu-{businessId}-{timestamp}.pdf`
+**Response**: PDF file (binary)
 
-**Error Responses:**
-- `400` - Business ID required
-- `401` - Unauthorized
-- `403` - Access denied or not a restaurant business
-- `404` - Business not found
-- `500` - Internal server error
+**Example Request**:
+```bash
+curl -X POST "http://localhost:3031/api/menu/pdf/1/pdf" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "template": "modern",
+    "includePrices": true,
+    "includeDescriptions": true,
+    "categoryLayout": "separate-page",
+    "categoryBackgroundColor": "#e3f2fd",
+    "maxItemsPerPage": 6
+  }' \
+  --output menu.pdf
+```
 
----
+**Category Layout Examples**:
 
-## Important Notes
-
-1. **Authentication**: All endpoints (except health checks) require Bearer token authentication
-2. **Business Scoping**: All data is scoped to the authenticated user's business
-3. **Validation**: Input validation is enforced at the controller level
-4. **Auto-generation**: SKU and barcode are auto-generated if not provided for items
-5. **Split Billing**: Total payment amounts must equal the sale total amount
-6. **User ID**: Most endpoints require or expect userId in the payload for proper tracking
-7. **Staff Messaging**: 
-   - Messages are automatically scoped to the user's business
-   - Sender information is automatically populated from the authenticated user
-   - Read/acknowledge status is tracked per user
-   - Expired messages are automatically marked as expired
-   - Recipient types: "all", "waitstaff", "kitchen", "managers", "specific_users"
-   - Message types: "announcement", "inventory_alert", "promotion", "discount", "urgent", "general"
-   - Priorities: "low", "normal", "high", "urgent"
-8. **Table Management**:
-   - Table status automatically updates when orders are created/completed
-   - Available → Occupied (when first order is placed)
-   - Occupied → Available (when order is completed)
-   - Tables can be marked as "reserved" for reservations
-   - Reservation data is automatically included in table responses when applicable
-9. **Reservation System**:
-   - Reservations can be created with or without table assignment
-   - Reservation data is automatically included in table responses when:
-     - Table status is "reserved"
-     - Table has active reservations (status: pending or confirmed)
-     - Reservation date matches today's date
-   - Reservation statuses: pending, confirmed, seated, completed, cancelled, no_show
-   - Party size validation: 1-20 guests
-   - Date format: YYYY-MM-DD, Time format: HH:MM:SS
-10. **Order Management**:
-    - Orders can be created for tables, takeaway, or delivery
-    - Kitchen orders are automatically generated for dine-in orders
-    - Order status flows: pending → preparing → ready → completed
-11. **Mobile App Compatibility**:
-    - `/api/messages` is an alias for `/api/staff-messages`
-    - `/api/promotions` returns filtered promotional messages
-    - All mobile app endpoints require authentication
-    - Table endpoints automatically include reservation data for mobile display
-    - Floor plan endpoints include table positions with reservation data
-12. **Response Format**: All endpoints return consistent response format:
-    - Success responses: `{success: true, data: {...}, message: "..."}`
-    - List responses include pagination: `{success: true, data: [...], pagination: {...}}`
-    - Error responses: `{error: "error message"}`
-13. **Required Fields**: 
-    - Sales endpoints require `userId` and `businessId` (not `customerName`)
-    - Sales with items require `unitPrice` for each item
-    - All timestamps include both `createdAt` and `updatedAt`
-    - Reservations require `customerName`, `partySize`, `reservationDate`, `reservationTime`
-14. **Sales Analytics**:
-    - All analytics endpoints support date filtering with `startDate` and `endDate` parameters
-    - Date format: YYYY-MM-DD
-    - Analytics are business-scoped and require appropriate permissions
-    - Item performance includes profit margins, growth rates, and rankings
-    - Revenue trends support daily, weekly, and monthly grouping
-    - Staff performance includes efficiency metrics and customer satisfaction
-    - Customer analytics categorize customers as new, returning, or loyal
-    - Inventory analytics provide stock alerts and reorder recommendations
-15. **Sales with Items**:
-    - `/sales/{id}/with-items` returns complete sale details including all items
-    - Includes item SKU, barcode, category, and pricing information
-    - Perfect for mobile apps requiring detailed sale information
-    - Business-scoped for security
-16. **Floor Plan Management**:
-    - Floor plans have dimensions (width/height) for visual representation
-    - Table positions include x/y coordinates, rotation, and size
-    - Background images can be set for visual floor plan representation
-    - Tables can be positioned on multiple floor plans
-    - Floor plans are business-scoped
-    - Table positions include reservation data when tables are reserved
-17. **Table Management**:
-    - Tables have status tracking (available, occupied, reserved, cleaning, out_of_service)
-    - Tables can be assigned to sections (Main Floor, Patio, etc.)
-    - Table positions are managed separately from table definitions
-    - Table status updates automatically with order lifecycle
-    - Reservation data is automatically included in table responses when applicable
-18. **Smart Recipe Suggestions**:
-    - AI-powered recipe suggestions based on inventory management
-    - Analyzes expiring items and underperforming inventory
-    - Provides confidence scores and potential savings calculations
-    - Supports filtering by expiring items, underperforming items, and custom criteria
-    - Returns detailed item information with reasons for suggestions
-    - Includes urgency levels (high, medium, low) based on expiration and sales data
-    - All suggestions are business-scoped and require authentication
-19. **Menu Management**:
-    - Complete CRUD operations for menu categories and menu items
-    - Business-scoped menu management for restaurant businesses
-    - Support for dietary restrictions (vegetarian, vegan, gluten-free, spicy)
-    - Nutritional information tracking (calories, allergens, ingredients)
-    - Preparation time and pricing management
-    - SKU and barcode support for inventory integration
-    - Image URLs for menu item photos
-    - Category organization with display order and color coding
-    - Availability status management
-    - All endpoints require authentication and business access
-20. **PDF Menu Generation**:
-    - Generate professional PDF menus for restaurant businesses
-    - Multiple template options: elegant, modern, classic, minimal
-    - Customizable content: prices, descriptions, allergens, calories
-    - Configurable layout: portrait/landscape, font sizes, color schemes
-    - Business-scoped and requires authentication
-    - Perfect for printing and distributing to customers at tables
-    - Includes dietary badges (vegetarian, vegan, gluten-free, spicy)
-    - Automatic business information inclusion (name, address, phone, website)
-
-## PDF Menu Generation
-
-## Menu Management
-
-### Get Menu Categories
-**GET** `/api/menu/categories`
-
-**Headers:**
-- `Authorization: Bearer <token>`
-
-**Query Parameters:**
-- `businessId` (integer, required) - Business ID
-- `active` (boolean, optional) - Filter by active status
-
-**Response:**
+1. **Same Page Layout** (Default):
 ```json
 {
-  "success": true,
-  "data": [
-    {
-      "id": 1,
-      "businessId": 1,
-      "name": "Appetizers",
-      "description": "Start your meal right",
-      "displayOrder": 1,
-      "isActive": true,
-      "imageUrl": "https://example.com/appetizers.jpg",
-      "colorCode": "#FF6B6B",
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z"
-    }
-  ]
+  "categoryLayout": "same-page",
+  "categoryBackgroundColor": "#f8f9fa"
 }
 ```
 
-### Create Menu Category
-**POST** `/api/menu/categories`
-
-**Headers:**
-- `Authorization: Bearer <token>`
-- `Content-Type: application/json`
-
-**Request Body:**
+2. **Separate Page Layout**:
 ```json
 {
-  "businessId": 1,
-  "name": "Appetizers",
-  "description": "Start your meal right",
-  "displayOrder": 1,
-  "imageUrl": "https://example.com/appetizers.jpg",
-  "colorCode": "#FF6B6B"
+  "categoryLayout": "separate-page",
+  "categoryBackgroundColor": "#e3f2fd",
+  "maxItemsPerPage": 6
 }
 ```
 
-**Response:**
+3. **Title Only Layout**:
 ```json
 {
-  "success": true,
-  "data": {
-    "id": 1,
-    "businessId": 1,
-    "name": "Appetizers",
-    "description": "Start your meal right",
-    "displayOrder": 1,
-    "isActive": true,
-    "imageUrl": "https://example.com/appetizers.jpg",
-    "colorCode": "#FF6B6B",
-    "createdAt": "2025-01-01T00:00:00.000Z",
-    "updatedAt": "2025-01-01T00:00:00.000Z"
-  }
+  "categoryLayout": "title-only",
+  "categoryBackgroundColor": "#fff3e0"
 }
 ```
-
-### Update Menu Category
-**PUT** `/api/menu/categories/{id}`
-
-**Headers:**
-- `Authorization: Bearer <token>`
-- `Content-Type: application/json`
-
-**Request Body:**
-```json
-{
-  "name": "Updated Appetizers",
-  "description": "Updated description",
-  "displayOrder": 2,
-  "isActive": true,
-  "imageUrl": "https://example.com/updated-appetizers.jpg",
-  "colorCode": "#FF8E8E"
-}
-```
-
-### Delete Menu Category
-**DELETE** `/api/menu/categories/{id}`
-
-**Headers:**
-- `Authorization: Bearer <token>`
-
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Category deleted successfully"
-}
-```
-
-### Get Menu Items
-**GET** `/api/menu/items`
-
-**Headers:**
-- `Authorization: Bearer <token>`
-
-**Query Parameters:**
-- `businessId` (integer, required) - Business ID
-- `categoryId` (integer, optional) - Filter by category ID
-- `available` (boolean, optional) - Filter by availability
-- `vegetarian` (boolean, optional) - Filter by vegetarian status
-- `vegan` (boolean, optional) - Filter by vegan status
-- `glutenFree` (boolean, optional) - Filter by gluten-free status
-- `spicy` (boolean, optional) - Filter by spicy status
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": 1,
-      "businessId": 1,
-      "categoryId": 1,
-      "itemId": 101,
-      "name": "Bruschetta",
-      "description": "Toasted bread with tomatoes and herbs",
-      "price": 8.99,
-      "cost": 3.50,
-      "sku": "IT-MI-APP-001",
-      "barcode": "123456789012",
-      "imageUrl": "https://example.com/bruschetta.jpg",
-      "ingredients": ["bread", "tomatoes", "olive oil", "basil"],
-      "allergens": ["gluten"],
-      "nutritionalInfo": {
-        "calories": 120,
-        "protein": 3,
-        "carbs": 15,
-        "fat": 6
-      },
-      "preparationTime": 10,
-      "isAvailable": true,
-      "isVegetarian": true,
-      "isVegan": false,
-      "isGlutenFree": false,
-      "isSpicy": false,
-      "spiceLevel": null,
-      "calories": 120,
-      "tags": ["popular", "starter"],
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z"
-    }
-  ]
-}
-```
-
-### Create Menu Item
-**POST** `/api/menu/items`
-
-**Headers:**
-- `Authorization: Bearer <token>`
-- `Content-Type: application/json`
-
-**Request Body:**
-```json
-{
-  "businessId": 1,
-  "categoryId": 1,
-  "name": "Margherita Pizza",
-  "description": "Fresh mozzarella, tomato sauce, basil",
-  "price": 18.99,
-  "cost": 8.50,
-  "imageUrl": "https://example.com/pizza.jpg",
-  "ingredients": ["dough", "tomato sauce", "mozzarella", "basil"],
-  "allergens": ["gluten", "dairy"],
-  "preparationTime": 15,
-  "isVegetarian": true,
-  "isVegan": false,
-  "isGlutenFree": false,
-  "isSpicy": false,
-  "spiceLevel": null,
-  "calories": 250,
-  "tags": ["popular", "vegetarian"]
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "businessId": 1,
-    "categoryId": 1,
-    "itemId": null,
-    "name": "Margherita Pizza",
-    "description": "Fresh mozzarella, tomato sauce, basil",
-    "price": 18.99,
-    "cost": 8.50,
-    "sku": "IT-ABC123-001",
-    "barcode": "123456789123456",
-    "imageUrl": "https://example.com/pizza.jpg",
-    "ingredients": ["dough", "tomato sauce", "mozzarella", "basil"],
-    "allergens": ["gluten", "dairy"],
-    "nutritionalInfo": null,
-    "preparationTime": 15,
-    "isAvailable": true,
-    "isVegetarian": true,
-    "isVegan": false,
-    "isGlutenFree": false,
-    "isSpicy": false,
-    "spiceLevel": null,
-    "calories": 250,
-    "tags": ["popular", "vegetarian"],
-    "createdAt": "2025-01-01T00:00:00.000Z",
-    "updatedAt": "2025-01-01T00:00:00.000Z"
-  }
-}
-```
-
-### Update Menu Item
-**PUT** `/api/menu/items/{id}`
-
-**Headers:**
-- `Authorization: Bearer <token>`
-- `Content-Type: application/json`
-
-**Request Body:**
-```json
-{
-  "name": "Updated Bruschetta",
-  "description": "Updated description",
-  "price": 9.99,
-  "cost": 4.00,
-  "sku": "IT-MI-APP-001-UPD",
-  "barcode": "123456789013",
-  "imageUrl": "https://example.com/updated-bruschetta.jpg",
-  "ingredients": ["bread", "tomatoes", "olive oil", "basil", "garlic"],
-  "allergens": ["gluten"],
-  "preparationTime": 12,
-  "isAvailable": true,
-  "isVegetarian": true,
-  "isVegan": false,
-  "isGlutenFree": false,
-  "isSpicy": false,
-  "spiceLevel": null,
-  "calories": 130,
-  "tags": ["popular", "starter", "updated"]
-}
-```
-
-### Delete Menu Item
-**DELETE** `/api/menu/items/{id}`
-
-**Headers:**
-- `Authorization: Bearer <token>`
-
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Item deleted successfully"
-}
-```
-
-**Error Responses:**
-- `400` - Bad request (missing required fields)
-- `401` - Unauthorized
-- `403` - Forbidden (not a restaurant business)
-- `404` - Category or item not found
-- `500` - Internal server error
-
-## PDF Menu Generation

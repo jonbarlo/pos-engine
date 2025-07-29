@@ -1,9 +1,9 @@
 import { Router, Request, Response } from 'express';
-import { 
-  MenuCategoryModel, 
-  MenuItemModel 
-} from '../models';
-import { authenticateToken, AuthRequest } from '../middleware/auth';
+import { authenticateToken } from '../middleware/auth';
+import { MenuCategoryModel } from '../models/MenuCategoryModel';
+import { MenuItemModel } from '../models/MenuItemModel';
+import { BusinessModel } from '../models/BusinessModel';
+import { generateSku, generateBarcode } from '../utils/skuGenerator';
 import { isRestaurantBusiness } from '../utils/businessTypeCheck';
 import { logger } from '../utils/logger';
 import { Op } from 'sequelize';
@@ -91,14 +91,6 @@ const router = Router();
  *           minimum: 0
  *           default: 0
  *           description: Item cost
- *         sku:
- *           type: string
- *           maxLength: 50
- *           description: Stock keeping unit
- *         barcode:
- *           type: string
- *           maxLength: 50
- *           description: Item barcode
  *         imageUrl:
  *           type: string
  *           format: uri
@@ -611,12 +603,6 @@ router.get('/items', authenticateToken, async (req: Request, res: Response): Pro
  *               cost:
  *                 type: number
  *                 minimum: 0
- *               sku:
- *                 type: string
- *                 maxLength: 50
- *               barcode:
- *                 type: string
- *                 maxLength: 50
  *               imageUrl:
  *                 type: string
  *                 format: uri
@@ -673,7 +659,7 @@ router.get('/items', authenticateToken, async (req: Request, res: Response): Pro
 router.post('/items', authenticateToken, async (req: Request, res: Response): Promise<void> => {
   try {
     const {
-      businessId, categoryId, name, description, price, cost, sku, barcode,
+      businessId, categoryId, name, description, price, cost,
       imageUrl, ingredients, allergens, preparationTime, isVegetarian,
       isVegan, isGlutenFree, isSpicy, spiceLevel, calories, tags
     } = req.body;
@@ -698,6 +684,20 @@ router.post('/items', authenticateToken, async (req: Request, res: Response): Pr
       return;
     }
 
+    // Get business to determine prefix for SKU generation
+    const business = await BusinessModel.findByPk(businessId);
+    if (!business) {
+      res.status(400).json({ success: false, message: 'Business not found' });
+      return;
+    }
+
+    // Generate business prefix from slug (e.g., 'italian-delight' -> 'IT')
+    const businessPrefix = business.slug?.split('-').map(word => word.charAt(0).toUpperCase()).join('') || 'IT';
+    
+    // Generate a unique counter for this business
+    const existingItems = await MenuItemModel.count({ where: { businessId } });
+    const counter = existingItems + 1;
+
     const item = await MenuItemModel.create({
       businessId,
       categoryId,
@@ -705,8 +705,8 @@ router.post('/items', authenticateToken, async (req: Request, res: Response): Pr
       description,
       price: price || 0,
       cost: cost || 0,
-      sku,
-      barcode,
+      sku: generateSku(businessPrefix, counter),
+      barcode: generateBarcode(businessPrefix, counter),
       imageUrl,
       ingredients,
       allergens,
@@ -761,12 +761,6 @@ router.post('/items', authenticateToken, async (req: Request, res: Response): Pr
  *               cost:
  *                 type: number
  *                 minimum: 0
- *               sku:
- *                 type: string
- *                 maxLength: 50
- *               barcode:
- *                 type: string
- *                 maxLength: 50
  *               imageUrl:
  *                 type: string
  *                 format: uri

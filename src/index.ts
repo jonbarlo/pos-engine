@@ -972,6 +972,7 @@ async function startServer() {
     const recipeCookingRoutes = (await import('./routes/recipeCooking')).default;
     const aiRecipeGenerationRoutes = (await import('./routes/aiRecipeGeneration')).default;
     const menuPdfRoutes = (await import('./routes/menuPdf')).default;
+    const customMenuTemplateRoutes = (await import('./routes/customMenuTemplates')).default;
     // API routes
     app.use('/api/auth', authRoutes);
     app.use('/api/businesses', businessRoutes);
@@ -983,6 +984,7 @@ async function startServer() {
     app.use('/api/customers', customerRoutes);
     app.use('/api/menu', menuRoutes);
     app.use('/api/menu/pdf', menuPdfRoutes);
+    app.use('/api/menu/templates', customMenuTemplateRoutes);
     app.use('/api/tables', tableRoutes);
     app.use('/api/reservations', reservationRoutes);
     app.use('/api/deliveries', deliveryRoutes);

@@ -22,19 +22,30 @@ export class MenuPdfController {
         return;
       }
 
-      // Get PDF options from request body
+      // Debug: Log the received parameters
+      logger(`PDF Generation Request Body: ${JSON.stringify(req.body)}`);
+      logger(`Received categoryBackgroundColor: ${req.body.categoryBackgroundColor}`);
+
       const options: MenuPdfOptions = {
         template: req.body.template || 'elegant',
         includePrices: req.body.includePrices !== false,
         includeDescriptions: req.body.includeDescriptions !== false,
         includeAllergens: req.body.includeAllergens !== false,
         includeCalories: req.body.includeCalories !== false,
+        includeImages: req.body.includeImages !== false,
+        includeBusinessLogo: req.body.includeBusinessLogo !== false,
         orientation: req.body.orientation || 'portrait',
         fontSize: req.body.fontSize || 'medium',
-        colorScheme: req.body.colorScheme || 'light'
+        colorScheme: req.body.colorScheme || 'light',
+        // New category-based options
+        categoryLayout: req.body.categoryLayout || 'same-page',
+        categoryBackgroundColor: req.body.categoryBackgroundColor || '#f8f9fa',
+        maxItemsPerPage: req.body.maxItemsPerPage || 8,
+        showCategoryTitles: req.body.showCategoryTitles !== false
       };
 
       logger(`API endpoint POST /menu/${businessId}/pdf was called...`);
+      logger(`Applied categoryBackgroundColor: ${options.categoryBackgroundColor}`);
       
       // Generate PDF
       const pdfBuffer = await MenuPdfService.generateMenuPdf(businessId, options);

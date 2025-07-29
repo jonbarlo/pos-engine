@@ -32,6 +32,14 @@ const router = Router();
  *           type: boolean
  *           default: true
  *           description: Include calorie information in PDF
+ *         includeImages:
+ *           type: boolean
+ *           default: true
+ *           description: Include item images in PDF
+ *         includeBusinessLogo:
+ *           type: boolean
+ *           default: true
+ *           description: Include business logo in PDF header
  *         orientation:
  *           type: string
  *           enum: [portrait, landscape]
@@ -47,6 +55,23 @@ const router = Router();
  *           enum: [dark, light, auto]
  *           default: light
  *           description: Color scheme for PDF
+ *         categoryLayout:
+ *           type: string
+ *           enum: [same-page, separate-page, title-only]
+ *           default: same-page
+ *           description: How to organize categories in the PDF
+ *         categoryBackgroundColor:
+ *           type: string
+ *           default: '#f8f9fa'
+ *           description: Background color for category sections
+ *         maxItemsPerPage:
+ *           type: number
+ *           default: 8
+ *           description: Maximum number of items per page
+ *         showCategoryTitles:
+ *           type: boolean
+ *           default: true
+ *           description: Whether to show category titles
  *     
  *     PdfTemplate:
  *       type: object
@@ -61,6 +86,30 @@ const router = Router();
  *           type: string
  *           description: Template description
  */
+
+/**
+ * @swagger
+ * /api/menu/pdf/health:
+ *   get:
+ *     summary: Health check for PDF menu routes
+ *     tags: [Menu PDF]
+ *     responses:
+ *       200:
+ *         description: PDF menu routes are working
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ */
+router.get('/health', (req, res) => {
+  console.log('GET /api/menu/pdf/health called');
+  res.json({ success: true, message: 'PDF menu routes are working' });
+});
 
 /**
  * @swagger
@@ -85,7 +134,15 @@ const router = Router();
  *       500:
  *         description: Internal server error
  */
-router.get('/templates', MenuPdfController.getTemplates);
+router.get('/templates', (req, res) => {
+  console.log('GET /api/menu/pdf/templates called');
+  try {
+    MenuPdfController.getTemplates(req, res);
+  } catch (error) {
+    console.error('Error in templates route:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
 
 /**
  * @swagger
