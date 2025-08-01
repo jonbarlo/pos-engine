@@ -6,6 +6,10 @@ import { TableStatus } from '../../models/TableModel';
 import { SaleStatus } from '../../models/SaleModel';
 import { OrderItemStatus } from '../../models/OrderItemModel';
 import { MessageType, MessageStatus, RecipientType } from '../../models/StaffMessageModel';
+import { generateSku, generateBarcode } from '../../utils/skuGenerator';
+import { generateMenuItemSkuWithCategory } from '../../utils/menuItemSkuGenerator';
+import { generateSaleNumber } from '../../utils/saleNumberGenerator';
+import { generateOrderNumber } from '../../utils/orderNumberGenerator';
 import dotenv from 'dotenv';
 import bcrypt from 'bcrypt';
 
@@ -136,27 +140,34 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   // Helper function to generate random stock between 5 and 20
   const getRandomStock = () => Math.floor(Math.random() * 16) + 5; // 5 to 20 inclusive
 
-  // 3. Create Items (Inventory)
+  // 3. Create Items (Inventory) - RAW INGREDIENTS with appropriate images
   const itemData = [
-    // Italian Delight Items
-    { businessSlug: 'italian-delight', name: 'Margherita Pizza Base', description: 'Pizza dough, tomato sauce, mozzarella', price: 12.99, cost: 5.50, stock: getRandomStock(), sku: 'IT-PIZ-001', barcode: '123456789001', category: 'Pizza', unit: 'piece', minStock: 10, maxStock: 100, imageUrl: 'https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=400&h=300&fit=crop&crop=center' },
-    { businessSlug: 'italian-delight', name: 'Spaghetti Pasta', description: 'Fresh spaghetti pasta', price: 8.99, cost: 3.20, stock: getRandomStock(), sku: 'IT-PAS-001', barcode: '123456789002', category: 'Pasta', unit: 'piece', minStock: 5, maxStock: 80, imageUrl: 'https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=400&h=300&fit=crop&crop=center' },
-    { businessSlug: 'italian-delight', name: 'Tiramisu Mix', description: 'Mascarpone, coffee, ladyfingers', price: 6.99, cost: 2.50, stock: getRandomStock(), sku: 'IT-DES-001', barcode: '123456789003', category: 'Dessert', unit: 'piece', minStock: 5, maxStock: 50, imageUrl: 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=400&h=300&fit=crop&crop=center' },
-    { businessSlug: 'italian-delight', name: 'Pepperoni Pizza Base', description: 'Pizza dough, tomato sauce, pepperoni', price: 14.99, cost: 6.50, stock: getRandomStock(), sku: 'IT-PIZ-002', barcode: '123456789004', category: 'Pizza', unit: 'piece', minStock: 8, maxStock: 80, imageUrl: 'https://images.unsplash.com/photo-1628840042765-356cda07504e?w=400&h=300&fit=crop&crop=center' },
-    { businessSlug: 'italian-delight', name: 'Fettuccine Alfredo', description: 'Fresh fettuccine with alfredo sauce', price: 10.99, cost: 4.20, stock: getRandomStock(), sku: 'IT-PAS-002', barcode: '123456789005', category: 'Pasta', unit: 'piece', minStock: 5, maxStock: 60, imageUrl: 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=400&h=300&fit=crop&crop=center' },
-    { businessSlug: 'italian-delight', name: 'Cannoli Shells', description: 'Crispy cannoli shells with filling', price: 5.99, cost: 2.00, stock: getRandomStock(), sku: 'IT-DES-002', barcode: '123456789006', category: 'Dessert', unit: 'piece', minStock: 10, maxStock: 70, imageUrl: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=400&h=300&fit=crop&crop=center' },
-    // Sushi Master Items
-    { businessSlug: 'sushi-master', name: 'California Roll Mix', description: 'Crab, avocado, cucumber, rice', price: 8.99, cost: 3.80, stock: getRandomStock(), sku: 'SU-ROL-001', barcode: '123456789007', category: 'Rolls', unit: 'piece', minStock: 10, maxStock: 100, imageUrl: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=300&fit=crop&crop=center' },
-    { businessSlug: 'sushi-master', name: 'Salmon Sashimi', description: 'Fresh salmon for nigiri', price: 4.99, cost: 2.20, stock: getRandomStock(), sku: 'SU-NIG-001', barcode: '123456789008', category: 'Nigiri', unit: 'piece', minStock: 15, maxStock: 120, imageUrl: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=300&fit=crop&crop=center' },
-    { businessSlug: 'sushi-master', name: 'Miso Soup Base', description: 'Miso paste, dashi, tofu', price: 2.99, cost: 0.80, stock: getRandomStock(), sku: 'SU-SOU-001', barcode: '123456789009', category: 'Soup', unit: 'bowl', minStock: 20, maxStock: 150, imageUrl: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400&h=300&fit=crop&crop=center' },
-    { businessSlug: 'sushi-master', name: 'Spicy Tuna Roll Mix', description: 'Tuna, spicy mayo, rice', price: 9.99, cost: 4.20, stock: getRandomStock(), sku: 'SU-ROL-002', barcode: '123456789010', category: 'Rolls', unit: 'piece', minStock: 8, maxStock: 80, imageUrl: 'https://images.unsplash.com/photo-1553621042-f6e147245754?w=400&h=300&fit=crop&crop=center' },
-    { businessSlug: 'sushi-master', name: 'Tuna Sashimi', description: 'Fresh tuna for nigiri', price: 5.99, cost: 2.80, stock: getRandomStock(), sku: 'SU-NIG-002', barcode: '123456789011', category: 'Nigiri', unit: 'piece', minStock: 12, maxStock: 100, imageUrl: 'https://images.unsplash.com/photo-1553621042-f6e147245754?w=400&h=300&fit=crop&crop=center' },
-    // Coffee Corner Items
-    { businessSlug: 'coffee-corner', name: 'Espresso Beans', description: 'Premium espresso coffee beans', price: 2.50, cost: 0.80, stock: getRandomStock(), sku: 'CO-ESP-001', barcode: '123456789012', category: 'Coffee', unit: 'shot', minStock: 50, maxStock: 500, imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=300&fit=crop&crop=center' },
-    { businessSlug: 'coffee-corner', name: 'Milk for Cappuccino', description: 'Fresh whole milk for cappuccino', price: 3.50, cost: 1.20, stock: getRandomStock(), sku: 'CO-CAP-001', barcode: '123456789013', category: 'Coffee', unit: 'cup', minStock: 30, maxStock: 300, imageUrl: 'https://images.unsplash.com/photo-1534778101976-62847782c06b?w=400&h=300&fit=crop&crop=center' },
-    { businessSlug: 'coffee-corner', name: 'Blueberry Muffin Mix', description: 'Fresh baked blueberry muffin mix', price: 2.99, cost: 1.00, stock: getRandomStock(), sku: 'CO-PAS-001', barcode: '123456789014', category: 'Pastry', unit: 'piece', minStock: 5, maxStock: 60, imageUrl: 'https://images.unsplash.com/photo-1607958996338-0106d5c0c1e1?w=400&h=300&fit=crop&crop=center' },
-    { businessSlug: 'coffee-corner', name: 'Chocolate Croissant Dough', description: 'Buttery croissant dough with chocolate', price: 3.50, cost: 1.30, stock: getRandomStock(), sku: 'CO-PAS-002', barcode: '123456789015', category: 'Pastry', unit: 'piece', minStock: 8, maxStock: 70, imageUrl: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=400&h=300&fit=crop&crop=center' },
-    { businessSlug: 'coffee-corner', name: 'Latte Milk', description: 'Steamed milk for lattes', price: 3.00, cost: 1.00, stock: getRandomStock(), sku: 'CO-LAT-001', barcode: '123456789016', category: 'Coffee', unit: 'cup', minStock: 25, maxStock: 250, imageUrl: 'https://images.unsplash.com/photo-1541167760496-1628856ab772?w=400&h=300&fit=crop&crop=center' }
+    // Italian Delight Items - RAW INGREDIENTS
+    { businessSlug: 'italian-delight', name: 'Pizza Dough', description: 'Fresh pizza dough base', price: 3.99, cost: 1.50, stock: getRandomStock(), sku: generateSku('IT', 1), barcode: generateBarcode('IT', 1), category: 'Pizza', unit: 'piece', minStock: 10, maxStock: 100, imageUrl: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=400&h=300&fit=crop&crop=center', allergens: ['gluten'] },
+    { businessSlug: 'italian-delight', name: 'Spaghetti Pasta', description: 'Fresh spaghetti pasta', price: 2.99, cost: 1.20, stock: getRandomStock(), sku: generateSku('IT', 2), barcode: generateBarcode('IT', 2), category: 'Pasta', unit: 'piece', minStock: 5, maxStock: 80, imageUrl: 'https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=400&h=300&fit=crop&crop=center', allergens: ['gluten'] },
+    { businessSlug: 'italian-delight', name: 'Mascarpone Cheese', description: 'Fresh mascarpone for tiramisu', price: 4.99, cost: 2.50, stock: getRandomStock(), sku: generateSku('IT', 3), barcode: generateBarcode('IT', 3), category: 'Dessert', unit: 'piece', minStock: 5, maxStock: 50, imageUrl: 'https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?w=400&h=300&fit=crop&crop=center', allergens: ['dairy'] },
+    { businessSlug: 'italian-delight', name: 'Pepperoni Slices', description: 'Fresh pepperoni for pizza', price: 5.99, cost: 2.80, stock: getRandomStock(), sku: generateSku('IT', 4), barcode: generateBarcode('IT', 4), category: 'Pizza', unit: 'piece', minStock: 8, maxStock: 80, imageUrl: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400&h=300&fit=crop&crop=center', allergens: ['pork'] },
+    { businessSlug: 'italian-delight', name: 'Fettuccine Pasta', description: 'Fresh fettuccine pasta', price: 3.50, cost: 1.40, stock: getRandomStock(), sku: generateSku('IT', 5), barcode: generateBarcode('IT', 5), category: 'Pasta', unit: 'piece', minStock: 5, maxStock: 60, imageUrl: 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=400&h=300&fit=crop&crop=center', allergens: ['gluten'] },
+    { businessSlug: 'italian-delight', name: 'Cannoli Shells', description: 'Crispy cannoli shells', price: 2.99, cost: 1.20, stock: getRandomStock(), sku: generateSku('IT', 6), barcode: generateBarcode('IT', 6), category: 'Dessert', unit: 'piece', minStock: 10, maxStock: 70, imageUrl: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=400&h=300&fit=crop&crop=center', allergens: ['gluten'] },
+    // Sushi Master Items - RAW INGREDIENTS
+    { businessSlug: 'sushi-master', name: 'Sushi Rice', description: 'Premium sushi rice', price: 3.99, cost: 1.80, stock: getRandomStock(), sku: generateSku('SU', 1), barcode: generateBarcode('SU', 1), category: 'Rolls', unit: 'piece', minStock: 10, maxStock: 100, imageUrl: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=300&fit=crop&crop=center', allergens: [] },
+    { businessSlug: 'sushi-master', name: 'Fresh Salmon', description: 'Fresh salmon for nigiri', price: 8.99, cost: 4.20, stock: getRandomStock(), sku: generateSku('SU', 2), barcode: generateBarcode('SU', 2), category: 'Nigiri', unit: 'piece', minStock: 15, maxStock: 120, imageUrl: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=300&fit=crop&crop=center', allergens: ['fish'] },
+    { businessSlug: 'sushi-master', name: 'Miso Paste', description: 'Miso paste for soup', price: 1.99, cost: 0.80, stock: getRandomStock(), sku: generateSku('SU', 3), barcode: generateBarcode('SU', 3), category: 'Soup', unit: 'bowl', minStock: 20, maxStock: 150, imageUrl: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400&h=300&fit=crop&crop=center', allergens: ['soy'] },
+    { businessSlug: 'sushi-master', name: 'Fresh Tuna', description: 'Fresh tuna for rolls', price: 9.99, cost: 4.80, stock: getRandomStock(), sku: generateSku('SU', 4), barcode: generateBarcode('SU', 4), category: 'Rolls', unit: 'piece', minStock: 8, maxStock: 80, imageUrl: 'https://images.unsplash.com/photo-1553621042-f6e147245754?w=400&h=300&fit=crop&crop=center', allergens: ['fish'] },
+    { businessSlug: 'sushi-master', name: 'Fresh Tuna Sashimi', description: 'Fresh tuna for nigiri', price: 7.99, cost: 3.80, stock: getRandomStock(), sku: generateSku('SU', 5), barcode: generateBarcode('SU', 5), category: 'Nigiri', unit: 'piece', minStock: 12, maxStock: 100, imageUrl: 'https://images.unsplash.com/photo-1553621042-f6e147245754?w=400&h=300&fit=crop&crop=center', allergens: ['fish'] },
+    // Coffee Corner Items - RAW INGREDIENTS
+    { businessSlug: 'coffee-corner', name: 'Coffee Beans', description: 'Premium coffee beans', price: 12.99, cost: 6.50, stock: getRandomStock(), sku: generateSku('CO', 1), barcode: generateBarcode('CO', 1), category: 'Coffee', unit: 'shot', minStock: 50, maxStock: 500, imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=300&fit=crop&crop=center', allergens: [] },
+    { businessSlug: 'coffee-corner', name: 'Fresh Milk', description: 'Fresh whole milk', price: 2.99, cost: 1.20, stock: getRandomStock(), sku: generateSku('CO', 2), barcode: generateBarcode('CO', 2), category: 'Coffee', unit: 'cup', minStock: 30, maxStock: 300, imageUrl: 'https://images.unsplash.com/photo-1534778101976-62847782c06b?w=400&h=300&fit=crop&crop=center', allergens: ['dairy'] },
+    { businessSlug: 'coffee-corner', name: 'Muffin Mix', description: 'Blueberry muffin mix', price: 4.99, cost: 2.00, stock: getRandomStock(), sku: generateSku('CO', 3), barcode: generateBarcode('CO', 3), category: 'Pastry', unit: 'piece', minStock: 5, maxStock: 60, imageUrl: 'https://images.unsplash.com/photo-1607958996338-0106d5c0c1e1?w=400&h=300&fit=crop&crop=center', allergens: ['gluten', 'dairy', 'eggs'] },
+    { businessSlug: 'coffee-corner', name: 'Croissant Dough', description: 'Buttery croissant dough', price: 3.99, cost: 1.60, stock: getRandomStock(), sku: generateSku('CO', 4), barcode: generateBarcode('CO', 4), category: 'Pastry', unit: 'piece', minStock: 8, maxStock: 70, imageUrl: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=400&h=300&fit=crop&crop=center', allergens: ['gluten', 'dairy', 'eggs'] },
+    { businessSlug: 'coffee-corner', name: 'Steamed Milk', description: 'Steamed milk for lattes', price: 1.99, cost: 0.80, stock: getRandomStock(), sku: generateSku('CO', 5), barcode: generateBarcode('CO', 5), category: 'Coffee', unit: 'cup', minStock: 25, maxStock: 250, imageUrl: 'https://images.unsplash.com/photo-1541167760496-1628856ab772?w=400&h=300&fit=crop&crop=center', allergens: ['dairy'] },
+    // Missing beverage items for menu items
+    { businessSlug: 'italian-delight', name: 'Red Wine Bottle', description: 'Premium red wine bottle', price: 15.99, cost: 8.50, stock: getRandomStock(), sku: generateSku('IT', 7), barcode: generateBarcode('IT', 7), category: 'Beverages', unit: 'glass', minStock: 20, maxStock: 200, imageUrl: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=400&h=300&fit=crop', allergens: [] },
+    { businessSlug: 'italian-delight', name: 'Soda Syrup', description: 'Italian soda syrup', price: 4.99, cost: 2.20, stock: getRandomStock(), sku: generateSku('IT', 8), barcode: generateBarcode('IT', 8), category: 'Beverages', unit: 'glass', minStock: 15, maxStock: 150, imageUrl: 'https://images.unsplash.com/photo-1621263764928-df1444c5e859?w=400&h=300&fit=crop', allergens: [] },
+    { businessSlug: 'sushi-master', name: 'Green Tea Leaves', description: 'Premium Japanese green tea', price: 8.99, cost: 4.50, stock: getRandomStock(), sku: generateSku('SU', 6), barcode: generateBarcode('SU', 6), category: 'Beverages', unit: 'cup', minStock: 30, maxStock: 300, imageUrl: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop', allergens: [] },
+    { businessSlug: 'sushi-master', name: 'Sake Bottle', description: 'Premium sake bottle', price: 18.99, cost: 9.50, stock: getRandomStock(), sku: generateSku('SU', 7), barcode: generateBarcode('SU', 7), category: 'Beverages', unit: 'bottle', minStock: 10, maxStock: 100, imageUrl: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=400&h=300&fit=crop', allergens: [] },
+    { businessSlug: 'coffee-corner', name: 'Earl Grey Tea', description: 'Classic Earl Grey tea', price: 6.99, cost: 3.50, stock: getRandomStock(), sku: generateSku('CO', 6), barcode: generateBarcode('CO', 6), category: 'Tea', unit: 'cup', minStock: 25, maxStock: 250, imageUrl: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop', allergens: [] },
+    { businessSlug: 'coffee-corner', name: 'Berry Mix', description: 'Mixed berry mix for smoothies', price: 5.99, cost: 2.80, stock: getRandomStock(), sku: generateSku('CO', 7), barcode: generateBarcode('CO', 7), category: 'Smoothies', unit: 'cup', minStock: 15, maxStock: 150, imageUrl: 'https://images.unsplash.com/photo-1505252585461-04db1eb84625?w=400&h=300&fit=crop', allergens: ['dairy'] }
   ];
   await queryInterface.bulkInsert('items', itemData.map(i => ({
     businessId: businesses[i.businessSlug],
@@ -172,6 +183,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     minStock: i.minStock,
     maxStock: i.maxStock,
     imageUrl: i.imageUrl,
+    allergens: JSON.stringify(i.allergens || []),
     isActive: true,
     createdAt: new Date(),
     updatedAt: new Date()
@@ -494,7 +506,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       serverEmail: 'giuseppe@italiandelight.com',
       customerEmail: 'john.smith@email.com',
       tableKey: 'italian-delight-A2',
-      orderNumber: 'IT-2024-001',
+      orderNumber: await generateOrderNumber(businesses['italian-delight']!, 'IT'),
       status: OrderStatus.CONFIRMED,
       orderType: OrderType.DINE_IN,
       subtotal: 35.98,
@@ -510,7 +522,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       serverEmail: 'giuseppe@italiandelight.com',
       customerEmail: 'maria.garcia@email.com',
       tableKey: 'italian-delight-A1',
-      orderNumber: 'IT-2024-002',
+      orderNumber: await generateOrderNumber(businesses['italian-delight']!, 'IT'),
       status: OrderStatus.PENDING,
       orderType: OrderType.DINE_IN,
       subtotal: 20.99,
@@ -526,7 +538,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       serverEmail: 'aiko@sushimaster.com',
       customerEmail: 'david.kim@email.com',
       tableKey: 'sushi-master-S2',
-      orderNumber: 'SU-2024-001',
+      orderNumber: await generateOrderNumber(businesses['sushi-master']!, 'SU'),
       status: OrderStatus.IN_PROGRESS,
       orderType: OrderType.DINE_IN,
       subtotal: 24.97,
@@ -542,7 +554,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       serverEmail: 'aiko@sushimaster.com',
       customerEmail: null,
       tableKey: 'sushi-master-S1',
-      orderNumber: 'SU-2024-002',
+      orderNumber: await generateOrderNumber(businesses['sushi-master']!, 'SU'),
       status: OrderStatus.READY,
       orderType: OrderType.DINE_IN,
       subtotal: 12.99,
@@ -559,7 +571,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       serverEmail: 'emma@coffeecorner.com',
       customerEmail: 'jennifer.lee@email.com',
       tableKey: null,
-      orderNumber: 'CO-2024-001',
+      orderNumber: await generateOrderNumber(businesses['coffee-corner']!, 'CO'),
       status: OrderStatus.READY,
       orderType: OrderType.TAKEAWAY,
       subtotal: 8.49,
@@ -575,7 +587,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       serverEmail: 'sarah@coffeecorner.com',
       customerEmail: null,
       tableKey: 'coffee-corner-C1',
-      orderNumber: 'CO-2024-002',
+      orderNumber: await generateOrderNumber(businesses['coffee-corner']!, 'CO'),
       status: OrderStatus.SERVED,
       orderType: OrderType.DINE_IN,
       subtotal: 11.99,
@@ -684,38 +696,35 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   
   console.log('🔍 DEBUG: Final categories object:', categories);
 
-  // 8. Create Menu Items (moved up)
-  console.log('🔍 DEBUG: Creating menu items...');
-  console.log('🔍 DEBUG: Available categories:', categories);
-  
+  // 8. Create Menu Items - FINISHED DISHES with appropriate images
   const menuItemData = [
-    // Italian Delight Menu Items
-    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Pizza', name: 'Margherita Pizza', description: 'Fresh mozzarella, tomato sauce, basil', price: 18.99, cost: 8.50, sku: 'IT-MI-PIZ-001', barcode: '123456789010', itemSku: 'IT-PIZ-001', imageUrl: 'https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=400&h=300&fit=crop' },
-    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Pizza', name: 'Pepperoni Pizza', description: 'Classic pepperoni with mozzarella', price: 20.99, cost: 9.50, sku: 'IT-MI-PIZ-002', barcode: '123456789011', itemSku: 'IT-PIZ-002', imageUrl: 'https://images.unsplash.com/photo-1628840042765-356cda07504e?w=400&h=300&fit=crop' },
-    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Pasta', name: 'Spaghetti Carbonara', description: 'Pasta with eggs, cheese, pancetta, black pepper', price: 16.99, cost: 7.20, sku: 'IT-MI-PAS-001', barcode: '123456789012', itemSku: 'IT-PAS-001', imageUrl: 'https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=400&h=300&fit=crop' },
-    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Pasta', name: 'Fettuccine Alfredo', description: 'Creamy alfredo sauce with parmesan', price: 17.99, cost: 7.80, sku: 'IT-MI-PAS-002', barcode: '123456789013', itemSku: 'IT-PAS-002', imageUrl: 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=400&h=300&fit=crop' },
-    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Desserts', name: 'Tiramisu', description: 'Classic Italian dessert with coffee and mascarpone', price: 8.99, cost: 3.50, sku: 'IT-MI-DES-001', barcode: '123456789014', itemSku: 'IT-DES-001', imageUrl: 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=400&h=300&fit=crop' },
-    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Desserts', name: 'Cannoli', description: 'Crispy shells filled with sweet ricotta', price: 6.99, cost: 2.50, sku: 'IT-MI-DES-002', barcode: '123456789015', itemSku: 'IT-DES-002', imageUrl: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=400&h=300&fit=crop' },
-    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Beverages', name: 'House Red Wine', description: 'Glass of our signature red wine', price: 8.99, cost: 3.20, sku: 'IT-MI-BEV-001', barcode: '123456789016', itemSku: null, imageUrl: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=400&h=300&fit=crop' },
-    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Beverages', name: 'Italian Soda', description: 'Refreshing Italian soda', price: 3.99, cost: 1.20, sku: 'IT-MI-BEV-002', barcode: '123456789017', itemSku: null, imageUrl: 'https://images.unsplash.com/photo-1621263764928-df1444c5e859?w=400&h=300&fit=crop' },
+    // Italian Delight Menu Items - FINISHED DISHES
+    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Pizza', name: 'Margherita Pizza', description: 'Fresh mozzarella, tomato sauce, basil', price: 18.99, cost: 8.50, sku: generateSku('IT', 1), barcode: generateBarcode('IT', 1), itemSku: generateMenuItemSkuWithCategory('IT', 'Pizza', 1), imageUrl: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400&h=300&fit=crop&crop=center', allergens: ['gluten', 'dairy'] },
+    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Pizza', name: 'Pepperoni Pizza', description: 'Classic pepperoni with mozzarella', price: 20.99, cost: 9.50, sku: generateSku('IT', 2), barcode: generateBarcode('IT', 2), itemSku: generateMenuItemSkuWithCategory('IT', 'Pizza', 2), imageUrl: 'https://images.unsplash.com/photo-1628840042765-356cda07504e?w=400&h=300&fit=crop&crop=center', allergens: ['gluten', 'dairy', 'pork'] },
+    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Pasta', name: 'Spaghetti Carbonara', description: 'Pasta with eggs, cheese, pancetta, black pepper', price: 16.99, cost: 7.20, sku: generateSku('IT', 3), barcode: generateBarcode('IT', 3), itemSku: generateMenuItemSkuWithCategory('IT', 'Pasta', 1), imageUrl: 'https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=400&h=300&fit=crop&crop=center', allergens: ['gluten', 'dairy', 'eggs', 'pork'] },
+    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Pasta', name: 'Fettuccine Alfredo', description: 'Creamy alfredo sauce with parmesan', price: 17.99, cost: 7.80, sku: generateSku('IT', 4), barcode: generateBarcode('IT', 4), itemSku: generateMenuItemSkuWithCategory('IT', 'Pasta', 2), imageUrl: 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=400&h=300&fit=crop&crop=center', allergens: ['gluten', 'dairy'] },
+    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Desserts', name: 'Tiramisu', description: 'Classic Italian dessert with coffee and mascarpone', price: 8.99, cost: 3.50, sku: generateSku('IT', 5), barcode: generateBarcode('IT', 5), itemSku: generateMenuItemSkuWithCategory('IT', 'Desserts', 1), imageUrl: 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=400&h=300&fit=crop&crop=center', allergens: ['gluten', 'dairy', 'eggs'] },
+    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Desserts', name: 'Cannoli', description: 'Crispy shells filled with sweet ricotta', price: 6.99, cost: 2.50, sku: generateSku('IT', 6), barcode: generateBarcode('IT', 6), itemSku: generateMenuItemSkuWithCategory('IT', 'Desserts', 2), imageUrl: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=400&h=300&fit=crop&crop=center', allergens: ['gluten', 'dairy'] },
+    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Beverages', name: 'House Red Wine', description: 'Glass of our signature red wine', price: 8.99, cost: 3.20, sku: generateSku('IT', 7), barcode: generateBarcode('IT', 7), itemSku: generateMenuItemSkuWithCategory('IT', 'Beverages', 1), imageUrl: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=400&h=300&fit=crop&crop=center', allergens: [] },
+    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Beverages', name: 'Italian Soda', description: 'Refreshing Italian soda', price: 3.99, cost: 1.20, sku: generateSku('IT', 8), barcode: generateBarcode('IT', 8), itemSku: generateMenuItemSkuWithCategory('IT', 'Beverages', 2), imageUrl: 'https://images.unsplash.com/photo-1621263764928-df1444c5e859?w=400&h=300&fit=crop&crop=center', allergens: [] },
     
-    // Sushi Master Menu Items
-    { businessSlug: 'sushi-master', categoryKey: 'sushi-master-Rolls', name: 'California Roll', description: 'Crab, avocado, cucumber', price: 12.99, cost: 5.80, sku: 'SU-MI-ROL-001', barcode: '123456789020', itemSku: 'SU-ROL-001', imageUrl: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=300&fit=crop' },
-    { businessSlug: 'sushi-master', categoryKey: 'sushi-master-Rolls', name: 'Spicy Tuna Roll', description: 'Spicy tuna with cucumber', price: 14.99, cost: 6.50, sku: 'SU-MI-ROL-002', barcode: '123456789021', itemSku: 'SU-ROL-002', imageUrl: 'https://images.unsplash.com/photo-1553621042-f6e147245754?w=400&h=300&fit=crop' },
-    { businessSlug: 'sushi-master', categoryKey: 'sushi-master-Nigiri', name: 'Salmon Nigiri', description: 'Fresh salmon over rice', price: 6.99, cost: 3.20, sku: 'SU-MI-NIG-001', barcode: '123456789022', itemSku: 'SU-NIG-001', imageUrl: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=300&fit=crop' },
-    { businessSlug: 'sushi-master', categoryKey: 'sushi-master-Nigiri', name: 'Tuna Nigiri', description: 'Fresh tuna over rice', price: 7.99, cost: 3.80, sku: 'SU-MI-NIG-002', barcode: '123456789023', itemSku: 'SU-NIG-002', imageUrl: 'https://images.unsplash.com/photo-1553621042-f6e147245754?w=400&h=300&fit=crop' },
-    { businessSlug: 'sushi-master', categoryKey: 'sushi-master-Soups', name: 'Miso Soup', description: 'Traditional Japanese soup', price: 4.99, cost: 1.80, sku: 'SU-MI-SOU-001', barcode: '123456789024', itemSku: 'SU-SOU-001', imageUrl: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400&h=300&fit=crop' },
-    { businessSlug: 'sushi-master', categoryKey: 'sushi-master-Beverages', name: 'Green Tea', description: 'Premium Japanese green tea', price: 2.99, cost: 0.80, sku: 'SU-MI-BEV-001', barcode: '123456789025', itemSku: null, imageUrl: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop' },
-    { businessSlug: 'sushi-master', categoryKey: 'sushi-master-Beverages', name: 'Sake', description: 'Premium sake', price: 12.99, cost: 5.20, sku: 'SU-MI-BEV-002', barcode: '123456789026', itemSku: null, imageUrl: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=400&h=300&fit=crop' },
+    // Sushi Master Menu Items - FINISHED DISHES
+    { businessSlug: 'sushi-master', categoryKey: 'sushi-master-Rolls', name: 'California Roll', description: 'Crab, avocado, cucumber', price: 12.99, cost: 5.80, sku: generateSku('SU', 1), barcode: generateBarcode('SU', 1), itemSku: generateMenuItemSkuWithCategory('SU', 'Rolls', 1), imageUrl: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=300&fit=crop&crop=center', allergens: ['fish', 'soy'] },
+    { businessSlug: 'sushi-master', categoryKey: 'sushi-master-Rolls', name: 'Spicy Tuna Roll', description: 'Spicy tuna with cucumber', price: 14.99, cost: 6.50, sku: generateSku('SU', 2), barcode: generateBarcode('SU', 2), itemSku: generateMenuItemSkuWithCategory('SU', 'Rolls', 2), imageUrl: 'https://images.unsplash.com/photo-1553621042-f6e147245754?w=400&h=300&fit=crop&crop=center', allergens: ['fish', 'soy'] },
+    { businessSlug: 'sushi-master', categoryKey: 'sushi-master-Nigiri', name: 'Salmon Nigiri', description: 'Fresh salmon over rice', price: 6.99, cost: 3.20, sku: generateSku('SU', 3), barcode: generateBarcode('SU', 3), itemSku: generateMenuItemSkuWithCategory('SU', 'Nigiri', 1), imageUrl: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=300&fit=crop&crop=center', allergens: ['fish'] },
+    { businessSlug: 'sushi-master', categoryKey: 'sushi-master-Nigiri', name: 'Tuna Nigiri', description: 'Fresh tuna over rice', price: 7.99, cost: 3.80, sku: generateSku('SU', 4), barcode: generateBarcode('SU', 4), itemSku: generateMenuItemSkuWithCategory('SU', 'Nigiri', 2), imageUrl: 'https://images.unsplash.com/photo-1553621042-f6e147245754?w=400&h=300&fit=crop&crop=center', allergens: ['fish'] },
+    { businessSlug: 'sushi-master', categoryKey: 'sushi-master-Soups', name: 'Miso Soup', description: 'Traditional Japanese soup', price: 4.99, cost: 1.80, sku: generateSku('SU', 5), barcode: generateBarcode('SU', 5), itemSku: generateMenuItemSkuWithCategory('SU', 'Soups', 1), imageUrl: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400&h=300&fit=crop&crop=center', allergens: ['soy'] },
+    { businessSlug: 'sushi-master', categoryKey: 'sushi-master-Beverages', name: 'Green Tea', description: 'Premium Japanese green tea', price: 2.99, cost: 0.80, sku: generateSku('SU', 6), barcode: generateBarcode('SU', 6), itemSku: generateMenuItemSkuWithCategory('SU', 'Beverages', 1), imageUrl: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop&crop=center', allergens: [] },
+    { businessSlug: 'sushi-master', categoryKey: 'sushi-master-Beverages', name: 'Sake', description: 'Premium sake', price: 12.99, cost: 5.20, sku: generateSku('SU', 7), barcode: generateBarcode('SU', 7), itemSku: generateMenuItemSkuWithCategory('SU', 'Beverages', 2), imageUrl: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=400&h=300&fit=crop&crop=center', allergens: [] },
     
-    // Coffee Corner Menu Items
-    { businessSlug: 'coffee-corner', categoryKey: 'coffee-corner-Coffee', name: 'Espresso', description: 'Single shot of espresso', price: 3.50, cost: 1.20, sku: 'CO-MI-COF-001', barcode: '123456789030', itemSku: 'CO-ESP-001', imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=300&fit=crop' },
-    { businessSlug: 'coffee-corner', categoryKey: 'coffee-corner-Coffee', name: 'Cappuccino', description: 'Espresso with steamed milk and foam', price: 4.99, cost: 1.80, sku: 'CO-MI-COF-002', barcode: '123456789031', itemSku: 'CO-CAP-001', imageUrl: 'https://images.unsplash.com/photo-1534778101976-62847782c06b?w=400&h=300&fit=crop' },
-    { businessSlug: 'coffee-corner', categoryKey: 'coffee-corner-Coffee', name: 'Latte', description: 'Espresso with steamed milk', price: 4.49, cost: 1.60, sku: 'CO-MI-COF-003', barcode: '123456789032', itemSku: 'CO-LAT-001', imageUrl: 'https://images.unsplash.com/photo-1541167760496-1628856ab772?w=400&h=300&fit=crop' },
-    { businessSlug: 'coffee-corner', categoryKey: 'coffee-corner-Pastries', name: 'Blueberry Muffin', description: 'Fresh baked blueberry muffin', price: 3.99, cost: 1.50, sku: 'CO-MI-PAS-001', barcode: '123456789033', itemSku: 'CO-PAS-001', imageUrl: 'https://images.unsplash.com/photo-1607958996338-0106d5c0c1e1?w=400&h=300&fit=crop&crop=center' },
-    { businessSlug: 'coffee-corner', categoryKey: 'coffee-corner-Pastries', name: 'Chocolate Croissant', description: 'Buttery croissant with chocolate', price: 4.49, cost: 1.80, sku: 'CO-MI-PAS-002', barcode: '123456789034', itemSku: 'CO-PAS-002', imageUrl: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=400&h=300&fit=crop' },
-    { businessSlug: 'coffee-corner', categoryKey: 'coffee-corner-Tea', name: 'Earl Grey Tea', description: 'Classic Earl Grey tea', price: 3.99, cost: 1.20, sku: 'CO-MI-TEA-001', barcode: '123456789035', itemSku: null, imageUrl: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop' },
-    { businessSlug: 'coffee-corner', categoryKey: 'coffee-corner-Smoothies', name: 'Berry Blast Smoothie', description: 'Mixed berry smoothie', price: 5.99, cost: 2.20, sku: 'CO-MI-SMO-001', barcode: '123456789036', itemSku: null, imageUrl: 'https://images.unsplash.com/photo-1505252585461-04db1eb84625?w=400&h=300&fit=crop' }
+    // Coffee Corner Menu Items - FINISHED DISHES
+    { businessSlug: 'coffee-corner', categoryKey: 'coffee-corner-Coffee', name: 'Espresso', description: 'Single shot of espresso', price: 3.50, cost: 1.20, sku: generateSku('CO', 1), barcode: generateBarcode('CO', 1), itemSku: generateMenuItemSkuWithCategory('CO', 'Coffee', 1), imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=300&fit=crop&crop=center', allergens: [] },
+    { businessSlug: 'coffee-corner', categoryKey: 'coffee-corner-Coffee', name: 'Cappuccino', description: 'Espresso with steamed milk and foam', price: 4.99, cost: 1.80, sku: generateSku('CO', 2), barcode: generateBarcode('CO', 2), itemSku: generateMenuItemSkuWithCategory('CO', 'Coffee', 2), imageUrl: 'https://images.unsplash.com/photo-1534778101976-62847782c06b?w=400&h=300&fit=crop&crop=center', allergens: ['dairy'] },
+    { businessSlug: 'coffee-corner', categoryKey: 'coffee-corner-Coffee', name: 'Latte', description: 'Espresso with steamed milk', price: 4.49, cost: 1.60, sku: generateSku('CO', 3), barcode: generateBarcode('CO', 3), itemSku: generateMenuItemSkuWithCategory('CO', 'Coffee', 3), imageUrl: 'https://images.unsplash.com/photo-1541167760496-1628856ab772?w=400&h=300&fit=crop&crop=center', allergens: ['dairy'] },
+    { businessSlug: 'coffee-corner', categoryKey: 'coffee-corner-Pastries', name: 'Blueberry Muffin', description: 'Fresh baked blueberry muffin', price: 3.99, cost: 1.50, sku: generateSku('CO', 4), barcode: generateBarcode('CO', 4), itemSku: generateMenuItemSkuWithCategory('CO', 'Pastries', 1), imageUrl: 'https://images.unsplash.com/photo-1607958996338-0106d5c0c1e1?w=400&h=300&fit=crop&crop=center', allergens: ['gluten', 'dairy', 'eggs'] },
+    { businessSlug: 'coffee-corner', categoryKey: 'coffee-corner-Pastries', name: 'Chocolate Croissant', description: 'Buttery croissant with chocolate', price: 4.49, cost: 1.80, sku: generateSku('CO', 5), barcode: generateBarcode('CO', 5), itemSku: generateMenuItemSkuWithCategory('CO', 'Pastries', 2), imageUrl: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=400&h=300&fit=crop&crop=center', allergens: ['gluten', 'dairy', 'eggs'] },
+    { businessSlug: 'coffee-corner', categoryKey: 'coffee-corner-Tea', name: 'Earl Grey Tea', description: 'Classic Earl Grey tea', price: 3.99, cost: 1.20, sku: generateSku('CO', 6), barcode: generateBarcode('CO', 6), itemSku: generateMenuItemSkuWithCategory('CO', 'Tea', 1), imageUrl: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop&crop=center', allergens: [] },
+    { businessSlug: 'coffee-corner', categoryKey: 'coffee-corner-Smoothies', name: 'Berry Blast Smoothie', description: 'Mixed berry smoothie', price: 5.99, cost: 2.20, sku: generateSku('CO', 7), barcode: generateBarcode('CO', 7), itemSku: generateMenuItemSkuWithCategory('CO', 'Smoothies', 1), imageUrl: 'https://images.unsplash.com/photo-1505252585461-04db1eb84625?w=400&h=300&fit=crop&crop=center', allergens: ['dairy'] }
   ];
   
   console.log('🔍 DEBUG: Menu item data to insert:', menuItemData);
@@ -740,6 +749,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       sku: mi.sku,
       barcode: mi.barcode,
       imageUrl: mi.imageUrl,
+      allergens: JSON.stringify(mi.allergens || []),
       preparationTime: 15,
       isAvailable: true,
       isVegetarian: false,
@@ -768,21 +778,21 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   // 9. Create Order Items
   const orderItemData = [
     // Italian Delight Orders
-    { orderNumber: 'IT-2024-001', itemSku: 'IT-MI-PIZ-001', itemName: 'Margherita Pizza', quantity: 1, unitPrice: 18.99, totalPrice: 18.99, specialInstructions: 'Extra cheese', status: OrderItemStatus.IN_PROGRESS },
-    { orderNumber: 'IT-2024-001', itemSku: 'IT-MI-PAS-001', itemName: 'Spaghetti Carbonara', quantity: 1, unitPrice: 16.99, totalPrice: 16.99, specialInstructions: null, status: OrderItemStatus.IN_PROGRESS },
-    { orderNumber: 'IT-2024-002', itemSku: 'IT-MI-PIZ-002', itemName: 'Pepperoni Pizza', quantity: 1, unitPrice: 20.99, totalPrice: 20.99, specialInstructions: 'Well done', status: OrderItemStatus.PENDING },
+    { orderNumber: orderData[0]!.orderNumber, itemSku: generateMenuItemSkuWithCategory('IT', 'Pizza', 1), itemName: 'Margherita Pizza', quantity: 1, unitPrice: 18.99, totalPrice: 18.99, specialInstructions: 'Extra cheese', status: OrderItemStatus.IN_PROGRESS },
+    { orderNumber: orderData[0]!.orderNumber, itemSku: generateMenuItemSkuWithCategory('IT', 'Pasta', 1), itemName: 'Spaghetti Carbonara', quantity: 1, unitPrice: 16.99, totalPrice: 16.99, specialInstructions: null, status: OrderItemStatus.IN_PROGRESS },
+    { orderNumber: orderData[1]!.orderNumber, itemSku: generateMenuItemSkuWithCategory('IT', 'Pizza', 2), itemName: 'Pepperoni Pizza', quantity: 1, unitPrice: 20.99, totalPrice: 20.99, specialInstructions: 'Well done', status: OrderItemStatus.PENDING },
     
     // Sushi Master Orders
-    { orderNumber: 'SU-2024-001', itemSku: 'SU-MI-ROL-001', itemName: 'California Roll', quantity: 1, unitPrice: 12.99, totalPrice: 12.99, specialInstructions: 'Extra wasabi', status: OrderItemStatus.READY },
-    { orderNumber: 'SU-2024-001', itemSku: 'SU-MI-NIG-001', itemName: 'Salmon Nigiri', quantity: 2, unitPrice: 6.99, totalPrice: 13.98, specialInstructions: null, status: OrderItemStatus.READY },
-    { orderNumber: 'SU-2024-002', itemSku: 'SU-MI-ROL-001', itemName: 'California Roll', quantity: 1, unitPrice: 12.99, totalPrice: 12.99, specialInstructions: 'No wasabi', status: OrderItemStatus.READY },
+    { orderNumber: orderData[2]!.orderNumber, itemSku: generateMenuItemSkuWithCategory('SU', 'Rolls', 1), itemName: 'California Roll', quantity: 1, unitPrice: 12.99, totalPrice: 12.99, specialInstructions: 'Extra wasabi', status: OrderItemStatus.READY },
+    { orderNumber: orderData[2]!.orderNumber, itemSku: generateMenuItemSkuWithCategory('SU', 'Nigiri', 1), itemName: 'Salmon Nigiri', quantity: 2, unitPrice: 6.99, totalPrice: 13.98, specialInstructions: null, status: OrderItemStatus.READY },
+    { orderNumber: orderData[3]!.orderNumber, itemSku: generateMenuItemSkuWithCategory('SU', 'Rolls', 1), itemName: 'California Roll', quantity: 1, unitPrice: 12.99, totalPrice: 12.99, specialInstructions: 'No wasabi', status: OrderItemStatus.READY },
     
     // Coffee Corner Orders
-    { orderNumber: 'CO-2024-001', itemSku: 'CO-MI-COF-002', itemName: 'Cappuccino', quantity: 1, unitPrice: 4.99, totalPrice: 4.99, specialInstructions: 'Extra hot', status: OrderItemStatus.SERVED },
-    { orderNumber: 'CO-2024-001', itemSku: 'CO-MI-PAS-001', itemName: 'Blueberry Muffin', quantity: 1, unitPrice: 3.99, totalPrice: 3.99, specialInstructions: null, status: OrderItemStatus.SERVED },
-    { orderNumber: 'CO-2024-002', itemSku: 'CO-MI-COF-003', itemName: 'Latte', quantity: 1, unitPrice: 4.49, totalPrice: 4.49, specialInstructions: 'Extra shot', status: OrderItemStatus.SERVED },
-    { orderNumber: 'CO-2024-002', itemSku: 'CO-MI-PAS-002', itemName: 'Chocolate Croissant', quantity: 1, unitPrice: 4.49, totalPrice: 4.49, specialInstructions: null, status: OrderItemStatus.SERVED },
-    { orderNumber: 'CO-2024-002', itemSku: 'CO-MI-COF-001', itemName: 'Espresso', quantity: 1, unitPrice: 3.50, totalPrice: 3.50, specialInstructions: null, status: OrderItemStatus.SERVED }
+    { orderNumber: orderData[4]!.orderNumber, itemSku: generateMenuItemSkuWithCategory('CO', 'Coffee', 2), itemName: 'Cappuccino', quantity: 1, unitPrice: 4.99, totalPrice: 4.99, specialInstructions: 'Extra hot', status: OrderItemStatus.SERVED },
+    { orderNumber: orderData[4]!.orderNumber, itemSku: generateMenuItemSkuWithCategory('CO', 'Pastries', 1), itemName: 'Blueberry Muffin', quantity: 1, unitPrice: 3.99, totalPrice: 3.99, specialInstructions: null, status: OrderItemStatus.SERVED },
+    { orderNumber: orderData[5]!.orderNumber, itemSku: generateMenuItemSkuWithCategory('CO', 'Coffee', 3), itemName: 'Latte', quantity: 1, unitPrice: 4.49, totalPrice: 4.49, specialInstructions: 'Extra shot', status: OrderItemStatus.SERVED },
+    { orderNumber: orderData[5]!.orderNumber, itemSku: generateMenuItemSkuWithCategory('CO', 'Pastries', 2), itemName: 'Chocolate Croissant', quantity: 1, unitPrice: 4.49, totalPrice: 4.49, specialInstructions: null, status: OrderItemStatus.SERVED },
+    { orderNumber: orderData[5]!.orderNumber, itemSku: generateMenuItemSkuWithCategory('CO', 'Coffee', 1), itemName: 'Espresso', quantity: 1, unitPrice: 3.50, totalPrice: 3.50, specialInstructions: null, status: OrderItemStatus.SERVED }
   ];
   
   console.log('DEBUG: OrderItemStatus enum values:', Object.values(OrderItemStatus));
@@ -803,11 +813,11 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   // Update table statuses to reflect current orders (following POS convention)
   console.log('🔍 DEBUG: Updating table statuses to reflect current orders...');
   const tableUpdates = [
-    { tableKey: 'italian-delight-A2', orderNumber: 'IT-2024-001', serverEmail: 'giuseppe@italiandelight.com', partySize: 4 },
-    { tableKey: 'italian-delight-A1', orderNumber: 'IT-2024-002', serverEmail: 'giuseppe@italiandelight.com', partySize: 2 },
-    { tableKey: 'sushi-master-S2', orderNumber: 'SU-2024-001', serverEmail: 'aiko@sushimaster.com', partySize: 6 },
-    { tableKey: 'sushi-master-S1', orderNumber: 'SU-2024-002', serverEmail: 'aiko@sushimaster.com', partySize: 3 },
-    { tableKey: 'coffee-corner-C1', orderNumber: 'CO-2024-002', serverEmail: 'sarah@coffeecorner.com', partySize: 2 }
+    { tableKey: 'italian-delight-A2', orderNumber: orderData[0]!.orderNumber, serverEmail: 'giuseppe@italiandelight.com', partySize: 4 },
+    { tableKey: 'italian-delight-A1', orderNumber: orderData[1]!.orderNumber, serverEmail: 'giuseppe@italiandelight.com', partySize: 2 },
+    { tableKey: 'sushi-master-S2', orderNumber: orderData[2]!.orderNumber, serverEmail: 'aiko@sushimaster.com', partySize: 6 },
+    { tableKey: 'sushi-master-S1', orderNumber: orderData[3]!.orderNumber, serverEmail: 'aiko@sushimaster.com', partySize: 3 },
+    { tableKey: 'coffee-corner-C1', orderNumber: orderData[5]!.orderNumber, serverEmail: 'sarah@coffeecorner.com', partySize: 2 }
   ];
 
   for (const update of tableUpdates) {
@@ -833,7 +843,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       businessSlug: 'italian-delight',
       cashierEmail: 'antonio@italiandelight.com',
       customerEmail: 'john.smith@email.com',
-      saleNumber: 'SALE-IT-2024-001',
+      saleNumber: await generateSaleNumber(businesses['italian-delight']!, 'IT'),
       status: SaleStatus.COMPLETED,
       subtotal: 35.98,
       taxAmount: 3.19,
@@ -846,7 +856,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       businessSlug: 'italian-delight',
       cashierEmail: 'antonio@italiandelight.com',
       customerEmail: 'john.smith@email.com',
-      saleNumber: 'SALE-IT-2024-002',
+      saleNumber: await generateSaleNumber(businesses['italian-delight']!, 'IT'),
       status: SaleStatus.COMPLETED,
       subtotal: 42.50,
       taxAmount: 3.77,
@@ -859,7 +869,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       businessSlug: 'italian-delight',
       cashierEmail: 'antonio@italiandelight.com',
       customerEmail: 'maria.garcia@email.com',
-      saleNumber: 'SALE-IT-2024-003',
+      saleNumber: await generateSaleNumber(businesses['italian-delight']!, 'IT'),
       status: SaleStatus.COMPLETED,
       subtotal: 28.99,
       taxAmount: 2.57,
@@ -872,7 +882,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       businessSlug: 'italian-delight',
       cashierEmail: 'antonio@italiandelight.com',
       customerEmail: 'maria.garcia@email.com',
-      saleNumber: 'SALE-IT-2024-004',
+      saleNumber: await generateSaleNumber(businesses['italian-delight']!, 'IT'),
       status: SaleStatus.COMPLETED,
       subtotal: 55.75,
       taxAmount: 4.95,
@@ -885,7 +895,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       businessSlug: 'italian-delight',
       cashierEmail: 'antonio@italiandelight.com',
       customerEmail: null,
-      saleNumber: 'SALE-IT-2024-005',
+      saleNumber: await generateSaleNumber(businesses['italian-delight']!, 'IT'),
       status: SaleStatus.COMPLETED,
       subtotal: 15.99,
       taxAmount: 1.42,
@@ -898,7 +908,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       businessSlug: 'sushi-master',
       cashierEmail: 'hiroshi@sushimaster.com',
       customerEmail: 'david.kim@email.com',
-      saleNumber: 'SALE-SU-2024-001',
+      saleNumber: await generateSaleNumber(businesses['sushi-master']!, 'SU'),
       status: SaleStatus.COMPLETED,
       subtotal: 24.97,
       taxAmount: 2.31,
@@ -911,7 +921,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       businessSlug: 'sushi-master',
       cashierEmail: 'hiroshi@sushimaster.com',
       customerEmail: 'david.kim@email.com',
-      saleNumber: 'SALE-SU-2024-002',
+      saleNumber: await generateSaleNumber(businesses['sushi-master']!, 'SU'),
       status: SaleStatus.COMPLETED,
       subtotal: 38.50,
       taxAmount: 3.56,
@@ -924,7 +934,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       businessSlug: 'sushi-master',
       cashierEmail: 'hiroshi@sushimaster.com',
       customerEmail: null,
-      saleNumber: 'SALE-SU-2024-003',
+      saleNumber: await generateSaleNumber(businesses['sushi-master']!, 'SU'),
       status: SaleStatus.COMPLETED,
       subtotal: 18.99,
       taxAmount: 1.76,
@@ -937,7 +947,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       businessSlug: 'coffee-corner',
       cashierEmail: 'alex@coffeecorner.com',
       customerEmail: 'jennifer.lee@email.com',
-      saleNumber: 'SALE-CO-2024-001',
+      saleNumber: await generateSaleNumber(businesses['coffee-corner']!, 'CO'),
       status: SaleStatus.COMPLETED,
       subtotal: 8.49,
       taxAmount: 0.86,
@@ -950,7 +960,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       businessSlug: 'coffee-corner',
       cashierEmail: 'alex@coffeecorner.com',
       customerEmail: 'jennifer.lee@email.com',
-      saleNumber: 'SALE-CO-2024-002',
+      saleNumber: await generateSaleNumber(businesses['coffee-corner']!, 'CO'),
       status: SaleStatus.COMPLETED,
       subtotal: 12.75,
       taxAmount: 1.29,
@@ -1099,57 +1109,57 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   // 11. Create Sale Items with comprehensive data
   const saleItemData = [
     // Italian Delight Sales
-    { saleNumber: 'SALE-IT-2024-001', itemSku: 'IT-PIZ-001', quantity: 1, unitPrice: 18.99, totalPrice: 18.99 },
-    { saleNumber: 'SALE-IT-2024-001', itemSku: 'IT-PAS-001', quantity: 1, unitPrice: 16.99, totalPrice: 16.99 },
-    { saleNumber: 'SALE-IT-2024-002', itemSku: 'IT-PIZ-002', quantity: 1, unitPrice: 20.99, totalPrice: 20.99 },
-    { saleNumber: 'SALE-IT-2024-002', itemSku: 'IT-PAS-002', quantity: 1, unitPrice: 17.99, totalPrice: 17.99 },
-    { saleNumber: 'SALE-IT-2024-002', itemSku: 'IT-DES-001', quantity: 1, unitPrice: 8.99, totalPrice: 8.99 },
-    { saleNumber: 'SALE-IT-2024-003', itemSku: 'IT-PIZ-001', quantity: 1, unitPrice: 18.99, totalPrice: 18.99 },
-    { saleNumber: 'SALE-IT-2024-003', itemSku: 'IT-DES-002', quantity: 1, unitPrice: 6.99, totalPrice: 6.99 },
-    { saleNumber: 'SALE-IT-2024-004', itemSku: 'IT-PIZ-002', quantity: 1, unitPrice: 20.99, totalPrice: 20.99 },
-    { saleNumber: 'SALE-IT-2024-004', itemSku: 'IT-PAS-001', quantity: 1, unitPrice: 16.99, totalPrice: 16.99 },
-    { saleNumber: 'SALE-IT-2024-004', itemSku: 'IT-DES-001', quantity: 1, unitPrice: 8.99, totalPrice: 8.99 },
-    { saleNumber: 'SALE-IT-2024-005', itemSku: 'IT-PAS-002', quantity: 1, unitPrice: 17.99, totalPrice: 17.99 },
+    { saleNumber: saleData[0]!.saleNumber, itemSku: 'IT-PIZ-001', quantity: 1, unitPrice: 18.99, totalPrice: 18.99 },
+    { saleNumber: saleData[0]!.saleNumber, itemSku: 'IT-PAS-001', quantity: 1, unitPrice: 16.99, totalPrice: 16.99 },
+    { saleNumber: saleData[1]!.saleNumber, itemSku: 'IT-PIZ-002', quantity: 1, unitPrice: 20.99, totalPrice: 20.99 },
+    { saleNumber: saleData[1]!.saleNumber, itemSku: 'IT-PAS-002', quantity: 1, unitPrice: 17.99, totalPrice: 17.99 },
+    { saleNumber: saleData[1]!.saleNumber, itemSku: 'IT-DES-001', quantity: 1, unitPrice: 8.99, totalPrice: 8.99 },
+    { saleNumber: saleData[2]!.saleNumber, itemSku: 'IT-PIZ-001', quantity: 1, unitPrice: 18.99, totalPrice: 18.99 },
+    { saleNumber: saleData[2]!.saleNumber, itemSku: 'IT-DES-002', quantity: 1, unitPrice: 6.99, totalPrice: 6.99 },
+    { saleNumber: saleData[3]!.saleNumber, itemSku: 'IT-PIZ-002', quantity: 1, unitPrice: 20.99, totalPrice: 20.99 },
+    { saleNumber: saleData[3]!.saleNumber, itemSku: 'IT-PAS-001', quantity: 1, unitPrice: 16.99, totalPrice: 16.99 },
+    { saleNumber: saleData[3]!.saleNumber, itemSku: 'IT-DES-001', quantity: 1, unitPrice: 8.99, totalPrice: 8.99 },
+    { saleNumber: saleData[4]!.saleNumber, itemSku: 'IT-PAS-002', quantity: 1, unitPrice: 17.99, totalPrice: 17.99 },
     
     // Sushi Master Sales
-    { saleNumber: 'SALE-SU-2024-001', itemSku: 'SU-ROL-001', quantity: 1, unitPrice: 12.99, totalPrice: 12.99 },
-    { saleNumber: 'SALE-SU-2024-001', itemSku: 'SU-NIG-001', quantity: 2, unitPrice: 6.99, totalPrice: 13.98 },
-    { saleNumber: 'SALE-SU-2024-002', itemSku: 'SU-ROL-002', quantity: 1, unitPrice: 14.99, totalPrice: 14.99 },
-    { saleNumber: 'SALE-SU-2024-002', itemSku: 'SU-NIG-002', quantity: 2, unitPrice: 7.99, totalPrice: 15.98 },
-    { saleNumber: 'SALE-SU-2024-002', itemSku: 'SU-SOU-001', quantity: 1, unitPrice: 4.99, totalPrice: 4.99 },
-    { saleNumber: 'SALE-SU-2024-003', itemSku: 'SU-ROL-001', quantity: 1, unitPrice: 12.99, totalPrice: 12.99 },
-    { saleNumber: 'SALE-SU-2024-003', itemSku: 'SU-NIG-001', quantity: 1, unitPrice: 6.99, totalPrice: 6.99 },
+    { saleNumber: saleData[5]!.saleNumber, itemSku: 'SU-ROL-001', quantity: 1, unitPrice: 12.99, totalPrice: 12.99 },
+    { saleNumber: saleData[5]!.saleNumber, itemSku: 'SU-NIG-001', quantity: 2, unitPrice: 6.99, totalPrice: 13.98 },
+    { saleNumber: saleData[6]!.saleNumber, itemSku: 'SU-ROL-002', quantity: 1, unitPrice: 14.99, totalPrice: 14.99 },
+    { saleNumber: saleData[6]!.saleNumber, itemSku: 'SU-NIG-002', quantity: 2, unitPrice: 7.99, totalPrice: 15.98 },
+    { saleNumber: saleData[6]!.saleNumber, itemSku: 'SU-SOU-001', quantity: 1, unitPrice: 4.99, totalPrice: 4.99 },
+    { saleNumber: saleData[7]!.saleNumber, itemSku: 'SU-ROL-001', quantity: 1, unitPrice: 12.99, totalPrice: 12.99 },
+    { saleNumber: saleData[7]!.saleNumber, itemSku: 'SU-NIG-001', quantity: 1, unitPrice: 6.99, totalPrice: 6.99 },
     
     // Coffee Corner Sales
-    { saleNumber: 'SALE-CO-2024-001', itemSku: 'CO-CAP-001', quantity: 1, unitPrice: 4.99, totalPrice: 4.99 },
-    { saleNumber: 'SALE-CO-2024-001', itemSku: 'CO-PAS-001', quantity: 1, unitPrice: 3.99, totalPrice: 3.99 },
-    { saleNumber: 'SALE-CO-2024-002', itemSku: 'CO-LAT-001', quantity: 1, unitPrice: 4.49, totalPrice: 4.49 },
-    { saleNumber: 'SALE-CO-2024-002', itemSku: 'CO-PAS-002', quantity: 1, unitPrice: 4.49, totalPrice: 4.49 },
-    { saleNumber: 'SALE-CO-2024-002', itemSku: 'CO-ESP-001', quantity: 1, unitPrice: 3.50, totalPrice: 3.50 },
-    { saleNumber: 'SALE-CO-2024-003', itemSku: 'CO-ESP-001', quantity: 1, unitPrice: 3.50, totalPrice: 3.50 },
-    { saleNumber: 'SALE-CO-2024-003', itemSku: 'CO-PAS-001', quantity: 1, unitPrice: 3.99, totalPrice: 3.99 },
-    { saleNumber: 'SALE-CO-2024-004', itemSku: 'CO-ESP-001', quantity: 1, unitPrice: 3.50, totalPrice: 3.50 },
+    { saleNumber: saleData[8]!.saleNumber, itemSku: 'CO-CAP-001', quantity: 1, unitPrice: 4.99, totalPrice: 4.99 },
+    { saleNumber: saleData[8]!.saleNumber, itemSku: 'CO-PAS-001', quantity: 1, unitPrice: 3.99, totalPrice: 3.99 },
+    { saleNumber: saleData[9]!.saleNumber, itemSku: 'CO-LAT-001', quantity: 1, unitPrice: 4.49, totalPrice: 4.49 },
+    { saleNumber: saleData[9]!.saleNumber, itemSku: 'CO-PAS-002', quantity: 1, unitPrice: 4.49, totalPrice: 4.49 },
+    { saleNumber: saleData[9]!.saleNumber, itemSku: 'CO-ESP-001', quantity: 1, unitPrice: 3.50, totalPrice: 3.50 },
+    { saleNumber: saleData[10]!.saleNumber, itemSku: 'CO-ESP-001', quantity: 1, unitPrice: 3.50, totalPrice: 3.50 },
+    { saleNumber: saleData[10]!.saleNumber, itemSku: 'CO-PAS-001', quantity: 1, unitPrice: 3.99, totalPrice: 3.99 },
+    { saleNumber: saleData[11]!.saleNumber, itemSku: 'CO-ESP-001', quantity: 1, unitPrice: 3.50, totalPrice: 3.50 },
     
     // Additional sales for new customers
-    { saleNumber: 'SALE-IT-2024-006', itemSku: 'IT-PIZ-001', quantity: 2, unitPrice: 18.99, totalPrice: 37.98 },
-    { saleNumber: 'SALE-IT-2024-006', itemSku: 'IT-PAS-002', quantity: 1, unitPrice: 17.99, totalPrice: 17.99 },
-    { saleNumber: 'SALE-IT-2024-006', itemSku: 'IT-DES-001', quantity: 1, unitPrice: 8.99, totalPrice: 8.99 },
-    { saleNumber: 'SALE-IT-2024-007', itemSku: 'IT-PIZ-002', quantity: 1, unitPrice: 20.99, totalPrice: 20.99 },
-    { saleNumber: 'SALE-IT-2024-007', itemSku: 'IT-DES-002', quantity: 1, unitPrice: 6.99, totalPrice: 6.99 },
-    { saleNumber: 'SALE-SU-2024-004', itemSku: 'SU-ROL-002', quantity: 1, unitPrice: 14.99, totalPrice: 14.99 },
-    { saleNumber: 'SALE-SU-2024-004', itemSku: 'SU-NIG-002', quantity: 3, unitPrice: 7.99, totalPrice: 23.97 },
-    { saleNumber: 'SALE-SU-2024-004', itemSku: 'SU-SOU-001', quantity: 1, unitPrice: 4.99, totalPrice: 4.99 },
-    { saleNumber: 'SALE-SU-2024-005', itemSku: 'SU-ROL-001', quantity: 2, unitPrice: 12.99, totalPrice: 25.98 },
-    { saleNumber: 'SALE-SU-2024-005', itemSku: 'SU-ROL-002', quantity: 1, unitPrice: 14.99, totalPrice: 14.99 },
-    { saleNumber: 'SALE-SU-2024-005', itemSku: 'SU-NIG-001', quantity: 3, unitPrice: 6.99, totalPrice: 20.97 },
-    { saleNumber: 'SALE-SU-2024-005', itemSku: 'SU-NIG-002', quantity: 2, unitPrice: 7.99, totalPrice: 15.98 },
-    { saleNumber: 'SALE-CO-2024-005', itemSku: 'CO-CAP-001', quantity: 1, unitPrice: 4.99, totalPrice: 4.99 },
-    { saleNumber: 'SALE-CO-2024-005', itemSku: 'CO-LAT-001', quantity: 1, unitPrice: 4.49, totalPrice: 4.49 },
-    { saleNumber: 'SALE-CO-2024-005', itemSku: 'CO-PAS-001', quantity: 1, unitPrice: 3.99, totalPrice: 3.99 },
-    { saleNumber: 'SALE-CO-2024-005', itemSku: 'CO-PAS-002', quantity: 1, unitPrice: 4.49, totalPrice: 4.49 },
-    { saleNumber: 'SALE-CO-2024-006', itemSku: 'CO-LAT-001', quantity: 2, unitPrice: 4.49, totalPrice: 8.98 },
-    { saleNumber: 'SALE-CO-2024-006', itemSku: 'CO-PAS-002', quantity: 1, unitPrice: 4.49, totalPrice: 4.49 },
-    { saleNumber: 'SALE-CO-2024-006', itemSku: 'CO-ESP-001', quantity: 2, unitPrice: 3.50, totalPrice: 7.00 }
+    { saleNumber: saleData[12]!.saleNumber, itemSku: 'IT-PIZ-001', quantity: 2, unitPrice: 18.99, totalPrice: 37.98 },
+    { saleNumber: saleData[12]!.saleNumber, itemSku: 'IT-PAS-002', quantity: 1, unitPrice: 17.99, totalPrice: 17.99 },
+    { saleNumber: saleData[12]!.saleNumber, itemSku: 'IT-DES-001', quantity: 1, unitPrice: 8.99, totalPrice: 8.99 },
+    { saleNumber: saleData[13]!.saleNumber, itemSku: 'IT-PIZ-002', quantity: 1, unitPrice: 20.99, totalPrice: 20.99 },
+    { saleNumber: saleData[13]!.saleNumber, itemSku: 'IT-DES-002', quantity: 1, unitPrice: 6.99, totalPrice: 6.99 },
+    { saleNumber: saleData[14]!.saleNumber, itemSku: 'SU-ROL-002', quantity: 1, unitPrice: 14.99, totalPrice: 14.99 },
+    { saleNumber: saleData[14]!.saleNumber, itemSku: 'SU-NIG-002', quantity: 3, unitPrice: 7.99, totalPrice: 23.97 },
+    { saleNumber: saleData[14]!.saleNumber, itemSku: 'SU-SOU-001', quantity: 1, unitPrice: 4.99, totalPrice: 4.99 },
+    { saleNumber: saleData[15]!.saleNumber, itemSku: 'SU-ROL-001', quantity: 2, unitPrice: 12.99, totalPrice: 25.98 },
+    { saleNumber: saleData[15]!.saleNumber, itemSku: 'SU-ROL-002', quantity: 1, unitPrice: 14.99, totalPrice: 14.99 },
+    { saleNumber: saleData[15]!.saleNumber, itemSku: 'SU-NIG-001', quantity: 3, unitPrice: 6.99, totalPrice: 20.97 },
+    { saleNumber: saleData[15]!.saleNumber, itemSku: 'SU-NIG-002', quantity: 2, unitPrice: 7.99, totalPrice: 15.98 },
+    { saleNumber: saleData[16]!.saleNumber, itemSku: 'CO-CAP-001', quantity: 1, unitPrice: 4.99, totalPrice: 4.99 },
+    { saleNumber: saleData[16]!.saleNumber, itemSku: 'CO-LAT-001', quantity: 1, unitPrice: 4.49, totalPrice: 4.49 },
+    { saleNumber: saleData[16]!.saleNumber, itemSku: 'CO-PAS-001', quantity: 1, unitPrice: 3.99, totalPrice: 3.99 },
+    { saleNumber: saleData[16]!.saleNumber, itemSku: 'CO-PAS-002', quantity: 1, unitPrice: 4.49, totalPrice: 4.49 },
+    { saleNumber: saleData[17]!.saleNumber, itemSku: 'CO-LAT-001', quantity: 2, unitPrice: 4.49, totalPrice: 8.98 },
+    { saleNumber: saleData[17]!.saleNumber, itemSku: 'CO-PAS-002', quantity: 1, unitPrice: 4.49, totalPrice: 4.49 },
+    { saleNumber: saleData[17]!.saleNumber, itemSku: 'CO-ESP-001', quantity: 2, unitPrice: 3.50, totalPrice: 7.00 }
   ];
   await queryInterface.bulkInsert('sale_items', saleItemData.map(si => {
     // Determine business ID based on sale number prefix
