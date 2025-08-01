@@ -16,40 +16,56 @@ import bcrypt from 'bcrypt';
 
 dotenv.config();
 
-
 export async function up(queryInterface: QueryInterface): Promise<void> {
   // Insert default currencies
   await queryInterface.bulkInsert('currencies', [
     {
-      id: 1,
       code: 'USD',
       name: 'US Dollar',
       symbol: '$',
       decimalPlaces: 2,
       isActive: true,
-      isDefault: true,
+      isDefault: false,
       createdAt: new Date(),
       updatedAt: new Date()
     },
     {
-      id: 2,
       code: 'CRC',
       name: 'Costa Rican Colón',
       symbol: '₡',
       decimalPlaces: 2,
       isActive: true,
-      isDefault: false,
+      isDefault: true,
       createdAt: new Date(),
       updatedAt: new Date()
     }
   ]);
 
+  // Get currency IDs for exchange rates
+  const usdCurrency = await queryInterface.sequelize.query(
+    'SELECT id FROM currencies WHERE code = ?',
+    {
+      replacements: ['USD'],
+      type: QueryTypes.SELECT
+    }
+  ) as any[];
+  
+  const crcCurrency = await queryInterface.sequelize.query(
+    'SELECT id FROM currencies WHERE code = ?',
+    {
+      replacements: ['CRC'],
+      type: QueryTypes.SELECT
+    }
+  ) as any[];
+
+  const usdId = usdCurrency[0]?.id;
+  const crcId = crcCurrency[0]?.id;
+
   // Insert default exchange rates
   await queryInterface.bulkInsert('exchange_rates', [
     {
-      id: 1,
-      fromCurrencyId: 1, // USD
-      toCurrencyId: 2,   // CRC
+      fromCurrencyId: usdId, // USD
+      toCurrencyId: crcId,   // CRC
       rate: 520.00,      // 1 USD = 520 CRC (approximate rate)
       effectiveDate: new Date(),
       isActive: true,
@@ -57,9 +73,8 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       updatedAt: new Date()
     },
     {
-      id: 2,
-      fromCurrencyId: 2, // CRC
-      toCurrencyId: 1,   // USD
+      fromCurrencyId: crcId, // CRC
+      toCurrencyId: usdId,   // USD
       rate: 0.001923,    // 1 CRC = 0.001923 USD (1/520)
       effectiveDate: new Date(),
       isActive: true,
@@ -79,11 +94,11 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       secondaryColor: '#8B0000',
       address: '123 Main Street, Downtown, NY 10001',
       phone: '+1-555-0123',
-                        email: 'info@italiandelight.com',
-                  website: 'https://italiandelight.com',
-                  taxRate: 8.875,
-                  currencyId: 2, // CRC (Costa Rican Colón) - default currency
-                  timezone: 'America/New_York',
+      email: 'info@italiandelight.com',
+      website: 'https://italiandelight.com',
+      taxRate: 8.875,
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
+      timezone: 'America/New_York',
       isActive: true,
       type: 'restaurant',
       createdAt: new Date(),
@@ -101,7 +116,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       email: 'contact@sushimaster.com',
       website: 'https://sushimaster.com',
       taxRate: 9.25,
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       timezone: 'America/Los_Angeles',
       isActive: true,
       type: 'restaurant',
@@ -120,7 +135,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       email: 'hello@coffeecorner.com',
       website: 'https://coffeecorner.com',
       taxRate: 10.1,
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       timezone: 'America/Seattle',
       isActive: true,
       type: 'restaurant',

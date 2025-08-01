@@ -73,7 +73,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 1,
       maxStock: 8,
       unit: 'pounds',
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days
       isActive: true,
       createdAt: new Date(),
@@ -92,7 +92,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 1,
       maxStock: 5,
       unit: 'trays',
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000), // 1 day
       isActive: true,
       createdAt: new Date(),
@@ -111,7 +111,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 3,
       maxStock: 15,
       unit: 'pieces',
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000), // 1 day
       isActive: true,
       createdAt: new Date(),
@@ -130,7 +130,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 5,
       maxStock: 30,
       unit: 'packages',
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000), // 6 months
       isActive: true,
       createdAt: new Date(),
@@ -251,7 +251,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock,
       maxStock,
       unit,
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       imageUrl: getImageUrlForCategory(category),
       isActive: true,
       isPerishable: category === 'vegetables' || category === 'fish' || category === 'seafood',

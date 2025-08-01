@@ -76,7 +76,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 5,
       maxStock: 25,
       unit: 'pounds',
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 3 months
       isActive: true,
       createdAt: new Date(),
@@ -95,7 +95,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 8,
       maxStock: 35,
       unit: 'pounds',
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 3 months
       isActive: true,
       createdAt: new Date(),
@@ -114,7 +114,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 4,
       maxStock: 20,
       unit: 'pounds',
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 3 months
       isActive: true,
       createdAt: new Date(),
@@ -133,7 +133,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 6,
       maxStock: 28,
       unit: 'pounds',
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 3 months
       isActive: true,
       createdAt: new Date(),
@@ -152,7 +152,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 3,
       maxStock: 15,
       unit: 'pounds',
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 3 months
       isActive: true,
       createdAt: new Date(),
@@ -171,7 +171,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 10,
       maxStock: 45,
       unit: 'quarts',
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days
       isActive: true,
       createdAt: new Date(),
@@ -190,7 +190,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 8,
       maxStock: 32,
       unit: 'quarts',
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
       isActive: true,
       createdAt: new Date(),
@@ -209,7 +209,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 5,
       maxStock: 25,
       unit: 'quarts',
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
       isActive: true,
       createdAt: new Date(),
@@ -228,7 +228,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 4,
       maxStock: 18,
       unit: 'pieces',
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days
       isActive: true,
       createdAt: new Date(),
@@ -247,7 +247,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 3,
       maxStock: 15,
       unit: 'pieces',
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days
       isActive: true,
       createdAt: new Date(),
@@ -266,7 +266,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 5,
       maxStock: 22,
       unit: 'pieces',
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days
       isActive: true,
       createdAt: new Date(),
@@ -285,7 +285,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 6,
       maxStock: 26,
       unit: 'pieces',
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days
       isActive: true,
       createdAt: new Date(),
@@ -304,7 +304,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 4,
       maxStock: 16,
       unit: 'loaves',
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days
       isActive: true,
       createdAt: new Date(),
@@ -323,7 +323,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 5,
       maxStock: 20,
       unit: 'loaves',
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days
       isActive: true,
       createdAt: new Date(),
@@ -342,7 +342,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 8,
       maxStock: 30,
       unit: 'slices',
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days
       isActive: true,
       createdAt: new Date(),
@@ -361,7 +361,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 6,
       maxStock: 24,
       unit: 'slices',
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days
       isActive: true,
       createdAt: new Date(),
@@ -380,7 +380,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 2,
       maxStock: 12,
       unit: 'grams',
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year
       isActive: true,
       createdAt: new Date(),
@@ -399,7 +399,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 4,
       maxStock: 16,
       unit: 'quarts',
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days
       isActive: true,
       createdAt: new Date(),
@@ -418,7 +418,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 2,
       maxStock: 10,
       unit: 'packages',
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
       isActive: true,
       createdAt: new Date(),
@@ -437,7 +437,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 7,
       maxStock: 28,
       unit: 'pounds',
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days
       isActive: true,
       createdAt: new Date(),
@@ -456,7 +456,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 4,
       maxStock: 18,
       unit: 'pounds',
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days
       isActive: true,
       createdAt: new Date(),
@@ -582,7 +582,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock,
       maxStock,
       unit,
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       imageUrl: getImageUrlForCategory(category),
       isActive: true,
       isPerishable: category === 'fruits' || category === 'dairy' || category === 'bread' || category === 'pastry',

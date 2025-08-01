@@ -1,5 +1,5 @@
 import { QueryInterface, QueryTypes } from 'sequelize';
-import { generateBarcode } from '../../utils/skuGenerator';
+import { generateSku, generateBarcode } from '../../utils/skuGenerator';
 import dotenv from 'dotenv';
 
 // Function to get valid Unsplash image URL based on category
@@ -52,7 +52,21 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     ) as any[];
     if (biz) {
       businesses[slug] = biz.id;
+    } else {
+      console.log(`⚠️ Business not found: ${slug}`);
     }
+  }
+
+  // Get CRC currency ID
+  const [crcCurrency] = await queryInterface.sequelize.query(
+    'SELECT id FROM currencies WHERE code = ?',
+    { type: QueryTypes.SELECT, replacements: ['CRC'] }
+  ) as any[];
+  
+  const crcId = crcCurrency?.id;
+  if (!crcId) {
+    console.log('⚠️ CRC currency not found');
+    return;
   }
 
   // Track existing barcodes to ensure uniqueness
@@ -66,7 +80,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       name: 'Truffle Oil (Underperforming)',
       description: 'Premium black truffle oil',
       category: 'oils',
-      sku: 'IT-ING-TRU-001',
+      sku: generateSku('IT', 101),
       barcode: generateBarcode('IT', 101, existingBarcodes),
       price: 23.40,
       cost: 18.00,
@@ -74,7 +88,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 3,
       maxStock: 20,
       unit: 'bottles',
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year
 
       isActive: true,
@@ -86,7 +100,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       name: 'Premium Black Truffle Pasta',
       description: 'Fresh pasta with black truffle',
       category: 'pasta',
-      sku: 'IT-ING-PAS-001',
+      sku: generateSku('IT', 102),
       barcode: generateBarcode('IT', 102, existingBarcodes),
       price: 19.50,
       cost: 15.00,
@@ -94,7 +108,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 2,
       maxStock: 15,
       unit: 'pounds',
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000), // 1 day
 
       isActive: true,
@@ -106,7 +120,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       name: 'Premium Lobster Ravioli',
       description: 'Fresh lobster-filled ravioli',
       category: 'pasta',
-      sku: 'IT-ING-RAV-001',
+      sku: generateSku('IT', 103),
       barcode: generateBarcode('IT', 103, existingBarcodes),
       price: 21.45,
       cost: 16.50,
@@ -114,7 +128,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 5,
       maxStock: 25,
       unit: 'pieces',
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000), // 1 day
 
       isActive: true,
@@ -126,7 +140,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       name: 'Wagyu Beef (Premium)',
       description: 'Premium Japanese Wagyu beef',
       category: 'meat',
-      sku: 'IT-ING-WAG-001',
+      sku: generateSku('IT', 104),
       barcode: generateBarcode('IT', 104, existingBarcodes),
       price: 45.60,
       cost: 35.00,
@@ -134,7 +148,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 1,
       maxStock: 10,
       unit: 'pounds',
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days
 
       isActive: true,
@@ -146,7 +160,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       name: 'Fresh Basil',
       description: 'Fresh organic basil leaves',
       category: 'herbs',
-      sku: 'IT-ING-BAS-001',
+      sku: generateSku('IT', 105),
       barcode: generateBarcode('IT', 105, existingBarcodes),
       price: 4.20,
       cost: 2.50,
@@ -154,7 +168,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 10,
       maxStock: 50,
       unit: 'bunches',
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5 days
 
       isActive: true,
@@ -166,7 +180,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       name: 'Cherry Tomatoes',
       description: 'Sweet cherry tomatoes',
       category: 'vegetables',
-      sku: 'IT-ING-TOM-001',
+      sku: generateSku('IT', 106),
       barcode: generateBarcode('IT', 106, existingBarcodes),
       price: 6.80,
       cost: 4.20,
@@ -174,7 +188,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 8,
       maxStock: 40,
       unit: 'pints',
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000), // 4 days
 
       isActive: true,
@@ -186,7 +200,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       name: 'Premium Saffron (Underperforming)',
       description: 'Premium Spanish saffron threads',
       category: 'spices',
-      sku: 'IT-ING-SAF-001',
+      sku: generateSku('IT', 107),
       barcode: generateBarcode('IT', 107, existingBarcodes),
       price: 28.90,
       cost: 22.00,
@@ -194,7 +208,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 2,
       maxStock: 15,
       unit: 'grams',
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 730 * 24 * 60 * 60 * 1000), // 2 years
 
       isActive: true,
@@ -369,7 +383,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
         name,
         description: `High-quality ${name.toLowerCase()} for ${businessSlug}`,
         category,
-        sku: `${prefix}-${category.toUpperCase().substring(0, 3)}-${(itemId + 1000).toString().padStart(3, '0')}`,
+                 sku: generateSku(prefix, itemId + 1000),
         barcode,
         price: Math.round((cost * 1.4) * 100) / 100, // Fixed 40% markup for consistency
         cost,
@@ -377,7 +391,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
         minStock,
         maxStock,
         unit,
-        currencyId: 2, // CRC (Costa Rican Colón) - default currency
+        currencyId: crcId, // CRC (Costa Rican Colón) - default currency
         imageUrl: getImageUrlForCategory(category),
         isActive: true,
         isPerishable: category === 'vegetables' || category === 'fruits' || category === 'dairy' || category === 'meat' || category === 'seafood',
@@ -401,76 +415,24 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
 
   // Add missing ingredients that recipe templates need
   const missingIngredients = [
-    // Italian Delight missing ingredients
+    // Sushi Master missing ingredients
     {
-      businessId: businesses['italian-delight'],
-      name: 'Premium Saffron (Underperforming)',
-      description: 'Premium Spanish saffron threads',
-      category: 'spices',
-      sku: 'IT-ING-SAF-001',
-      barcode: generateBarcode('IT', 999, existingBarcodes),
-      price: 89.99,
-      cost: 65.00,
-      stock: 2,
-      minStock: 1,
-      maxStock: 5,
-      unit: 'grams',
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      businessId: businesses['sushi-master'],
+      name: 'Nori Sheets',
+      description: 'Premium roasted seaweed sheets for sushi',
+      category: 'ingredients',
+      sku: generateSku('SM', 999),
+      barcode: generateBarcode('SM', 999, existingBarcodes),
+      price: 12.99,
+      cost: 8.00,
+      stock: 25,
+      minStock: 10,
+      maxStock: 50,
+      unit: 'sheets',
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
       isActive: true,
       isPerishable: false,
-      isUnderperforming: true,
-      isExpiringSoon: false,
-      isVegetarian: true,
-      isVegan: true,
-      isGlutenFree: true,
-      isSpicy: false,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['italian-delight'],
-      name: 'Fresh Basil',
-      description: 'Fresh organic basil leaves',
-      category: 'herbs',
-      sku: 'IT-ING-BAS-001',
-      barcode: generateBarcode('IT', 998, existingBarcodes),
-      price: 4.99,
-      cost: 2.50,
-      stock: 15,
-      minStock: 5,
-      maxStock: 30,
-      unit: 'bunches',
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
-      expirationDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      isActive: true,
-      isPerishable: true,
-      isUnderperforming: false,
-      isExpiringSoon: false,
-      isVegetarian: true,
-      isVegan: true,
-      isGlutenFree: true,
-      isSpicy: false,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['italian-delight'],
-      name: 'Cherry Tomatoes',
-      description: 'Sweet cherry tomatoes',
-      category: 'vegetables',
-      sku: 'IT-ING-TOM-001',
-      barcode: generateBarcode('IT', 997, existingBarcodes),
-      price: 6.99,
-      cost: 4.00,
-      stock: 12,
-      minStock: 3,
-      maxStock: 25,
-      unit: 'pints',
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
-      expirationDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
-      isActive: true,
-      isPerishable: true,
       isUnderperforming: false,
       isExpiringSoon: false,
       isVegetarian: true,
@@ -494,7 +456,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 10,
       maxStock: 50,
       unit: 'sheets',
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
       isActive: true,
       isPerishable: false,
@@ -513,7 +475,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       name: 'Ethiopian Yirgacheffe Beans',
       description: 'Premium Ethiopian Yirgacheffe coffee beans',
       category: 'coffee',
-      sku: 'CC-ING-ETH-001',
+      sku: generateSku('CC', 999),
       barcode: generateBarcode('CC', 999, existingBarcodes),
       price: 24.99,
       cost: 18.00,
@@ -521,7 +483,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 3,
       maxStock: 20,
       unit: 'pounds',
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000),
       isActive: true,
       isPerishable: false,
@@ -535,7 +497,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       name: 'Colombian Supremo Beans',
       description: 'Premium Colombian Supremo coffee beans',
       category: 'coffee',
-      sku: 'CC-ING-COL-001',
+      sku: generateSku('CC', 998),
       barcode: generateBarcode('CC', 998, existingBarcodes),
       price: 22.99,
       cost: 16.50,
@@ -543,7 +505,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 4,
       maxStock: 25,
       unit: 'pounds',
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000),
       isActive: true,
       isPerishable: false,
@@ -557,7 +519,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       name: 'Oat Milk (Expiring Soon)',
       description: 'Organic oat milk',
       category: 'dairy',
-      sku: 'CC-ING-OAT-001',
+      sku: generateSku('CC', 997),
       barcode: generateBarcode('CC', 997, existingBarcodes),
       price: 5.99,
       cost: 3.50,
@@ -565,7 +527,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 2,
       maxStock: 15,
       unit: 'quarts',
-      currencyId: 2, // CRC (Costa Rican Colón) - default currency
+      currencyId: crcId, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
       isActive: true,
       isPerishable: true,
