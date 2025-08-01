@@ -24,6 +24,17 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
         key: 'id'
       },
     },
+    currencyId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 2, // CRC (Costa Rican Colón) - default currency
+      references: {
+        model: 'currencies',
+        key: 'id'
+      },
+      onUpdate: 'CASCADE',
+      onDelete: 'NO ACTION'
+    },
     customerId: {
       type: DataTypes.INTEGER,
       allowNull: true,

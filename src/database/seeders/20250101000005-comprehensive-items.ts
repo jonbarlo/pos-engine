@@ -2,6 +2,40 @@ import { QueryInterface, QueryTypes } from 'sequelize';
 import { generateBarcode } from '../../utils/skuGenerator';
 import dotenv from 'dotenv';
 
+// Function to get valid Unsplash image URL based on category
+function getImageUrlForCategory(category: string): string {
+  const validPhotoIds = {
+    'pizza': '1565299624946-b28f40a0ca4b',
+    'pasta': '1621996346565-e3dbc353d946',
+    'salad': '1540420773420-3366772f4999',
+    'dessert': '1565958011703-44f9829ba187',
+    'coffee': '1509042239860-f550ce710b93',
+    'tea': '1541167760496-1628856ab772',
+    'wine': '1510812431401-41d2bd2722f3',
+    'beer': '1556909114-f6e7ad7d3136',
+    'vegetables': '1556909114-f6e7ad7d3136',
+    'fruits': '1565299624946-b28f40a0ca4b',
+    'meat': '1544025162-d76694265947',
+    'seafood': '1556909114-f6e7ad7d3136',
+    'dairy': '1556909114-f6e7ad7d3136',
+    'grains': '1607958996338-0106d5c0c1e1',
+    'spices': '1565557623262-b51c2513a641',
+    'herbs': '1565299624946-b28f40a0ca4b',
+    'ingredients': '1604382354936-07c5d9983bd3',
+    'fish': '1579584425555-c3ce17fd4351',
+    'pastry': '1571877227200-a0d98ea607e9',
+    'bread': '1628840042765-356cda07504e',
+    'sweeteners': '1551183053-bf91a1d81141',
+    'syrups': '1551024506-0bccd828d307',
+    'sauces': '1547592166-23ac45744acd',
+    'oils': '1553621042-f6e147245754',
+    'default': '1604382354936-07c5d9983bd3'
+  };
+
+  const photoId = validPhotoIds[category as keyof typeof validPhotoIds] || validPhotoIds.default;
+  return `https://images.unsplash.com/photo-${photoId}?w=400&h=300&fit=crop&crop=center`;
+}
+
 dotenv.config();
 
 export async function up(queryInterface: QueryInterface): Promise<void> {
@@ -9,7 +43,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
 
   // Get business IDs
   const businesses: { [key: string]: number } = {};
-  const businessSlugs = ['italian-delight', 'sushi-master', 'coffee-corner', 'taco-fiesta', 'american-diner', 'golden-dragon', 'indian-spice-palace', 'peruvian-coastal-kitchen', 'argentinian-grill-house', 'colombian-cafe-bogota', 'costa-rican-tropical-grill'];
+  const businessSlugs = ['italian-delight'];
   
   for (const slug of businessSlugs) {
     const [biz] = await queryInterface.sequelize.query(
@@ -40,6 +74,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 3,
       maxStock: 20,
       unit: 'bottles',
+      currencyId: 2, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year
 
       isActive: true,
@@ -59,6 +94,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 2,
       maxStock: 15,
       unit: 'pounds',
+      currencyId: 2, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000), // 1 day
 
       isActive: true,
@@ -78,6 +114,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 5,
       maxStock: 25,
       unit: 'pieces',
+      currencyId: 2, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000), // 1 day
 
       isActive: true,
@@ -97,6 +134,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 1,
       maxStock: 10,
       unit: 'pounds',
+      currencyId: 2, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days
 
       isActive: true,
@@ -116,6 +154,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 10,
       maxStock: 50,
       unit: 'bunches',
+      currencyId: 2, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5 days
 
       isActive: true,
@@ -135,6 +174,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 8,
       maxStock: 40,
       unit: 'pints',
+      currencyId: 2, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000), // 4 days
 
       isActive: true,
@@ -154,6 +194,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 2,
       maxStock: 15,
       unit: 'grams',
+      currencyId: 2, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 730 * 24 * 60 * 60 * 1000), // 2 years
 
       isActive: true,
@@ -161,484 +202,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       updatedAt: new Date()
     },
 
-    // SUSHI MASTER - INGREDIENTS - REMOVED "Salmon" and "Rice" duplicates
-    {
-      businessId: businesses['sushi-master'],
-      name: 'Bluefin Tuna Otoro',
-      description: 'Premium fatty tuna belly',
-      category: 'fish',
-      sku: 'SU-ING-OTO-001',
-      barcode: generateBarcode('SU', 201, existingBarcodes),
-      price: 35.75,
-      cost: 28.00,
-      stock: 4,
-      minStock: 1,
-      maxStock: 8,
-      unit: 'pounds',
-      expirationDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days
 
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['sushi-master'],
-      name: 'Hokkaido Uni',
-      description: 'Fresh sea urchin from Hokkaido',
-      category: 'seafood',
-      sku: 'SU-ING-UNI-001',
-      barcode: generateBarcode('SU', 202, existingBarcodes),
-      price: 42.30,
-      cost: 32.50,
-      stock: 2,
-      minStock: 1,
-      maxStock: 5,
-      unit: 'trays',
-      expirationDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000), // 1 day
-
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['sushi-master'],
-      name: 'Soft Shell Crab',
-      description: 'Fresh soft shell crab',
-      category: 'seafood',
-      sku: 'SU-ING-CRB-001',
-      barcode: generateBarcode('SU', 203, existingBarcodes),
-      price: 18.90,
-      cost: 14.50,
-      stock: 7,
-      minStock: 3,
-      maxStock: 15,
-      unit: 'pieces',
-      expirationDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000), // 1 day
-
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['sushi-master'],
-      name: 'Nori Sheets',
-      description: 'Premium roasted nori sheets',
-      category: 'ingredients',
-      sku: 'SU-ING-NOR-001',
-      barcode: generateBarcode('SU', 204, existingBarcodes),
-      price: 12.60,
-      cost: 9.70,
-      stock: 15,
-      minStock: 5,
-      maxStock: 30,
-      unit: 'packages',
-      expirationDate: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000), // 6 months
-
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-
-    // COFFEE CORNER - INGREDIENTS - REMOVED "Earl Grey Tea" duplicate
-    {
-      businessId: businesses['coffee-corner'],
-      name: 'Ethiopian Yirgacheffe Beans',
-      description: 'Single origin Ethiopian coffee beans',
-      category: 'coffee',
-      sku: 'CO-ING-ETH-001',
-      barcode: generateBarcode('CO', 301, existingBarcodes),
-      price: 16.80,
-      cost: 12.90,
-      stock: 12,
-      minStock: 5,
-      maxStock: 25,
-      unit: 'pounds',
-      expirationDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 3 months
-
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['coffee-corner'],
-      name: 'Colombian Supremo Beans',
-      description: 'Premium Colombian coffee beans',
-      category: 'coffee',
-      sku: 'CO-ING-COL-001',
-      barcode: generateBarcode('CO', 302, existingBarcodes),
-      price: 14.50,
-      cost: 11.20,
-      stock: 18,
-      minStock: 8,
-      maxStock: 35,
-      unit: 'pounds',
-      expirationDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 3 months
-
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['coffee-corner'],
-      name: 'Sumatra Mandheling Beans',
-      description: 'Full-bodied Indonesian coffee beans',
-      category: 'coffee',
-      sku: 'CO-ING-SUM-001',
-      barcode: generateBarcode('CO', 303, existingBarcodes),
-      price: 15.90,
-      cost: 12.20,
-      stock: 10,
-      minStock: 4,
-      maxStock: 20,
-      unit: 'pounds',
-      expirationDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 3 months
-
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['coffee-corner'],
-      name: 'Guatemala Antigua Beans',
-      description: 'Smooth Guatemalan coffee beans',
-      category: 'coffee',
-      sku: 'CO-ING-GUA-001',
-      barcode: generateBarcode('CO', 304, existingBarcodes),
-      price: 13.70,
-      cost: 10.50,
-      stock: 14,
-      minStock: 6,
-      maxStock: 28,
-      unit: 'pounds',
-      expirationDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 3 months
-
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['coffee-corner'],
-      name: 'Kenya AA Beans',
-      description: 'Bright Kenyan coffee beans',
-      category: 'coffee',
-      sku: 'CO-ING-KEN-001',
-      barcode: generateBarcode('CO', 305, existingBarcodes),
-      price: 17.20,
-      cost: 13.20,
-      stock: 8,
-      minStock: 3,
-      maxStock: 15,
-      unit: 'pounds',
-      expirationDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 3 months
-
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['coffee-corner'],
-      name: 'Oat Milk (Expiring Soon)',
-      description: 'Barista oat milk',
-      category: 'milk',
-      sku: 'CO-ING-OAT-001',
-      barcode: generateBarcode('CO', 306, existingBarcodes),
-      price: 5.40,
-      cost: 4.15,
-      stock: 22,
-      minStock: 10,
-      maxStock: 45,
-      unit: 'quarts',
-      expirationDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days
-
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['coffee-corner'],
-      name: 'Almond Milk',
-      description: 'Unsweetened almond milk',
-      category: 'milk',
-      sku: 'CO-ING-ALM-001',
-      barcode: generateBarcode('CO', 307, existingBarcodes),
-      price: 6.20,
-      cost: 4.75,
-      stock: 16,
-      minStock: 8,
-      maxStock: 32,
-      unit: 'quarts',
-      expirationDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['coffee-corner'],
-      name: 'Coconut Milk',
-      description: 'Full-fat coconut milk',
-      category: 'milk',
-      sku: 'CO-ING-COC-001',
-      barcode: generateBarcode('CO', 308, existingBarcodes),
-      price: 7.80,
-      cost: 6.00,
-      stock: 12,
-      minStock: 5,
-      maxStock: 25,
-      unit: 'quarts',
-      expirationDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['coffee-corner'],
-      name: 'Pain au Chocolat Dough',
-      description: 'Buttery croissant dough with chocolate',
-      category: 'pastry',
-      sku: 'CO-ING-PAC-001',
-      barcode: generateBarcode('CO', 309, existingBarcodes),
-      price: 8.90,
-      cost: 6.85,
-      stock: 9,
-      minStock: 4,
-      maxStock: 18,
-      unit: 'pieces',
-      expirationDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days
-
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['coffee-corner'],
-      name: 'Almond Croissant Dough',
-      description: 'Buttery croissant dough with almond filling',
-      category: 'pastry',
-      sku: 'CO-ING-ALC-001',
-      barcode: generateBarcode('CO', 310, existingBarcodes),
-      price: 9.20,
-      cost: 7.08,
-      stock: 7,
-      minStock: 3,
-      maxStock: 15,
-      unit: 'pieces',
-      expirationDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days
-
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['coffee-corner'],
-      name: 'Cinnamon Roll Dough',
-      description: 'Sweet cinnamon roll dough',
-      category: 'pastry',
-      sku: 'CO-ING-CIN-001',
-      barcode: generateBarcode('CO', 311, existingBarcodes),
-      price: 7.50,
-      cost: 5.77,
-      stock: 11,
-      minStock: 5,
-      maxStock: 22,
-      unit: 'pieces',
-      expirationDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days
-
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['coffee-corner'],
-      name: 'Scone Mix',
-      description: 'Traditional scone mix',
-      category: 'pastry',
-      sku: 'CO-ING-SCO-001',
-      barcode: generateBarcode('CO', 312, existingBarcodes),
-      price: 6.80,
-      cost: 5.23,
-      stock: 13,
-      minStock: 6,
-      maxStock: 26,
-      unit: 'pieces',
-      expirationDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days
-
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['coffee-corner'],
-      name: 'Sourdough Bread',
-      description: 'Artisanal sourdough bread',
-      category: 'bread',
-      sku: 'CO-ING-SOU-001',
-      barcode: generateBarcode('CO', 313, existingBarcodes),
-      price: 4.90,
-      cost: 3.77,
-      stock: 8,
-      minStock: 4,
-      maxStock: 16,
-      unit: 'loaves',
-      expirationDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days
-
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['coffee-corner'],
-      name: 'Whole Wheat Bread',
-      description: 'Healthy whole wheat bread',
-      category: 'bread',
-      sku: 'CO-ING-WHE-001',
-      barcode: generateBarcode('CO', 314, existingBarcodes),
-      price: 4.20,
-      cost: 3.23,
-      stock: 10,
-      minStock: 5,
-      maxStock: 20,
-      unit: 'loaves',
-      expirationDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days
-
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['coffee-corner'],
-      name: 'Avocado Toast Base',
-      description: 'Fresh bread for avocado toast',
-      category: 'toast',
-      sku: 'CO-ING-AVO-001',
-      barcode: generateBarcode('CO', 315, existingBarcodes),
-      price: 3.60,
-      cost: 2.77,
-      stock: 15,
-      minStock: 8,
-      maxStock: 30,
-      unit: 'slices',
-      expirationDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days
-
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['coffee-corner'],
-      name: 'Salmon Toast Base',
-      description: 'Fresh bread for salmon toast',
-      category: 'toast',
-      sku: 'CO-ING-SAL-001',
-      barcode: generateBarcode('CO', 316, existingBarcodes),
-      price: 4.10,
-      cost: 3.15,
-      stock: 12,
-      minStock: 6,
-      maxStock: 24,
-      unit: 'slices',
-      expirationDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days
-
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['coffee-corner'],
-      name: 'Matcha Powder',
-      description: 'Premium Japanese matcha powder',
-      category: 'tea',
-      sku: 'CO-ING-MAT-001',
-      barcode: generateBarcode('CO', 317, existingBarcodes),
-      price: 22.40,
-      cost: 17.23,
-      stock: 6,
-      minStock: 2,
-      maxStock: 12,
-      unit: 'grams',
-      expirationDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year
-
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['coffee-corner'],
-      name: 'Chai Concentrate',
-      description: 'Spiced chai tea concentrate',
-      category: 'tea',
-      sku: 'CO-ING-CHA-001',
-      barcode: generateBarcode('CO', 318, existingBarcodes),
-      price: 12.80,
-      cost: 9.85,
-      stock: 8,
-      minStock: 4,
-      maxStock: 16,
-      unit: 'quarts',
-      expirationDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days
-
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['coffee-corner'],
-      name: 'Acai Bowl Base',
-      description: 'Frozen acai puree for bowls',
-      category: 'bowls',
-      sku: 'CO-ING-ACA-001',
-      barcode: generateBarcode('CO', 319, existingBarcodes),
-      price: 18.60,
-      cost: 14.31,
-      stock: 5,
-      minStock: 2,
-      maxStock: 10,
-      unit: 'packages',
-      expirationDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['coffee-corner'],
-      name: 'Fresh Fruit Bowl Mix',
-      description: 'Mixed fresh fruits for bowls',
-      category: 'bowls',
-      sku: 'CO-ING-FRU-001',
-      barcode: generateBarcode('CO', 320, existingBarcodes),
-      price: 8.90,
-      cost: 6.85,
-      stock: 14,
-      minStock: 7,
-      maxStock: 28,
-      unit: 'pounds',
-      expirationDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days
-
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      businessId: businesses['coffee-corner'],
-      name: 'Granola Mix',
-      description: 'Homemade granola mix',
-      category: 'bowls',
-      sku: 'CO-ING-GRA-001',
-      barcode: generateBarcode('CO', 321, existingBarcodes),
-      price: 11.20,
-      cost: 8.62,
-      stock: 9,
-      minStock: 4,
-      maxStock: 18,
-      unit: 'pounds',
-      expirationDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days
-
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }
   ];
 
   // Insert hardcoded items first
@@ -714,18 +278,63 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       };
       
       const units = unitMap[category as keyof typeof unitMap] || ['pieces'];
-      const unit = units[Math.floor(Math.random() * units.length)];
+      const unit = units[itemId % units.length]; // Deterministic unit selection
       
-      // Random pricing and stock
-      const cost = Math.round((Math.random() * 50 + 1) * 100) / 100; // $1-$51
-      const stock = Math.floor(Math.random() * 100) + 1; // 1-100
-      const minStock = Math.floor(stock * 0.2);
-      const maxStock = stock + Math.floor(Math.random() * 50);
+      // Realistic pricing and stock based on category
+      const costMap = {
+        'ingredients': 5.50,
+        'dairy': 3.25,
+        'meat': 12.75,
+        'seafood': 18.50,
+        'fish': 22.00,
+        'vegetables': 2.80,
+        'fruits': 4.20,
+        'grains': 3.90,
+        'spices': 8.75,
+        'oils': 15.30,
+        'herbs': 3.45,
+        'coffee': 12.80,
+        'tea': 6.40,
+        'pastry': 4.60,
+        'bread': 2.90,
+        'sweeteners': 3.20,
+        'syrups': 7.85,
+        'sauces': 4.50
+      };
       
-      // Random expiration (some expiring soon, some not)
-      const daysToExpiry = Math.random() > 0.3 ? 
-        Math.floor(Math.random() * 365) + 30 : // 30-395 days
-        Math.floor(Math.random() * 7) + 1; // 1-7 days (expiring soon)
+      const stockMap = {
+        'ingredients': 25,
+        'dairy': 15,
+        'meat': 8,
+        'seafood': 5,
+        'fish': 6,
+        'vegetables': 20,
+        'fruits': 18,
+        'grains': 30,
+        'spices': 12,
+        'oils': 10,
+        'herbs': 15,
+        'coffee': 20,
+        'tea': 15,
+        'pastry': 12,
+        'bread': 8,
+        'sweeteners': 25,
+        'syrups': 8,
+        'sauces': 12
+      };
+      
+      const cost = costMap[category as keyof typeof costMap] || 5.00;
+      const stock = stockMap[category as keyof typeof stockMap] || 15;
+      const minStock = Math.floor(stock * 0.3);
+      const maxStock = stock * 2;
+      
+      // Realistic expiration based on category
+      const daysToExpiry = category === 'vegetables' ? 5 : 
+                           category === 'fruits' ? 10 : 
+                           category === 'dairy' ? 14 : 
+                           category === 'meat' ? 3 : 
+                           category === 'seafood' ? 2 : 
+                           category === 'fish' ? 2 : 365;
       
       const expirationDate = new Date(Date.now() + daysToExpiry * 24 * 60 * 60 * 1000);
       
@@ -752,7 +361,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       };
       
       const names = itemNames[category as keyof typeof itemNames] || ['Generic Item'];
-      const nameIndex = (itemId - 1) % names.length;
+      const nameIndex = itemId % names.length;
       const name = names[nameIndex] || 'Generic Item';
       
       allDynamicItems.push({
@@ -762,27 +371,28 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
         category,
         sku: `${prefix}-${category.toUpperCase().substring(0, 3)}-${(itemId + 1000).toString().padStart(3, '0')}`,
         barcode,
-        price: Math.round((cost * (1 + Math.random() * 0.5 + 0.3)) * 100) / 100, // 30-80% markup
+        price: Math.round((cost * 1.4) * 100) / 100, // Fixed 40% markup for consistency
         cost,
         stock,
         minStock,
         maxStock,
         unit,
-        imageUrl: `https://images.unsplash.com/photo-${Math.random().toString(36).substring(2, 15)}?w=400&h=300&fit=crop&crop=center`,
+        currencyId: 2, // CRC (Costa Rican Colón) - default currency
+        imageUrl: getImageUrlForCategory(category),
         isActive: true,
-        isPerishable: Math.random() > 0.3,
+        isPerishable: category === 'vegetables' || category === 'fruits' || category === 'dairy' || category === 'meat' || category === 'seafood',
         expirationDate,
-        manufacturingDate: new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000),
-        shelfLifeDays: Math.floor(Math.random() * 365) + 1,
+        manufacturingDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
+        shelfLifeDays: category === 'vegetables' ? 7 : category === 'fruits' ? 14 : category === 'dairy' ? 21 : category === 'meat' ? 3 : category === 'seafood' ? 2 : 365,
         lastSoldDate: null,
         salesVelocity: 0,
         daysSinceLastSale: 0,
-        isUnderperforming: Math.random() > 0.8,
+        isUnderperforming: stock < minStock,
         isExpiringSoon: daysToExpiry <= 7,
-        isVegetarian: Math.random() > 0.6,
-        isVegan: Math.random() > 0.8,
-        isGlutenFree: Math.random() > 0.7,
-        isSpicy: Math.random() > 0.8,
+        isVegetarian: category === 'vegetables' || category === 'fruits' || category === 'grains' || category === 'dairy',
+        isVegan: category === 'vegetables' || category === 'fruits' || category === 'grains',
+        isGlutenFree: category === 'vegetables' || category === 'fruits' || category === 'meat' || category === 'seafood' || category === 'dairy',
+        isSpicy: category === 'spices' || name.toLowerCase().includes('spicy') || name.toLowerCase().includes('hot'),
         createdAt: new Date(),
         updatedAt: new Date()
       });
@@ -805,6 +415,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 1,
       maxStock: 5,
       unit: 'grams',
+      currencyId: 2, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
       isActive: true,
       isPerishable: false,
@@ -830,6 +441,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 5,
       maxStock: 30,
       unit: 'bunches',
+      currencyId: 2, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       isActive: true,
       isPerishable: true,
@@ -855,6 +467,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 3,
       maxStock: 25,
       unit: 'pints',
+      currencyId: 2, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
       isActive: true,
       isPerishable: true,
@@ -881,6 +494,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 10,
       maxStock: 50,
       unit: 'sheets',
+      currencyId: 2, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
       isActive: true,
       isPerishable: false,
@@ -907,6 +521,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 3,
       maxStock: 20,
       unit: 'pounds',
+      currencyId: 2, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000),
       isActive: true,
       isPerishable: false,
@@ -928,6 +543,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 4,
       maxStock: 25,
       unit: 'pounds',
+      currencyId: 2, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000),
       isActive: true,
       isPerishable: false,
@@ -949,6 +565,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       minStock: 2,
       maxStock: 15,
       unit: 'quarts',
+      currencyId: 2, // CRC (Costa Rican Colón) - default currency
       expirationDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
       isActive: true,
       isPerishable: true,
@@ -1002,8 +619,8 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
 export async function down(queryInterface: QueryInterface): Promise<void> {
   console.log('🔄 Rolling back comprehensive items seeder...');
   
-  // Delete all items from all businesses
-  const businessSlugs = ['italian-delight', 'sushi-master', 'coffee-corner', 'taco-fiesta', 'american-diner', 'golden-dragon', 'indian-spice-palace', 'peruvian-coastal-kitchen', 'argentinian-grill-house', 'colombian-cafe-bogota', 'costa-rican-tropical-grill'];
+  // Delete all items from Italian Delight business
+  const businessSlugs = ['italian-delight'];
 
   for (const slug of businessSlugs) {
     const [business] = await queryInterface.sequelize.query(

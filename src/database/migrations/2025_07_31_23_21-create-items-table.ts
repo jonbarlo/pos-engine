@@ -15,6 +15,17 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
         key: 'id'
       },
     },
+    currencyId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 2, // CRC (Costa Rican Colón) - default currency
+      references: {
+        model: 'currencies',
+        key: 'id'
+      },
+      onUpdate: 'CASCADE',
+      onDelete: 'NO ACTION'
+    },
     name: {
       type: DataTypes.STRING(100),
       allowNull: false,
@@ -170,6 +181,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   await queryInterface.addIndex('items', ['businessId', 'isActive']);
   await queryInterface.addIndex('items', ['sku'], { unique: true });
   await queryInterface.addIndex('items', ['barcode'], { unique: true });
+  await queryInterface.addIndex('items', ['currencyId']);
   
   // Add dietary and preparation indexes
   await queryInterface.addIndex('items', ['businessId', 'isVegetarian']);

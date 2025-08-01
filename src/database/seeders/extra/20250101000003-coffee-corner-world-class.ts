@@ -1,5 +1,4 @@
 import { QueryInterface, QueryTypes } from 'sequelize';
-import { v4 as uuidv4 } from 'uuid';
 
 export async function up(queryInterface: QueryInterface): Promise<void> {
   console.log('☕ Adding Coffee Corner Restaurant Data...');
@@ -706,21 +705,128 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       maxStock: i.maxStock,
       imageUrl: i.imageUrl,
       isActive: true,
-      isPerishable: i.isPerishable,
-      expirationDate: i.expirationDate,
-      manufacturingDate: i.manufacturingDate,
-      shelfLifeDays: i.shelfLifeDays,
-      lastSoldDate: i.daysSinceLastSale > 0 ? new Date(Date.now() - i.daysSinceLastSale * 24 * 60 * 60 * 1000) : null,
-      salesVelocity: i.salesVelocity,
-      daysSinceLastSale: i.daysSinceLastSale,
-      isUnderperforming: i.isUnderperforming,
-      isExpiringSoon: i.isExpiringSoon,
+      isPerishable: i.isPerishable || false,
+      expirationDate: i.expirationDate || null,
+      manufacturingDate: i.manufacturingDate || null,
+      shelfLifeDays: i.shelfLifeDays || null,
+      lastSoldDate: null,
+      salesVelocity: i.salesVelocity || 0,
+      daysSinceLastSale: i.daysSinceLastSale || 0,
+      isUnderperforming: i.isUnderperforming || false,
+      isExpiringSoon: i.isExpiringSoon || false,
       createdAt: new Date(),
       updatedAt: new Date()
     })));
     
-    console.log(`✅ Inserted ${newSmartItems.length} smart test items for Coffee Corner (${smartTestItems.length - newSmartItems.length} already existed)`);
+    console.log(`✅ Inserted ${newSmartItems.length} new smart test items for Coffee Corner (${smartTestItems.length - newSmartItems.length} already existed)`);
   }
+
+  // 🚀 MASSIVE RECIPE GENERATION - Take it to the next level!
+  console.log('🚀 Generating MASSIVE amounts of additional Coffee recipes...');
+  
+  const coffeeRecipeTemplates = [
+    { base: 'Coffee', variations: ['Americano', 'Cappuccino', 'Latte', 'Mocha', 'Macchiato', 'Flat White', 'Cortado', 'Piccolo', 'Long Black', 'Ristretto', 'Espresso', 'Doppio', 'Lungo', 'Con Panna', 'Affogato', 'Cafe au Lait', 'Cafe Breve', 'Cafe Misto', 'Cafe Con Leche', 'Cafe Bombon'] },
+    { base: 'Tea', variations: ['Green', 'Black', 'Herbal', 'Chai', 'Matcha', 'Earl Grey', 'Jasmine', 'Oolong', 'Rooibos', 'Chamomile', 'Peppermint', 'Lavender', 'Rose', 'Hibiscus', 'Lemongrass', 'Ginger', 'Turmeric', 'Cinnamon', 'Vanilla', 'Bergamot'] },
+    { base: 'Smoothie', variations: ['Berry', 'Green', 'Tropical', 'Protein', 'Acai', 'Mango', 'Strawberry', 'Banana', 'Pineapple', 'Mixed Fruit', 'Peach', 'Blueberry', 'Raspberry', 'Blackberry', 'Cherry', 'Orange', 'Lemon', 'Lime', 'Grape', 'Apple'] },
+    { base: 'Bowl', variations: ['Acai', 'Poke', 'Buddha', 'Grain', 'Fruit', 'Yogurt', 'Smoothie', 'Breakfast', 'Lunch', 'Dinner', 'Quinoa', 'Oatmeal', 'Chia', 'Granola', 'Muesli', 'Cereal', 'Rice', 'Noodle', 'Salad', 'Dessert'] },
+    { base: 'Pastry', variations: ['Croissant', 'Danish', 'Muffin', 'Scone', 'Biscotti', 'Cookie', 'Brownie', 'Cake', 'Tart', 'Pie', 'Donut', 'Bagel', 'Bread', 'Roll', 'Bun', 'Sticky Bun', 'Cinnamon Roll', 'Pain au Chocolat', 'Almond Croissant', 'Cheese Danish'] },
+    { base: 'Sandwich', variations: ['Breakfast', 'Lunch', 'Veggie', 'Chicken', 'Turkey', 'Ham', 'Cheese', 'Egg', 'Bacon', 'Avocado', 'Tuna', 'Salmon', 'Roast Beef', 'Pastrami', 'Corned Beef', 'BLT', 'Club', 'Reuben', 'Monte Cristo', 'Grilled Cheese'] },
+    { base: 'Salad', variations: ['Garden', 'Caesar', 'Greek', 'Cobb', 'Wedge', 'Spinach', 'Kale', 'Arugula', 'Mixed Greens', 'Fruit', 'Grain', 'Pasta', 'Potato', 'Macaroni', 'Coleslaw', 'Waldorf', 'Nicoise', 'Caprese', 'Antipasto', 'Insalata'] }
+  ];
+
+  // Generate 500-1000 additional recipes for Coffee Corner
+  const additionalRecipesPerTemplate = 50 + Math.floor(Math.random() * 50); // 50-100 recipes per template
+  
+  for (const template of coffeeRecipeTemplates) {
+    for (let i = 0; i < additionalRecipesPerTemplate; i++) {
+      const variation = template.variations[Math.floor(Math.random() * template.variations.length)] || 'Classic';
+      const recipeName = `${variation} ${template.base} ${i + 1}`;
+      
+      const recipe = {
+        businessId,
+        name: recipeName,
+        description: `Premium ${variation.toLowerCase()} ${template.base.toLowerCase()} made with artisanal methods`,
+        ingredients: `Premium ingredients, fresh herbs, quality spices, artisanal methods`,
+        instructions: `Prepare ${variation.toLowerCase()} ingredients using artisanal techniques, combine with ${template.base.toLowerCase()} base, serve premium`,
+        prepTime: 10 + Math.floor(Math.random() * 30),
+        cookTime: 5 + Math.floor(Math.random() * 25),
+        servings: 1 + Math.floor(Math.random() * 4),
+        difficulty: Math.random() > 0.7 ? 'hard' : Math.random() > 0.4 ? 'medium' : 'easy',
+        cuisine: 'International',
+        category: template.base.toLowerCase(),
+        nutritionInfo: JSON.stringify({
+          calories: Math.floor(Math.random() * 500) + 100,
+          protein: Math.floor(Math.random() * 25) + 5,
+          carbs: Math.floor(Math.random() * 50) + 10,
+          fat: Math.floor(Math.random() * 20) + 2
+        }),
+        imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=300&fit=crop&crop=center',
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      await queryInterface.bulkInsert('recipes', [recipe]);
+    }
+    console.log(`✅ Generated ${additionalRecipesPerTemplate} additional ${template.base} recipes`);
+  }
+
+  console.log(`🚀 MASSIVE Coffee recipe generation completed!`);
+
+  // 🚀 MASSIVE ITEM GENERATION - Take it to the next level!
+  console.log('🚀 Generating MASSIVE amounts of additional Coffee items...');
+  
+  // Generate 1000-2000 additional items for Coffee Corner
+  const additionalItemsCount = 1000 + Math.floor(Math.random() * 1000); // 1000-2000 items
+  
+  const coffeeItemCategories = ['coffee', 'tea', 'dairy', 'pastry', 'bread', 'fruits', 'sweeteners', 'syrups', 'ingredients', 'beverages', 'desserts', 'snacks', 'condiments', 'toppings', 'garnishes'];
+  const coffeeItemNames = [
+    'Ethiopian Yirgacheffe', 'Colombian Supremo', 'Brazilian Santos', 'Guatemalan Antigua', 'Kenyan AA', 'Costa Rican Tarrazu', 'Panamanian Geisha', 'Jamaican Blue Mountain', 'Hawaiian Kona', 'Sumatra Mandheling',
+    'Earl Grey Tea', 'Green Tea', 'Chamomile Tea', 'Peppermint Tea', 'Rooibos Tea', 'Oolong Tea', 'Jasmine Tea', 'Matcha Powder', 'Chai Spice', 'Herbal Blend',
+    'Fresh Milk', 'Almond Milk', 'Oat Milk', 'Soy Milk', 'Coconut Milk', 'Cashew Milk', 'Hemp Milk', 'Rice Milk', 'Heavy Cream', 'Half and Half',
+    'Vanilla Syrup', 'Caramel Syrup', 'Hazelnut Syrup', 'Chocolate Syrup', 'Pumpkin Spice Syrup', 'Peppermint Syrup', 'Cinnamon Syrup', 'Lavender Syrup', 'Rose Syrup', 'Maple Syrup',
+    'Croissant Dough', 'Danish Dough', 'Muffin Mix', 'Scone Mix', 'Biscotti Dough', 'Cookie Dough', 'Brownie Mix', 'Cake Mix', 'Tart Shells', 'Pie Crust',
+    'Fresh Berries', 'Bananas', 'Apples', 'Oranges', 'Lemons', 'Limes', 'Mangoes', 'Pineapples', 'Strawberries', 'Blueberries',
+    'Raw Sugar', 'Brown Sugar', 'Honey', 'Agave Nectar', 'Stevia', 'Monk Fruit', 'Maple Syrup', 'Molasses', 'Coconut Sugar', 'Date Syrup'
+  ];
+
+  for (let i = 0; i < additionalItemsCount; i++) {
+    const category = coffeeItemCategories[Math.floor(Math.random() * coffeeItemCategories.length)] || 'ingredients';
+    const baseName = coffeeItemNames[Math.floor(Math.random() * coffeeItemNames.length)] || 'Premium Coffee Item';
+    const itemName = `${baseName} ${i + 1}`;
+    
+    const item = {
+      businessId,
+      name: itemName,
+      description: `Premium ${category} for artisanal coffee and cafe cuisine`,
+      price: 0, // Items don't have direct prices
+      cost: Math.round((Math.random() * 100 + 1) * 100) / 100, // $1-$101
+      stock: Math.floor(Math.random() * 200) + 10, // 10-210
+      sku: `CO-MASS-${category.toUpperCase().substring(0, 3)}-${(i + 1000).toString().padStart(4, '0')}`,
+      barcode: `123456789${(i + 3000).toString().padStart(6, '0')}`,
+      category,
+      unit: ['pieces', 'pounds', 'kilograms', 'grams', 'ounces', 'bottles', 'jars', 'cans', 'bags', 'packets', 'sachets'][Math.floor(Math.random() * 11)],
+      minStock: 5,
+      maxStock: 500,
+      imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=300&fit=crop&crop=center',
+      isActive: true,
+      isPerishable: Math.random() > 0.3,
+      expirationDate: new Date(Date.now() + Math.floor(Math.random() * 365) * 24 * 60 * 60 * 1000),
+      manufacturingDate: new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000),
+      shelfLifeDays: Math.floor(Math.random() * 365) + 1,
+      lastSoldDate: null,
+      salesVelocity: Math.random() * 2,
+      daysSinceLastSale: Math.floor(Math.random() * 30),
+      isUnderperforming: Math.random() > 0.8,
+      isExpiringSoon: Math.random() > 0.9,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    await queryInterface.bulkInsert('items', [item]);
+  }
+
+  console.log(`🚀 MASSIVE Coffee item generation completed! Generated ${additionalItemsCount} additional items`);
 
   console.log('🎉 Coffee Corner world-class enhancement complete!');
 }

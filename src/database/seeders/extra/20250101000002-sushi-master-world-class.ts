@@ -1,5 +1,4 @@
 import { QueryInterface, QueryTypes } from 'sequelize';
-import { v4 as uuidv4 } from 'uuid';
 
 export async function up(queryInterface: QueryInterface): Promise<void> {
   console.log('🍣 Adding Sushi Master Restaurant Data...');
@@ -410,10 +409,116 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       updatedAt: new Date()
     })));
 
-    console.log(`✅ Inserted ${newRecipeSuggestions.length} new recipe suggestions for Sushi Master (${enhancedRecipeSuggestions.length - newRecipeSuggestions.length} already existed)`);
+    console.log(`✅ Inserted ${newRecipeSuggestions.length} new enhanced recipe suggestions for Sushi Master (${enhancedRecipeSuggestions.length - newRecipeSuggestions.length} already existed)`);
   } else {
     console.log(`ℹ️ All recipe suggestions already exist for Sushi Master`);
   }
+
+  // 🚀 MASSIVE RECIPE GENERATION - Take it to the next level!
+  console.log('🚀 Generating MASSIVE amounts of additional Japanese recipes...');
+  
+  const japaneseRecipeTemplates = [
+    { base: 'Nigiri', variations: ['Salmon', 'Tuna', 'Yellowtail', 'Eel', 'Scallop', 'Shrimp', 'Mackerel', 'Octopus', 'Tamago', 'Uni', 'Toro', 'Hamachi', 'Amaebi', 'Hotate', 'Ika', 'Tako', 'Ebi', 'Saba', 'Aji', 'Kohada'] },
+    { base: 'Roll', variations: ['California', 'Spicy Tuna', 'Dragon', 'Rainbow', 'Spider', 'Volcano', 'Tiger', 'Dynamite', 'Caterpillar', 'Philadelphia', 'Alaska', 'Boston', 'New York', 'Seattle', 'Hawaiian', 'Tempura', 'Crunchy', 'Spicy', 'Sweet', 'Sour'] },
+    { base: 'Sashimi', variations: ['Salmon', 'Tuna', 'Yellowtail', 'Scallop', 'Mackerel', 'Octopus', 'Uni', 'Toro', 'Hamachi', 'Amaebi', 'Hotate', 'Ika', 'Tako', 'Ebi', 'Saba', 'Aji', 'Kohada', 'Madai', 'Hirame', 'Suzuki'] },
+    { base: 'Ramen', variations: ['Tonkotsu', 'Shoyu', 'Miso', 'Shio', 'Spicy', 'Vegetarian', 'Chicken', 'Beef', 'Seafood', 'Truffle', 'Curry', 'Kimchi', 'Mushroom', 'Pork', 'Duck', 'Lamb', 'Fish', 'Crab', 'Lobster', 'Scallop'] },
+    { base: 'Donburi', variations: ['Gyudon', 'Katsudon', 'Oyakodon', 'Tendon', 'Unadon', 'Chirashi', 'Tekkadon', 'Negitoro', 'Salmon', 'Tuna', 'Mixed', 'Premium', 'Deluxe', 'Special', 'Chef', 'Signature', 'House', 'Traditional', 'Modern', 'Fusion'] },
+    { base: 'Tempura', variations: ['Shrimp', 'Vegetable', 'Mixed', 'Seafood', 'Chicken', 'Fish', 'Mushroom', 'Sweet Potato', 'Zucchini', 'Eggplant', 'Onion', 'Carrot', 'Broccoli', 'Asparagus', 'Green Bean', 'Pumpkin', 'Lotus Root', 'Burdock', 'Bamboo', 'Seaweed'] },
+    { base: 'Teriyaki', variations: ['Chicken', 'Beef', 'Salmon', 'Tuna', 'Pork', 'Duck', 'Shrimp', 'Scallop', 'Fish', 'Lamb', 'Vegetable', 'Mushroom', 'Tofu', 'Mixed', 'Premium', 'Deluxe', 'Special', 'Chef', 'Signature', 'House'] }
+  ];
+
+  // Generate 500-1000 additional recipes for Sushi Master
+  const additionalRecipesPerTemplate = 50 + Math.floor(Math.random() * 50); // 50-100 recipes per template
+  
+  for (const template of japaneseRecipeTemplates) {
+    for (let i = 0; i < additionalRecipesPerTemplate; i++) {
+      const variation = template.variations[Math.floor(Math.random() * template.variations.length)] || 'Classic';
+      const recipeName = `${variation} ${template.base} ${i + 1}`;
+      
+      const recipe = {
+        businessId,
+        name: recipeName,
+        description: `Authentic Japanese ${variation.toLowerCase()} ${template.base.toLowerCase()} made with traditional methods`,
+        ingredients: `Premium Japanese ingredients, fresh fish, quality rice, traditional methods`,
+        instructions: `Prepare ${variation.toLowerCase()} ingredients using traditional Japanese techniques, combine with ${template.base.toLowerCase()} base, serve authentic`,
+        prepTime: 15 + Math.floor(Math.random() * 45),
+        cookTime: 10 + Math.floor(Math.random() * 40),
+        servings: 2 + Math.floor(Math.random() * 6),
+        difficulty: Math.random() > 0.7 ? 'hard' : Math.random() > 0.4 ? 'medium' : 'easy',
+        cuisine: 'Japanese',
+        category: template.base.toLowerCase(),
+        nutritionInfo: JSON.stringify({
+          calories: Math.floor(Math.random() * 600) + 200,
+          protein: Math.floor(Math.random() * 35) + 10,
+          carbs: Math.floor(Math.random() * 60) + 20,
+          fat: Math.floor(Math.random() * 25) + 5
+        }),
+        imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=300&fit=crop&crop=center',
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      await queryInterface.bulkInsert('recipes', [recipe]);
+    }
+    console.log(`✅ Generated ${additionalRecipesPerTemplate} additional ${template.base} recipes`);
+  }
+
+  console.log(`🚀 MASSIVE Japanese recipe generation completed!`);
+
+  // 🚀 MASSIVE ITEM GENERATION - Take it to the next level!
+  console.log('🚀 Generating MASSIVE amounts of additional Japanese items...');
+  
+  // Generate 1000-2000 additional items for Sushi Master
+  const additionalItemsCount = 1000 + Math.floor(Math.random() * 1000); // 1000-2000 items
+  
+  const japaneseItemCategories = ['fish', 'seafood', 'ingredients', 'vegetables', 'grains', 'spices', 'sauces', 'noodles', 'rice', 'seaweed', 'pickles', 'condiments', 'beverages', 'desserts', 'snacks'];
+  const japaneseItemNames = [
+    'Bluefin Tuna', 'Salmon', 'Yellowtail', 'Hamachi', 'Mackerel', 'Sardines', 'Eel', 'Scallops', 'Shrimp', 'Lobster', 'Crab', 'Octopus', 'Squid', 'Uni', 'Toro', 'Amaebi', 'Hotate', 'Ika', 'Tako', 'Ebi',
+    'Sushi Rice', 'Short Grain Rice', 'Brown Rice', 'Black Rice', 'Red Rice', 'Wild Rice', 'Sticky Rice', 'Jasmine Rice', 'Basmati Rice', 'Arborio Rice', 'Carnaroli Rice', 'Vialone Nano Rice',
+    'Nori Sheets', 'Wakame', 'Kombu', 'Dulse', 'Arame', 'Hijiki', 'Mozuku', 'Ogonori', 'Tosaka', 'Ginnanso', 'Tengusa', 'Funori', 'Kanten', 'Carrageenan', 'Irish Moss',
+    'Soy Sauce', 'Tamari', 'Shoyu', 'Teriyaki Sauce', 'Ponzu Sauce', 'Miso Paste', 'Wasabi', 'Ginger', 'Sesame Oil', 'Rice Vinegar', 'Mirin', 'Sake', 'Dashi', 'Miso Soup', 'Green Tea',
+    'Daikon Radish', 'Napa Cabbage', 'Bok Choy', 'Chinese Cabbage', 'Mizuna', 'Mitsuba', 'Shiso', 'Perilla', 'Mint', 'Basil', 'Cilantro', 'Parsley', 'Chives', 'Scallions', 'Garlic Chives',
+    'Pickled Ginger', 'Umeboshi', 'Takuan', 'Nukazuke', 'Shibazuke', 'Kyoto Pickles', 'Tokyo Pickles', 'Osaka Pickles', 'Hakata Pickles', 'Nagoya Pickles', 'Sapporo Pickles', 'Fukuoka Pickles'
+  ];
+
+  for (let i = 0; i < additionalItemsCount; i++) {
+    const category = japaneseItemCategories[Math.floor(Math.random() * japaneseItemCategories.length)] || 'ingredients';
+    const baseName = japaneseItemNames[Math.floor(Math.random() * japaneseItemNames.length)] || 'Premium Japanese Item';
+    const itemName = `${baseName} ${i + 1}`;
+    
+    const item = {
+      businessId,
+      name: itemName,
+      description: `Premium Japanese ${category} for authentic cuisine`,
+      price: 0, // Items don't have direct prices
+      cost: Math.round((Math.random() * 100 + 1) * 100) / 100, // $1-$101
+      stock: Math.floor(Math.random() * 200) + 10, // 10-210
+      sku: `SU-MASS-${category.toUpperCase().substring(0, 3)}-${(i + 1000).toString().padStart(4, '0')}`,
+      barcode: `123456789${(i + 2000).toString().padStart(6, '0')}`,
+      category,
+      unit: ['pieces', 'pounds', 'kilograms', 'grams', 'ounces', 'bottles', 'jars', 'cans', 'bags', 'sheets', 'packets'][Math.floor(Math.random() * 11)],
+      minStock: 5,
+      maxStock: 500,
+      imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=300&fit=crop&crop=center',
+      isActive: true,
+      isPerishable: Math.random() > 0.3,
+      expirationDate: new Date(Date.now() + Math.floor(Math.random() * 365) * 24 * 60 * 60 * 1000),
+      manufacturingDate: new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000),
+      shelfLifeDays: Math.floor(Math.random() * 365) + 1,
+      lastSoldDate: null,
+      salesVelocity: Math.random() * 2,
+      daysSinceLastSale: Math.floor(Math.random() * 30),
+      isUnderperforming: Math.random() > 0.8,
+      isExpiringSoon: Math.random() > 0.9,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    await queryInterface.bulkInsert('items', [item]);
+  }
+
+  console.log(`🚀 MASSIVE Japanese item generation completed! Generated ${additionalItemsCount} additional items`);
 
   // Add items specifically for smart recipe suggestions testing
   console.log('🧪 Adding items for smart recipe suggestions testing...');

@@ -71,8 +71,8 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
 
   // Get business IDs
   const businesses = await queryInterface.sequelize.query(
-    'SELECT id, slug FROM businesses WHERE slug IN (?, ?, ?)',
-    { type: QueryTypes.SELECT, replacements: ['italian-delight', 'sushi-master', 'coffee-corner'] }
+    'SELECT id, slug FROM businesses WHERE slug IN (?)',
+    { type: QueryTypes.SELECT, replacements: ['italian-delight'] }
     ) as any[];
 
   const businessMap: { [slug: string]: number } = {};
@@ -168,115 +168,6 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
         imageUrl: 'https://images.unsplash.com/photo-1544025162-d76694265947',
         isActive: true
       }
-    ],
-    'sushi-master': [
-      {
-        name: 'Bluefin Tuna Otoro Nigiri',
-        mainIngredients: ['Bluefin Tuna Otoro'],
-        supportingIngredients: ['Nori Sheets'],
-        instructions: 'Form sushi rice into nigiri shape. Top with Bluefin Tuna Otoro. Wrap with Nori Sheets if desired.',
-        prepTime: 25,
-        cookTime: 0,
-        servings: 8,
-        difficulty: 'hard',
-        cuisine: 'Japanese',
-        category: 'Sushi',
-        nutritionInfo: 'Calories: 180, Protein: 22g, Carbs: 15g, Fat: 5g',
-        imageUrl: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351',
-        isActive: true
-      },
-      {
-        name: 'Hokkaido Uni Sushi',
-        mainIngredients: ['Hokkaido Uni'],
-        supportingIngredients: ['Nori Sheets'],
-        instructions: 'Form sushi rice into nigiri shape. Carefully place Hokkaido Uni on top. Serve immediately.',
-        prepTime: 20,
-        cookTime: 0,
-        servings: 6,
-        difficulty: 'hard',
-        cuisine: 'Japanese',
-        category: 'Sushi',
-        nutritionInfo: 'Calories: 145, Protein: 18g, Carbs: 12g, Fat: 3g',
-        imageUrl: 'https://images.unsplash.com/photo-1553621042-f6e147245754',
-        isActive: true
-      },
-      {
-        name: 'Soft Shell Crab Roll',
-        mainIngredients: ['Soft Shell Crab'],
-        supportingIngredients: ['Nori Sheets'],
-        instructions: 'Tempura fry Soft Shell Crab. Roll with sushi rice and Nori Sheets. Cut into pieces.',
-        prepTime: 30,
-        cookTime: 10,
-        servings: 8,
-        difficulty: 'medium',
-        cuisine: 'Japanese',
-        category: 'Sushi',
-        nutritionInfo: 'Calories: 280, Protein: 24g, Carbs: 18g, Fat: 12g',
-        imageUrl: 'https://images.unsplash.com/photo-1617196034796-73dfa7b1fd56',
-        isActive: true
-      }
-    ],
-    'coffee-corner': [
-      {
-        name: 'Ethiopian Yirgacheffe Pour Over',
-        mainIngredients: ['Ethiopian Yirgacheffe Beans'],
-        supportingIngredients: [],
-        instructions: 'Grind Ethiopian Yirgacheffe Beans medium-fine. Use pour over method with 200°F water. Brew for 3-4 minutes.',
-        prepTime: 5,
-        cookTime: 4,
-        servings: 1,
-        difficulty: 'medium',
-        cuisine: 'Ethiopian',
-        category: 'Coffee',
-        nutritionInfo: 'Calories: 5, Protein: 0g, Carbs: 1g, Fat: 0g',
-        imageUrl: 'https://images.unsplash.com/photo-1497935586351-b67a49e012bf',
-        isActive: true
-      },
-      {
-        name: 'Colombian Supremo Latte',
-        mainIngredients: ['Colombian Supremo Beans'],
-        supportingIngredients: ['Oat Milk (Expiring Soon)'],
-        instructions: 'Espresso with Colombian Supremo Beans. Steam Oat Milk to 140°F. Combine for perfect latte.',
-        prepTime: 3,
-        cookTime: 2,
-        servings: 1,
-        difficulty: 'easy',
-        cuisine: 'Colombian',
-        category: 'Coffee',
-        nutritionInfo: 'Calories: 150, Protein: 8g, Carbs: 15g, Fat: 5g',
-        imageUrl: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735',
-        isActive: true
-      },
-      {
-        name: 'Matcha Green Tea Latte',
-        mainIngredients: ['Matcha Powder'],
-        supportingIngredients: ['Almond Milk'],
-        instructions: 'Whisk Matcha Powder with hot water. Steam Almond Milk. Combine for smooth matcha latte.',
-        prepTime: 5,
-        cookTime: 3,
-        servings: 1,
-        difficulty: 'medium',
-        cuisine: 'Japanese',
-        category: 'Coffee',
-        nutritionInfo: 'Calories: 120, Protein: 6g, Carbs: 12g, Fat: 4g',
-        imageUrl: 'https://images.unsplash.com/photo-1515823064-d6e0c04616a7',
-        isActive: true
-      },
-      {
-        name: 'Chai Spiced Latte',
-        mainIngredients: ['Chai Concentrate'],
-        supportingIngredients: ['Oat Milk (Expiring Soon)'],
-        instructions: 'Heat Chai Concentrate. Steam Oat Milk. Combine for aromatic chai latte.',
-        prepTime: 3,
-        cookTime: 2,
-        servings: 1,
-        difficulty: 'easy',
-        cuisine: 'Indian',
-        category: 'Coffee',
-        nutritionInfo: 'Calories: 140, Protein: 7g, Carbs: 18g, Fat: 4g',
-        imageUrl: 'https://images.unsplash.com/photo-1571934811356-5cc061b6821f',
-        isActive: true
-      }
     ]
   };
 
@@ -352,9 +243,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
         
         // Create diverse recipe names based on cuisine
         const cuisineSuffixes = {
-          'italian-delight': ['Pasta', 'Risotto', 'Pizza', 'Antipasto', 'Primi Piatti'],
-          'sushi-master': ['Sushi', 'Nigiri', 'Maki', 'Sashimi', 'Temaki'],
-          'coffee-corner': ['Latte', 'Cappuccino', 'Espresso', 'Pour Over', 'Specialty']
+          'italian-delight': ['Pasta', 'Risotto', 'Pizza', 'Antipasto', 'Primi Piatti']
         };
         
         const suffixes = cuisineSuffixes[businessSlug as keyof typeof cuisineSuffixes] || ['Specialty'];
@@ -365,15 +254,15 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
         recipe = {
           businessId: businessIdNum,
           name: `${mainItem.name} ${suffix}`,
-          description: `Authentic ${businessSlug === 'italian-delight' ? 'Italian' : businessSlug === 'sushi-master' ? 'Japanese' : 'Coffee'} recipe using premium ingredients.`,
+          description: `Authentic Italian recipe using premium ingredients.`,
           ingredients: [mainItem, ...supportingItems].map(item => item.name).join(', '),
           instructions: `Prepare ${mainItem.name} with ${supportingItems.map(item => item.name).join(', ')}. Cook to perfection.`,
           prepTime: 10 + Math.floor(Math.random() * 20),
           cookTime: 15 + Math.floor(Math.random() * 30),
           servings: servings,
           difficulty: ['easy', 'medium', 'hard'][Math.floor(Math.random() * 3)] as 'easy' | 'medium' | 'hard',
-          cuisine: businessSlug === 'italian-delight' ? 'Italian' : businessSlug === 'sushi-master' ? 'Japanese' : 'Coffee',
-          category: businessSlug === 'italian-delight' ? 'Pasta' : businessSlug === 'sushi-master' ? 'Sushi' : 'Coffee',
+          cuisine: 'Italian',
+          category: 'Pasta',
           nutritionInfo: calculateNutrition([mainItem, ...supportingItems].map(item => item.name), servings),
           imageUrl: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b',
           isActive: true,
@@ -430,8 +319,8 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     `SELECT r.id, r.businessId, r.name, r.ingredients, b.slug as businessSlug 
      FROM recipes r 
      JOIN businesses b ON r.businessId = b.id 
-     WHERE r.createdAt >= ? AND b.slug IN (?, ?, ?)`,
-    { type: QueryTypes.SELECT, replacements: [new Date(Date.now() - 60000), 'italian-delight', 'sushi-master', 'coffee-corner'] }
+     WHERE r.createdAt >= ? AND b.slug IN (?)`,
+    { type: QueryTypes.SELECT, replacements: [new Date(Date.now() - 60000), 'italian-delight'] }
   ) as any[];
 
   // Create recipe ingredients using the actual ingredients from recipe creation
@@ -513,14 +402,14 @@ export async function down(queryInterface: QueryInterface): Promise<void> {
 
   // Delete recipe ingredients first (due to foreign key constraints)
   await queryInterface.sequelize.query(
-    'DELETE FROM recipe_ingredients WHERE recipeId IN (SELECT id FROM recipes WHERE businessId IN (SELECT id FROM businesses WHERE slug IN (?, ?, ?)))',
-    { replacements: ['italian-delight', 'sushi-master', 'coffee-corner'] }
+    'DELETE FROM recipe_ingredients WHERE recipeId IN (SELECT id FROM recipes WHERE businessId IN (SELECT id FROM businesses WHERE slug IN (?)))',
+    { replacements: ['italian-delight'] }
   );
 
   // Delete recipes
   await queryInterface.sequelize.query(
-    'DELETE FROM recipes WHERE businessId IN (SELECT id FROM businesses WHERE slug IN (?, ?, ?))',
-    { replacements: ['italian-delight', 'sushi-master', 'coffee-corner'] }
+    'DELETE FROM recipes WHERE businessId IN (SELECT id FROM businesses WHERE slug IN (?))',
+    { replacements: ['italian-delight'] }
   );
 
   console.log('✅ Comprehensive recipes seeder rolled back successfully!');

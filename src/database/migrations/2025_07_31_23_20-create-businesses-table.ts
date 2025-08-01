@@ -53,10 +53,16 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       allowNull: false,
       defaultValue: 0.00,
     },
-    currency: {
-      type: DataTypes.STRING(3),
+    currencyId: {
+      type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue: 'USD',
+      defaultValue: 2, // CRC (Costa Rican Colón) - default currency
+      references: {
+        model: 'currencies',
+        key: 'id'
+      },
+      onUpdate: 'CASCADE',
+      onDelete: 'NO ACTION'
     },
     timezone: {
       type: DataTypes.STRING(50),
@@ -89,6 +95,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   await queryInterface.addIndex('businesses', ['slug'], { unique: true });
   await queryInterface.addIndex('businesses', ['type']);
   await queryInterface.addIndex('businesses', ['isActive']);
+  await queryInterface.addIndex('businesses', ['currencyId']);
 }
 
 export async function down(queryInterface: QueryInterface): Promise<void> {

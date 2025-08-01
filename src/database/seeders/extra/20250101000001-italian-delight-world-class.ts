@@ -1,5 +1,4 @@
 import { QueryInterface, QueryTypes } from 'sequelize';
-import { v4 as uuidv4 } from 'uuid';
 
 export async function up(queryInterface: QueryInterface): Promise<void> {
   console.log('🍕 Adding Italian Delight Restaurant Data...');
@@ -189,6 +188,244 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   })));
 
   console.log(`✅ Inserted ${enhancedRecipes.length} enhanced recipes for Italian Delight`);
+
+  // 🚀 MASSIVE RECIPE GENERATION - Take it to the next level!
+  console.log('🚀 Generating MASSIVE amounts of additional Italian recipes...');
+  
+  const italianRecipeTemplates = [
+    { base: 'Pizza', variations: ['Margherita', 'Pepperoni', 'Quattro Stagioni', 'Diavola', 'Prosciutto e Funghi', 'Capricciosa', 'Romana', 'Napoletana', 'Siciliana', 'Calzone', 'Focaccia', 'Pizza Bianca', 'Pizza Rossa', 'Pizza al Taglio', 'Pizza Gourmet'] },
+    { base: 'Pasta', variations: ['Spaghetti', 'Fettuccine', 'Linguine', 'Penne', 'Rigatoni', 'Farfalle', 'Orecchiette', 'Gnocchi', 'Ravioli', 'Tortellini', 'Lasagna', 'Cannelloni', 'Manicotti', 'Tagliatelle', 'Pappardelle'] },
+    { base: 'Risotto', variations: ['Mushroom', 'Seafood', 'Truffle', 'Saffron', 'Parmesan', 'Asparagus', 'Butternut Squash', 'Wild Mushroom', 'Lobster', 'Truffle', 'Porcini', 'Artichoke', 'Pea', 'Lemon', 'Herb'] },
+    { base: 'Salad', variations: ['Caprese', 'Caesar', 'Greek', 'Mediterranean', 'Arugula', 'Spinach', 'Kale', 'Mixed Greens', 'Antipasto', 'Insalata', 'Panzenella', 'Insalata di Mare', 'Insalata di Pollo', 'Insalata di Tonno', 'Insalata di Frutta'] },
+    { base: 'Soup', variations: ['Minestrone', 'Pasta e Fagioli', 'Ribollita', 'Zuppa di Pesce', 'Zuppa di Verdure', 'Zuppa di Pollo', 'Zuppa di Lenticchie', 'Zuppa di Pomodoro', 'Zuppa di Cipolle', 'Zuppa di Funghi', 'Zuppa di Patate', 'Zuppa di Carote', 'Zuppa di Spinaci', 'Zuppa di Broccoli', 'Zuppa di Asparagi'] },
+    { base: 'Dessert', variations: ['Tiramisu', 'Panna Cotta', 'Gelato', 'Sorbet', 'Cannoli', 'Zeppole', 'Biscotti', 'Panettone', 'Pandoro', 'Torta', 'Budino', 'Semifreddo', 'Granita', 'Affogato', 'Baba'] },
+    { base: 'Appetizer', variations: ['Bruschetta', 'Arancini', 'Calamari', 'Mozzarella di Bufala', 'Prosciutto di Parma', 'Bresaola', 'Carpaccio', 'Antipasto Misto', 'Caprese', 'Focaccia', 'Olive', 'Artichoke', 'Eggplant', 'Zucchini', 'Pepper'] }
+  ];
+
+  // Generate 500-1000 additional recipes for Italian Delight
+  const additionalRecipesPerTemplate = 50 + Math.floor(Math.random() * 50); // 50-100 recipes per template
+  
+  for (const template of italianRecipeTemplates) {
+    for (let i = 0; i < additionalRecipesPerTemplate; i++) {
+      const variation = template.variations[Math.floor(Math.random() * template.variations.length)] || 'Classic';
+      const recipeName = `${variation} ${template.base} ${i + 1}`;
+      
+      const recipe = {
+        businessId,
+        name: recipeName,
+        description: `Authentic Italian ${variation.toLowerCase()} ${template.base.toLowerCase()} made with traditional methods`,
+        ingredients: `Premium Italian ingredients, fresh herbs, quality spices, traditional methods`,
+        instructions: `Prepare ${variation.toLowerCase()} ingredients using traditional Italian techniques, combine with ${template.base.toLowerCase()} base, serve authentic`,
+        prepTime: 15 + Math.floor(Math.random() * 45),
+        cookTime: 10 + Math.floor(Math.random() * 40),
+        servings: 2 + Math.floor(Math.random() * 6),
+        difficulty: Math.random() > 0.7 ? 'hard' : Math.random() > 0.4 ? 'medium' : 'easy',
+        cuisine: 'Italian',
+        category: template.base.toLowerCase(),
+        nutritionInfo: JSON.stringify({
+          calories: Math.floor(Math.random() * 600) + 200,
+          protein: Math.floor(Math.random() * 35) + 10,
+          carbs: Math.floor(Math.random() * 60) + 20,
+          fat: Math.floor(Math.random() * 25) + 5
+        }),
+        imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=300&fit=crop&crop=center',
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      await queryInterface.bulkInsert('recipes', [recipe]);
+    }
+    console.log(`✅ Generated ${additionalRecipesPerTemplate} additional ${template.base} recipes`);
+  }
+
+  console.log(`🚀 MASSIVE Italian recipe generation completed!`);
+
+  // 🔗 Create Recipe Ingredients (N:N relationship) for Italian Delight recipes
+  console.log('🔗 Creating recipe-ingredient relationships for Italian Delight recipes...');
+  
+  // Get all items for Italian Delight
+  const allItems = await queryInterface.sequelize.query(
+    'SELECT id, name, sku FROM items WHERE businessId = ?',
+    { type: QueryTypes.SELECT, replacements: [businessId] }
+  ) as any[];
+
+  // Create item lookup map
+  const itemMap: { [name: string]: number } = {};
+  for (const item of allItems) {
+    if (item.name) {
+      itemMap[(item.name as string).toLowerCase()] = item.id;
+    }
+    if (item.sku) {
+      itemMap[(item.sku as string).toLowerCase()] = item.id;
+    }
+  }
+
+  // Get all recipes for Italian Delight
+  const allRecipes = await queryInterface.sequelize.query(
+    'SELECT id, name, ingredients FROM recipes WHERE businessId = ? AND ingredients IS NOT NULL',
+    { type: QueryTypes.SELECT, replacements: [businessId] }
+  ) as any[];
+
+  const recipeIngredients: any[] = [];
+
+  for (const recipe of allRecipes) {
+    // Parse ingredients text - handle different formats
+    let ingredientsList: string[] = [];
+    
+    if ((recipe.ingredients as string).includes(',')) {
+      // Comma-separated format
+      ingredientsList = (recipe.ingredients as string).split(',').map((i: string) => i.trim());
+    } else if ((recipe.ingredients as string).includes('\n')) {
+      // Newline-separated format
+      ingredientsList = (recipe.ingredients as string).split('\n').map((i: string) => i.trim());
+    } else if ((recipe.ingredients as string).includes(';')) {
+      // Semicolon-separated format
+      ingredientsList = (recipe.ingredients as string).split(';').map((i: string) => i.trim());
+    } else {
+      // Single ingredient
+      ingredientsList = [(recipe.ingredients as string).trim()];
+    }
+
+    // Process each ingredient
+    for (const ingredient of ingredientsList) {
+      if (!ingredient || ingredient.length < 2) continue;
+
+      // Extract ingredient name (remove quantities, units, etc.)
+      let ingredientName = ingredient.toLowerCase();
+      
+      // Remove common quantity patterns
+      ingredientName = ingredientName
+        .replace(/\d+(\.\d+)?\s*(g|kg|ml|l|oz|lb|cup|cups|tbsp|tsp|pinch|dash)/gi, '')
+        .replace(/^\d+(\.\d+)?\s*/, '')
+        .replace(/^\d+\/\d+\s*/, '')
+        .trim();
+
+      // Remove common prefixes/suffixes
+      ingredientName = ingredientName
+        .replace(/^(fresh|dried|ground|whole|sliced|chopped|minced|grated|extra virgin|virgin|premium|aged)\s+/i, '')
+        .replace(/\s+(optional|to taste|as needed)$/i, '')
+        .trim();
+
+      // Try to find matching item
+      let itemId: number | null = null;
+      
+      // Direct name match
+      if (itemMap[ingredientName]) {
+        itemId = itemMap[ingredientName] || null;
+      } else {
+        // Partial matches
+        for (const [itemName, id] of Object.entries(itemMap)) {
+          if (itemName.includes(ingredientName) || ingredientName.includes(itemName)) {
+            itemId = id as number;
+            break;
+          }
+        }
+      }
+
+      if (itemId) {
+        // Extract quantity and unit from original ingredient text
+        let quantity = 1;
+        let unit = 'piece';
+        let isOptional = false;
+
+        // Check if optional
+        if (ingredient.toLowerCase().includes('optional') || ingredient.toLowerCase().includes('to taste')) {
+          isOptional = true;
+        }
+
+        // Extract quantity
+        const quantityMatch = ingredient.match(/(\d+(?:\.\d+)?)\s*(g|kg|ml|l|oz|lb|cup|cups|tbsp|tsp|pinch|dash|piece|pieces|slice|slices|clove|cloves|bunch|bunches|head|heads|can|cans|jar|jars|bottle|bottles|pack|packs|bag|bags|box|boxes|sheet|sheets|roll|rolls|stick|sticks|bar|bars|loaf|loaves|sprig|sprigs|leaf|leaves|cube|cubes|chunk|chunks|dash|pinch|drop|drops|scoop|scoops|handful|handfuls|dash|pinch|drop|drops|scoop|scoops|handful|handfuls)/i);
+        if (quantityMatch && quantityMatch[1] && quantityMatch[2]) {
+          quantity = parseFloat(quantityMatch[1]);
+          unit = quantityMatch[2].toLowerCase();
+        } else {
+          // Try to extract just a number
+          const numMatch = ingredient.match(/(\d+(?:\.\d+)?)/);
+          if (numMatch && numMatch[1]) {
+            quantity = parseFloat(numMatch[1]);
+            unit = 'piece';
+          }
+        }
+
+        recipeIngredients.push({
+          recipeId: recipe.id,
+          itemId: itemId,
+          quantity: quantity,
+          unit: unit,
+          isOptional: isOptional,
+          notes: ingredient.trim(),
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+      }
+    }
+  }
+
+  // Insert recipe ingredients in chunks
+  if (recipeIngredients.length > 0) {
+    console.log(`🔗 Creating ${recipeIngredients.length} recipe-ingredient relationships for Italian Delight...`);
+    const ingredientChunkSize = 100;
+    for (let i = 0; i < recipeIngredients.length; i += ingredientChunkSize) {
+      const chunk = recipeIngredients.slice(i, i + ingredientChunkSize);
+      await queryInterface.bulkInsert('recipe_ingredients', chunk);
+      console.log(`📦 Inserted ingredient chunk ${Math.floor(i / ingredientChunkSize) + 1}/${Math.ceil(recipeIngredients.length / ingredientChunkSize)}`);
+    }
+    console.log(`✅ Created ${recipeIngredients.length} recipe-ingredient relationships for Italian Delight`);
+  }
+
+  // 🚀 MASSIVE ITEM GENERATION - Take it to the next level!
+  console.log('🚀 Generating MASSIVE amounts of additional Italian items...');
+  
+  // Generate 1000-2000 additional items for Italian Delight
+  const additionalItemsCount = 1000 + Math.floor(Math.random() * 1000); // 1000-2000 items
+  
+  const italianItemCategories = ['ingredients', 'dairy', 'meat', 'seafood', 'vegetables', 'fruits', 'grains', 'spices', 'oils', 'herbs', 'wine', 'cheese', 'pasta', 'sauce', 'dessert'];
+  const italianItemNames = [
+    'Premium Olive Oil', 'Aged Balsamic', 'Truffle Oil', 'Parmigiano Reggiano', 'Pecorino Romano', 'Mozzarella di Bufala', 'Prosciutto di Parma', 'Mortadella', 'Salami Milano', 'Pancetta', 'Guanciale', 'Lardo', 'Speck', 'Bresaola', 'Capicola',
+    'San Marzano Tomatoes', 'Arborio Rice', 'Carnaroli Rice', 'Vialone Nano Rice', '00 Flour', 'Semolina', 'Durum Wheat', 'Fresh Basil', 'Fresh Oregano', 'Fresh Thyme', 'Fresh Rosemary', 'Fresh Sage', 'Fresh Parsley', 'Fresh Mint', 'Fresh Bay Leaves',
+    'Porcini Mushrooms', 'Chanterelle Mushrooms', 'Morel Mushrooms', 'Oyster Mushrooms', 'Shiitake Mushrooms', 'Crimini Mushrooms', 'Portobello Mushrooms', 'White Button Mushrooms', 'Wild Mushroom Mix', 'Dried Porcini', 'Dried Morels', 'Dried Chanterelles',
+    'Artichoke Hearts', 'Sun-Dried Tomatoes', 'Roasted Red Peppers', 'Marinated Eggplant', 'Grilled Zucchini', 'Roasted Garlic', 'Caramelized Onions', 'Pickled Vegetables', 'Giardiniera', 'Olive Mix', 'Capers', 'Anchovies', 'Sardines', 'Tuna in Olive Oil',
+    'Barolo Wine', 'Chianti Wine', 'Brunello Wine', 'Amarone Wine', 'Prosecco', 'Lambrusco', 'Pinot Grigio', 'Soave', 'Valpolicella', 'Barbaresco', 'Dolcetto', 'Barbera', 'Nebbiolo', 'Sangiovese', 'Montepulciano'
+  ];
+
+  for (let i = 0; i < additionalItemsCount; i++) {
+    const category = italianItemCategories[Math.floor(Math.random() * italianItemCategories.length)] || 'ingredients';
+    const baseName = italianItemNames[Math.floor(Math.random() * italianItemNames.length)] || 'Premium Italian Item';
+    const itemName = `${baseName} ${i + 1}`;
+    
+    const item = {
+      businessId,
+      name: itemName,
+      description: `Premium Italian ${category} for authentic cuisine`,
+      price: 0, // Items don't have direct prices
+      cost: Math.round((Math.random() * 100 + 1) * 100) / 100, // $1-$101
+      stock: Math.floor(Math.random() * 200) + 10, // 10-210
+      sku: `IT-MASS-${category.toUpperCase().substring(0, 3)}-${(i + 1000).toString().padStart(4, '0')}`,
+      barcode: `123456789${(i + 1000).toString().padStart(6, '0')}`,
+      category,
+      unit: ['pieces', 'pounds', 'kilograms', 'grams', 'ounces', 'bottles', 'jars', 'cans', 'bags'][Math.floor(Math.random() * 9)],
+      minStock: 5,
+      maxStock: 500,
+      imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=300&fit=crop&crop=center',
+      isActive: true,
+      isPerishable: Math.random() > 0.3,
+      expirationDate: new Date(Date.now() + Math.floor(Math.random() * 365) * 24 * 60 * 60 * 1000),
+      manufacturingDate: new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000),
+      shelfLifeDays: Math.floor(Math.random() * 365) + 1,
+      lastSoldDate: null,
+      salesVelocity: Math.random() * 2,
+      daysSinceLastSale: Math.floor(Math.random() * 30),
+      isUnderperforming: Math.random() > 0.8,
+      isExpiringSoon: Math.random() > 0.9,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    await queryInterface.bulkInsert('items', [item]);
+  }
+
+  console.log(`🚀 MASSIVE Italian item generation completed! Generated ${additionalItemsCount} additional items`);
 
   // Get or create category IDs
   const getOrCreateCategory = async (name: string) => {

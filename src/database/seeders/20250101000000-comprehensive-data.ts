@@ -10,12 +10,64 @@ import { generateSku, generateBarcode } from '../../utils/skuGenerator';
 import { generateMenuItemSkuWithCategory } from '../../utils/menuItemSkuGenerator';
 import { generateSaleNumber } from '../../utils/saleNumberGenerator';
 import { generateOrderNumber } from '../../utils/orderNumberGenerator';
+import { generateInventoryImageUrl, generateMenuItemImageUrl, ItemData } from '../../utils/dynamicImageGenerator';
 import dotenv from 'dotenv';
 import bcrypt from 'bcrypt';
 
 dotenv.config();
 
+
 export async function up(queryInterface: QueryInterface): Promise<void> {
+  // Insert default currencies
+  await queryInterface.bulkInsert('currencies', [
+    {
+      id: 1,
+      code: 'USD',
+      name: 'US Dollar',
+      symbol: '$',
+      decimalPlaces: 2,
+      isActive: true,
+      isDefault: true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    },
+    {
+      id: 2,
+      code: 'CRC',
+      name: 'Costa Rican Colón',
+      symbol: '₡',
+      decimalPlaces: 2,
+      isActive: true,
+      isDefault: false,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+  ]);
+
+  // Insert default exchange rates
+  await queryInterface.bulkInsert('exchange_rates', [
+    {
+      id: 1,
+      fromCurrencyId: 1, // USD
+      toCurrencyId: 2,   // CRC
+      rate: 520.00,      // 1 USD = 520 CRC (approximate rate)
+      effectiveDate: new Date(),
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    },
+    {
+      id: 2,
+      fromCurrencyId: 2, // CRC
+      toCurrencyId: 1,   // USD
+      rate: 0.001923,    // 1 CRC = 0.001923 USD (1/520)
+      effectiveDate: new Date(),
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+  ]);
+
   // 1. Create Businesses
   const businessData = [
     {
@@ -27,11 +79,11 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       secondaryColor: '#8B0000',
       address: '123 Main Street, Downtown, NY 10001',
       phone: '+1-555-0123',
-      email: 'info@italiandelight.com',
-      website: 'https://italiandelight.com',
-      taxRate: 8.875,
-      currency: 'USD',
-      timezone: 'America/New_York',
+                        email: 'info@italiandelight.com',
+                  website: 'https://italiandelight.com',
+                  taxRate: 8.875,
+                  currencyId: 2, // CRC (Costa Rican Colón) - default currency
+                  timezone: 'America/New_York',
       isActive: true,
       type: 'restaurant',
       createdAt: new Date(),
@@ -49,7 +101,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       email: 'contact@sushimaster.com',
       website: 'https://sushimaster.com',
       taxRate: 9.25,
-      currency: 'USD',
+      currencyId: 2, // CRC (Costa Rican Colón) - default currency
       timezone: 'America/Los_Angeles',
       isActive: true,
       type: 'restaurant',
@@ -68,7 +120,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       email: 'hello@coffeecorner.com',
       website: 'https://coffeecorner.com',
       taxRate: 10.1,
-      currency: 'USD',
+      currencyId: 2, // CRC (Costa Rican Colón) - default currency
       timezone: 'America/Seattle',
       isActive: true,
       type: 'restaurant',
@@ -140,35 +192,34 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   // Helper function to generate random stock between 5 and 20
   const getRandomStock = () => Math.floor(Math.random() * 16) + 5; // 5 to 20 inclusive
 
-  // 3. Create Items (Inventory) - RAW INGREDIENTS with appropriate images
-  const itemData = [
+  // 3. Create Items (Inventory) - RAW INGREDIENTS with dynamic images
+  const itemDataRaw = [
     // Italian Delight Items - RAW INGREDIENTS
-    { businessSlug: 'italian-delight', name: 'Pizza Dough', description: 'Fresh pizza dough base', price: 3.99, cost: 1.50, stock: getRandomStock(), sku: generateSku('IT', 1), barcode: generateBarcode('IT', 1), category: 'Pizza', unit: 'piece', minStock: 10, maxStock: 100, imageUrl: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=400&h=300&fit=crop&crop=center', allergens: ['gluten'] },
-    { businessSlug: 'italian-delight', name: 'Spaghetti Pasta', description: 'Fresh spaghetti pasta', price: 2.99, cost: 1.20, stock: getRandomStock(), sku: generateSku('IT', 2), barcode: generateBarcode('IT', 2), category: 'Pasta', unit: 'piece', minStock: 5, maxStock: 80, imageUrl: 'https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=400&h=300&fit=crop&crop=center', allergens: ['gluten'] },
-    { businessSlug: 'italian-delight', name: 'Mascarpone Cheese', description: 'Fresh mascarpone for tiramisu', price: 4.99, cost: 2.50, stock: getRandomStock(), sku: generateSku('IT', 3), barcode: generateBarcode('IT', 3), category: 'Dessert', unit: 'piece', minStock: 5, maxStock: 50, imageUrl: 'https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?w=400&h=300&fit=crop&crop=center', allergens: ['dairy'] },
-    { businessSlug: 'italian-delight', name: 'Pepperoni Slices', description: 'Fresh pepperoni for pizza', price: 5.99, cost: 2.80, stock: getRandomStock(), sku: generateSku('IT', 4), barcode: generateBarcode('IT', 4), category: 'Pizza', unit: 'piece', minStock: 8, maxStock: 80, imageUrl: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400&h=300&fit=crop&crop=center', allergens: ['pork'] },
-    { businessSlug: 'italian-delight', name: 'Fettuccine Pasta', description: 'Fresh fettuccine pasta', price: 3.50, cost: 1.40, stock: getRandomStock(), sku: generateSku('IT', 5), barcode: generateBarcode('IT', 5), category: 'Pasta', unit: 'piece', minStock: 5, maxStock: 60, imageUrl: 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=400&h=300&fit=crop&crop=center', allergens: ['gluten'] },
-    { businessSlug: 'italian-delight', name: 'Cannoli Shells', description: 'Crispy cannoli shells', price: 2.99, cost: 1.20, stock: getRandomStock(), sku: generateSku('IT', 6), barcode: generateBarcode('IT', 6), category: 'Dessert', unit: 'piece', minStock: 10, maxStock: 70, imageUrl: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=400&h=300&fit=crop&crop=center', allergens: ['gluten'] },
-    // Sushi Master Items - RAW INGREDIENTS
-    { businessSlug: 'sushi-master', name: 'Sushi Rice', description: 'Premium sushi rice', price: 3.99, cost: 1.80, stock: getRandomStock(), sku: generateSku('SU', 1), barcode: generateBarcode('SU', 1), category: 'Rolls', unit: 'piece', minStock: 10, maxStock: 100, imageUrl: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=300&fit=crop&crop=center', allergens: [] },
-    { businessSlug: 'sushi-master', name: 'Fresh Salmon', description: 'Fresh salmon for nigiri', price: 8.99, cost: 4.20, stock: getRandomStock(), sku: generateSku('SU', 2), barcode: generateBarcode('SU', 2), category: 'Nigiri', unit: 'piece', minStock: 15, maxStock: 120, imageUrl: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=300&fit=crop&crop=center', allergens: ['fish'] },
-    { businessSlug: 'sushi-master', name: 'Miso Paste', description: 'Miso paste for soup', price: 1.99, cost: 0.80, stock: getRandomStock(), sku: generateSku('SU', 3), barcode: generateBarcode('SU', 3), category: 'Soup', unit: 'bowl', minStock: 20, maxStock: 150, imageUrl: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400&h=300&fit=crop&crop=center', allergens: ['soy'] },
-    { businessSlug: 'sushi-master', name: 'Fresh Tuna', description: 'Fresh tuna for rolls', price: 9.99, cost: 4.80, stock: getRandomStock(), sku: generateSku('SU', 4), barcode: generateBarcode('SU', 4), category: 'Rolls', unit: 'piece', minStock: 8, maxStock: 80, imageUrl: 'https://images.unsplash.com/photo-1553621042-f6e147245754?w=400&h=300&fit=crop&crop=center', allergens: ['fish'] },
-    { businessSlug: 'sushi-master', name: 'Fresh Tuna Sashimi', description: 'Fresh tuna for nigiri', price: 7.99, cost: 3.80, stock: getRandomStock(), sku: generateSku('SU', 5), barcode: generateBarcode('SU', 5), category: 'Nigiri', unit: 'piece', minStock: 12, maxStock: 100, imageUrl: 'https://images.unsplash.com/photo-1553621042-f6e147245754?w=400&h=300&fit=crop&crop=center', allergens: ['fish'] },
-    // Coffee Corner Items - RAW INGREDIENTS
-    { businessSlug: 'coffee-corner', name: 'Coffee Beans', description: 'Premium coffee beans', price: 12.99, cost: 6.50, stock: getRandomStock(), sku: generateSku('CO', 1), barcode: generateBarcode('CO', 1), category: 'Coffee', unit: 'shot', minStock: 50, maxStock: 500, imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=300&fit=crop&crop=center', allergens: [] },
-    { businessSlug: 'coffee-corner', name: 'Fresh Milk', description: 'Fresh whole milk', price: 2.99, cost: 1.20, stock: getRandomStock(), sku: generateSku('CO', 2), barcode: generateBarcode('CO', 2), category: 'Coffee', unit: 'cup', minStock: 30, maxStock: 300, imageUrl: 'https://images.unsplash.com/photo-1534778101976-62847782c06b?w=400&h=300&fit=crop&crop=center', allergens: ['dairy'] },
-    { businessSlug: 'coffee-corner', name: 'Muffin Mix', description: 'Blueberry muffin mix', price: 4.99, cost: 2.00, stock: getRandomStock(), sku: generateSku('CO', 3), barcode: generateBarcode('CO', 3), category: 'Pastry', unit: 'piece', minStock: 5, maxStock: 60, imageUrl: 'https://images.unsplash.com/photo-1607958996338-0106d5c0c1e1?w=400&h=300&fit=crop&crop=center', allergens: ['gluten', 'dairy', 'eggs'] },
-    { businessSlug: 'coffee-corner', name: 'Croissant Dough', description: 'Buttery croissant dough', price: 3.99, cost: 1.60, stock: getRandomStock(), sku: generateSku('CO', 4), barcode: generateBarcode('CO', 4), category: 'Pastry', unit: 'piece', minStock: 8, maxStock: 70, imageUrl: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=400&h=300&fit=crop&crop=center', allergens: ['gluten', 'dairy', 'eggs'] },
-    { businessSlug: 'coffee-corner', name: 'Steamed Milk', description: 'Steamed milk for lattes', price: 1.99, cost: 0.80, stock: getRandomStock(), sku: generateSku('CO', 5), barcode: generateBarcode('CO', 5), category: 'Coffee', unit: 'cup', minStock: 25, maxStock: 250, imageUrl: 'https://images.unsplash.com/photo-1541167760496-1628856ab772?w=400&h=300&fit=crop&crop=center', allergens: ['dairy'] },
+    { businessSlug: 'italian-delight', name: 'Pizza Dough', description: 'Fresh pizza dough base', price: 3.99, cost: 1.50, stock: getRandomStock(), sku: generateSku('IT', 1), barcode: generateBarcode('IT', 1), category: 'Pizza', unit: 'piece', minStock: 10, maxStock: 100, allergens: ['gluten'] },
+    { businessSlug: 'italian-delight', name: 'Spaghetti Pasta', description: 'Fresh spaghetti pasta', price: 2.99, cost: 1.20, stock: getRandomStock(), sku: generateSku('IT', 2), barcode: generateBarcode('IT', 2), category: 'Pasta', unit: 'piece', minStock: 5, maxStock: 80, allergens: ['gluten'] },
+    { businessSlug: 'italian-delight', name: 'Mascarpone Cheese', description: 'Fresh mascarpone for tiramisu', price: 4.99, cost: 2.50, stock: getRandomStock(), sku: generateSku('IT', 3), barcode: generateBarcode('IT', 3), category: 'Dessert', unit: 'piece', minStock: 5, maxStock: 50, allergens: ['dairy'] },
+    { businessSlug: 'italian-delight', name: 'Pepperoni Slices', description: 'Fresh pepperoni for pizza', price: 5.99, cost: 2.80, stock: getRandomStock(), sku: generateSku('IT', 4), barcode: generateBarcode('IT', 4), category: 'Pizza', unit: 'piece', minStock: 8, maxStock: 80, allergens: ['pork'] },
+    { businessSlug: 'italian-delight', name: 'Fettuccine Pasta', description: 'Fresh fettuccine pasta', price: 3.50, cost: 1.40, stock: getRandomStock(), sku: generateSku('IT', 5), barcode: generateBarcode('IT', 5), category: 'Pasta', unit: 'piece', minStock: 5, maxStock: 60, allergens: ['gluten'] },
+    { businessSlug: 'italian-delight', name: 'Cannoli Shells', description: 'Crispy cannoli shells', price: 2.99, cost: 1.20, stock: getRandomStock(), sku: generateSku('IT', 6), barcode: generateBarcode('IT', 6), category: 'Dessert', unit: 'piece', minStock: 10, maxStock: 70, allergens: ['gluten'] },
+    // Sushi Master Items - RAW INGREDIENTS (Moved to separate seeder)
+    // Coffee Corner Items - RAW INGREDIENTS (Moved to separate seeder)
     // Missing beverage items for menu items
-    { businessSlug: 'italian-delight', name: 'Red Wine Bottle', description: 'Premium red wine bottle', price: 15.99, cost: 8.50, stock: getRandomStock(), sku: generateSku('IT', 7), barcode: generateBarcode('IT', 7), category: 'Beverages', unit: 'glass', minStock: 20, maxStock: 200, imageUrl: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=400&h=300&fit=crop', allergens: [] },
-    { businessSlug: 'italian-delight', name: 'Soda Syrup', description: 'Italian soda syrup', price: 4.99, cost: 2.20, stock: getRandomStock(), sku: generateSku('IT', 8), barcode: generateBarcode('IT', 8), category: 'Beverages', unit: 'glass', minStock: 15, maxStock: 150, imageUrl: 'https://images.unsplash.com/photo-1621263764928-df1444c5e859?w=400&h=300&fit=crop', allergens: [] },
-    { businessSlug: 'sushi-master', name: 'Green Tea Leaves', description: 'Premium Japanese green tea', price: 8.99, cost: 4.50, stock: getRandomStock(), sku: generateSku('SU', 6), barcode: generateBarcode('SU', 6), category: 'Beverages', unit: 'cup', minStock: 30, maxStock: 300, imageUrl: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop', allergens: [] },
-    { businessSlug: 'sushi-master', name: 'Sake Bottle', description: 'Premium sake bottle', price: 18.99, cost: 9.50, stock: getRandomStock(), sku: generateSku('SU', 7), barcode: generateBarcode('SU', 7), category: 'Beverages', unit: 'bottle', minStock: 10, maxStock: 100, imageUrl: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=400&h=300&fit=crop', allergens: [] },
-    { businessSlug: 'coffee-corner', name: 'Earl Grey Tea', description: 'Classic Earl Grey tea', price: 6.99, cost: 3.50, stock: getRandomStock(), sku: generateSku('CO', 6), barcode: generateBarcode('CO', 6), category: 'Tea', unit: 'cup', minStock: 25, maxStock: 250, imageUrl: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop', allergens: [] },
-    { businessSlug: 'coffee-corner', name: 'Berry Mix', description: 'Mixed berry mix for smoothies', price: 5.99, cost: 2.80, stock: getRandomStock(), sku: generateSku('CO', 7), barcode: generateBarcode('CO', 7), category: 'Smoothies', unit: 'cup', minStock: 15, maxStock: 150, imageUrl: 'https://images.unsplash.com/photo-1505252585461-04db1eb84625?w=400&h=300&fit=crop', allergens: ['dairy'] }
+    { businessSlug: 'italian-delight', name: 'Red Wine Bottle', description: 'Premium red wine bottle', price: 15.99, cost: 8.50, stock: getRandomStock(), sku: generateSku('IT', 7), barcode: generateBarcode('IT', 7), category: 'Beverages', unit: 'glass', minStock: 20, maxStock: 200, allergens: [] },
+    { businessSlug: 'italian-delight', name: 'Soda Syrup', description: 'Italian soda syrup', price: 4.99, cost: 2.20, stock: getRandomStock(), sku: generateSku('IT', 8), barcode: generateBarcode('IT', 8), category: 'Beverages', unit: 'glass', minStock: 15, maxStock: 150, allergens: [] },
+    // Sushi Master Beverages (Moved to separate seeder)
+    // Coffee Corner Beverages (Moved to separate seeder)
   ];
+
+  // Generate dynamic images for inventory items
+  const itemData = itemDataRaw.map(item => ({
+    ...item,
+    imageUrl: generateInventoryImageUrl({
+      name: item.name,
+      category: item.category,
+      businessSlug: item.businessSlug,
+      description: item.description
+    })
+  }));
   await queryInterface.bulkInsert('items', itemData.map(i => ({
     businessId: businesses[i.businessSlug],
     name: i.name,
@@ -696,36 +747,32 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   
   console.log('🔍 DEBUG: Final categories object:', categories);
 
-  // 8. Create Menu Items - FINISHED DISHES with appropriate images
-  const menuItemData = [
+  // 8. Create Menu Items - FINISHED DISHES with dynamic images
+  const menuItemDataRaw = [
     // Italian Delight Menu Items - FINISHED DISHES
-    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Pizza', name: 'Margherita Pizza', description: 'Fresh mozzarella, tomato sauce, basil', price: 18.99, cost: 8.50, sku: generateSku('IT', 1), barcode: generateBarcode('IT', 1), itemSku: generateMenuItemSkuWithCategory('IT', 'Pizza', 1), imageUrl: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400&h=300&fit=crop&crop=center', allergens: ['gluten', 'dairy'] },
-    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Pizza', name: 'Pepperoni Pizza', description: 'Classic pepperoni with mozzarella', price: 20.99, cost: 9.50, sku: generateSku('IT', 2), barcode: generateBarcode('IT', 2), itemSku: generateMenuItemSkuWithCategory('IT', 'Pizza', 2), imageUrl: 'https://images.unsplash.com/photo-1628840042765-356cda07504e?w=400&h=300&fit=crop&crop=center', allergens: ['gluten', 'dairy', 'pork'] },
-    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Pasta', name: 'Spaghetti Carbonara', description: 'Pasta with eggs, cheese, pancetta, black pepper', price: 16.99, cost: 7.20, sku: generateSku('IT', 3), barcode: generateBarcode('IT', 3), itemSku: generateMenuItemSkuWithCategory('IT', 'Pasta', 1), imageUrl: 'https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=400&h=300&fit=crop&crop=center', allergens: ['gluten', 'dairy', 'eggs', 'pork'] },
-    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Pasta', name: 'Fettuccine Alfredo', description: 'Creamy alfredo sauce with parmesan', price: 17.99, cost: 7.80, sku: generateSku('IT', 4), barcode: generateBarcode('IT', 4), itemSku: generateMenuItemSkuWithCategory('IT', 'Pasta', 2), imageUrl: 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=400&h=300&fit=crop&crop=center', allergens: ['gluten', 'dairy'] },
-    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Desserts', name: 'Tiramisu', description: 'Classic Italian dessert with coffee and mascarpone', price: 8.99, cost: 3.50, sku: generateSku('IT', 5), barcode: generateBarcode('IT', 5), itemSku: generateMenuItemSkuWithCategory('IT', 'Desserts', 1), imageUrl: 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=400&h=300&fit=crop&crop=center', allergens: ['gluten', 'dairy', 'eggs'] },
-    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Desserts', name: 'Cannoli', description: 'Crispy shells filled with sweet ricotta', price: 6.99, cost: 2.50, sku: generateSku('IT', 6), barcode: generateBarcode('IT', 6), itemSku: generateMenuItemSkuWithCategory('IT', 'Desserts', 2), imageUrl: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=400&h=300&fit=crop&crop=center', allergens: ['gluten', 'dairy'] },
-    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Beverages', name: 'House Red Wine', description: 'Glass of our signature red wine', price: 8.99, cost: 3.20, sku: generateSku('IT', 7), barcode: generateBarcode('IT', 7), itemSku: generateMenuItemSkuWithCategory('IT', 'Beverages', 1), imageUrl: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=400&h=300&fit=crop&crop=center', allergens: [] },
-    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Beverages', name: 'Italian Soda', description: 'Refreshing Italian soda', price: 3.99, cost: 1.20, sku: generateSku('IT', 8), barcode: generateBarcode('IT', 8), itemSku: generateMenuItemSkuWithCategory('IT', 'Beverages', 2), imageUrl: 'https://images.unsplash.com/photo-1621263764928-df1444c5e859?w=400&h=300&fit=crop&crop=center', allergens: [] },
+    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Pizza', name: 'Margherita Pizza', description: 'Fresh mozzarella, tomato sauce, basil', price: 18.99, cost: 8.50, sku: generateSku('IT', 1), barcode: generateBarcode('IT', 1), itemSku: generateMenuItemSkuWithCategory('IT', 'Pizza', 1), allergens: ['gluten', 'dairy'] },
+    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Pizza', name: 'Pepperoni Pizza', description: 'Classic pepperoni with mozzarella', price: 20.99, cost: 9.50, sku: generateSku('IT', 2), barcode: generateBarcode('IT', 2), itemSku: generateMenuItemSkuWithCategory('IT', 'Pizza', 2), allergens: ['gluten', 'dairy', 'pork'] },
+    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Pasta', name: 'Spaghetti Carbonara', description: 'Pasta with eggs, cheese, pancetta, black pepper', price: 16.99, cost: 7.20, sku: generateSku('IT', 3), barcode: generateBarcode('IT', 3), itemSku: generateMenuItemSkuWithCategory('IT', 'Pasta', 1), allergens: ['gluten', 'dairy', 'eggs', 'pork'] },
+    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Pasta', name: 'Fettuccine Alfredo', description: 'Creamy alfredo sauce with parmesan', price: 17.99, cost: 7.80, sku: generateSku('IT', 4), barcode: generateBarcode('IT', 4), itemSku: generateMenuItemSkuWithCategory('IT', 'Pasta', 2), allergens: ['gluten', 'dairy'] },
+    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Desserts', name: 'Tiramisu', description: 'Classic Italian dessert with coffee and mascarpone', price: 8.99, cost: 3.50, sku: generateSku('IT', 5), barcode: generateBarcode('IT', 5), itemSku: generateMenuItemSkuWithCategory('IT', 'Desserts', 1), allergens: ['gluten', 'dairy', 'eggs'] },
+    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Desserts', name: 'Cannoli', description: 'Crispy shells filled with sweet ricotta', price: 6.99, cost: 2.50, sku: generateSku('IT', 6), barcode: generateBarcode('IT', 6), itemSku: generateMenuItemSkuWithCategory('IT', 'Desserts', 2), allergens: ['gluten', 'dairy'] },
+    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Beverages', name: 'House Red Wine', description: 'Glass of our signature red wine', price: 8.99, cost: 3.20, sku: generateSku('IT', 7), barcode: generateBarcode('IT', 7), itemSku: generateMenuItemSkuWithCategory('IT', 'Beverages', 1), allergens: [] },
+    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Beverages', name: 'Italian Soda', description: 'Refreshing Italian soda', price: 3.99, cost: 1.20, sku: generateSku('IT', 8), barcode: generateBarcode('IT', 8), itemSku: generateMenuItemSkuWithCategory('IT', 'Beverages', 2), allergens: [] },
     
-    // Sushi Master Menu Items - FINISHED DISHES
-    { businessSlug: 'sushi-master', categoryKey: 'sushi-master-Rolls', name: 'California Roll', description: 'Crab, avocado, cucumber', price: 12.99, cost: 5.80, sku: generateSku('SU', 1), barcode: generateBarcode('SU', 1), itemSku: generateMenuItemSkuWithCategory('SU', 'Rolls', 1), imageUrl: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=300&fit=crop&crop=center', allergens: ['fish', 'soy'] },
-    { businessSlug: 'sushi-master', categoryKey: 'sushi-master-Rolls', name: 'Spicy Tuna Roll', description: 'Spicy tuna with cucumber', price: 14.99, cost: 6.50, sku: generateSku('SU', 2), barcode: generateBarcode('SU', 2), itemSku: generateMenuItemSkuWithCategory('SU', 'Rolls', 2), imageUrl: 'https://images.unsplash.com/photo-1553621042-f6e147245754?w=400&h=300&fit=crop&crop=center', allergens: ['fish', 'soy'] },
-    { businessSlug: 'sushi-master', categoryKey: 'sushi-master-Nigiri', name: 'Salmon Nigiri', description: 'Fresh salmon over rice', price: 6.99, cost: 3.20, sku: generateSku('SU', 3), barcode: generateBarcode('SU', 3), itemSku: generateMenuItemSkuWithCategory('SU', 'Nigiri', 1), imageUrl: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=300&fit=crop&crop=center', allergens: ['fish'] },
-    { businessSlug: 'sushi-master', categoryKey: 'sushi-master-Nigiri', name: 'Tuna Nigiri', description: 'Fresh tuna over rice', price: 7.99, cost: 3.80, sku: generateSku('SU', 4), barcode: generateBarcode('SU', 4), itemSku: generateMenuItemSkuWithCategory('SU', 'Nigiri', 2), imageUrl: 'https://images.unsplash.com/photo-1553621042-f6e147245754?w=400&h=300&fit=crop&crop=center', allergens: ['fish'] },
-    { businessSlug: 'sushi-master', categoryKey: 'sushi-master-Soups', name: 'Miso Soup', description: 'Traditional Japanese soup', price: 4.99, cost: 1.80, sku: generateSku('SU', 5), barcode: generateBarcode('SU', 5), itemSku: generateMenuItemSkuWithCategory('SU', 'Soups', 1), imageUrl: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400&h=300&fit=crop&crop=center', allergens: ['soy'] },
-    { businessSlug: 'sushi-master', categoryKey: 'sushi-master-Beverages', name: 'Green Tea', description: 'Premium Japanese green tea', price: 2.99, cost: 0.80, sku: generateSku('SU', 6), barcode: generateBarcode('SU', 6), itemSku: generateMenuItemSkuWithCategory('SU', 'Beverages', 1), imageUrl: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop&crop=center', allergens: [] },
-    { businessSlug: 'sushi-master', categoryKey: 'sushi-master-Beverages', name: 'Sake', description: 'Premium sake', price: 12.99, cost: 5.20, sku: generateSku('SU', 7), barcode: generateBarcode('SU', 7), itemSku: generateMenuItemSkuWithCategory('SU', 'Beverages', 2), imageUrl: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=400&h=300&fit=crop&crop=center', allergens: [] },
-    
-    // Coffee Corner Menu Items - FINISHED DISHES
-    { businessSlug: 'coffee-corner', categoryKey: 'coffee-corner-Coffee', name: 'Espresso', description: 'Single shot of espresso', price: 3.50, cost: 1.20, sku: generateSku('CO', 1), barcode: generateBarcode('CO', 1), itemSku: generateMenuItemSkuWithCategory('CO', 'Coffee', 1), imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=300&fit=crop&crop=center', allergens: [] },
-    { businessSlug: 'coffee-corner', categoryKey: 'coffee-corner-Coffee', name: 'Cappuccino', description: 'Espresso with steamed milk and foam', price: 4.99, cost: 1.80, sku: generateSku('CO', 2), barcode: generateBarcode('CO', 2), itemSku: generateMenuItemSkuWithCategory('CO', 'Coffee', 2), imageUrl: 'https://images.unsplash.com/photo-1534778101976-62847782c06b?w=400&h=300&fit=crop&crop=center', allergens: ['dairy'] },
-    { businessSlug: 'coffee-corner', categoryKey: 'coffee-corner-Coffee', name: 'Latte', description: 'Espresso with steamed milk', price: 4.49, cost: 1.60, sku: generateSku('CO', 3), barcode: generateBarcode('CO', 3), itemSku: generateMenuItemSkuWithCategory('CO', 'Coffee', 3), imageUrl: 'https://images.unsplash.com/photo-1541167760496-1628856ab772?w=400&h=300&fit=crop&crop=center', allergens: ['dairy'] },
-    { businessSlug: 'coffee-corner', categoryKey: 'coffee-corner-Pastries', name: 'Blueberry Muffin', description: 'Fresh baked blueberry muffin', price: 3.99, cost: 1.50, sku: generateSku('CO', 4), barcode: generateBarcode('CO', 4), itemSku: generateMenuItemSkuWithCategory('CO', 'Pastries', 1), imageUrl: 'https://images.unsplash.com/photo-1607958996338-0106d5c0c1e1?w=400&h=300&fit=crop&crop=center', allergens: ['gluten', 'dairy', 'eggs'] },
-    { businessSlug: 'coffee-corner', categoryKey: 'coffee-corner-Pastries', name: 'Chocolate Croissant', description: 'Buttery croissant with chocolate', price: 4.49, cost: 1.80, sku: generateSku('CO', 5), barcode: generateBarcode('CO', 5), itemSku: generateMenuItemSkuWithCategory('CO', 'Pastries', 2), imageUrl: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=400&h=300&fit=crop&crop=center', allergens: ['gluten', 'dairy', 'eggs'] },
-    { businessSlug: 'coffee-corner', categoryKey: 'coffee-corner-Tea', name: 'Earl Grey Tea', description: 'Classic Earl Grey tea', price: 3.99, cost: 1.20, sku: generateSku('CO', 6), barcode: generateBarcode('CO', 6), itemSku: generateMenuItemSkuWithCategory('CO', 'Tea', 1), imageUrl: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop&crop=center', allergens: [] },
-    { businessSlug: 'coffee-corner', categoryKey: 'coffee-corner-Smoothies', name: 'Berry Blast Smoothie', description: 'Mixed berry smoothie', price: 5.99, cost: 2.20, sku: generateSku('CO', 7), barcode: generateBarcode('CO', 7), itemSku: generateMenuItemSkuWithCategory('CO', 'Smoothies', 1), imageUrl: 'https://images.unsplash.com/photo-1505252585461-04db1eb84625?w=400&h=300&fit=crop&crop=center', allergens: ['dairy'] }
+    // Sushi Master Menu Items - FINISHED DISHES (Moved to separate seeder)
+    // Coffee Corner Menu Items - FINISHED DISHES (Moved to separate seeder)
   ];
+
+  // Generate dynamic images for menu items
+  const menuItemData = menuItemDataRaw.map(item => ({
+    ...item,
+    imageUrl: generateMenuItemImageUrl({
+      name: item.name,
+      category: item.categoryKey.split('-')[1] || 'Food', // Extract category from categoryKey with fallback
+      businessSlug: item.businessSlug,
+      description: item.description
+    })
+  }));
   
   console.log('🔍 DEBUG: Menu item data to insert:', menuItemData);
   
@@ -1848,6 +1895,8 @@ export async function down(queryInterface: QueryInterface): Promise<void> {
   await queryInterface.bulkDelete('items', {});
   await queryInterface.bulkDelete('users', {});
   await queryInterface.bulkDelete('businesses', {});
+  await queryInterface.bulkDelete('exchange_rates', {});
+  await queryInterface.bulkDelete('currencies', {});
 }
 
  

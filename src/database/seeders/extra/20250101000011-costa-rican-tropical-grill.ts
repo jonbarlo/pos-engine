@@ -1,5 +1,5 @@
 import { QueryInterface, QueryTypes } from 'sequelize';
-import { UserRole, KitchenAssignment } from '../../models/UserModel';
+import { UserRole, KitchenAssignment } from '../../../models/UserModel';
 import dotenv from 'dotenv';
 import bcrypt from 'bcrypt';
 

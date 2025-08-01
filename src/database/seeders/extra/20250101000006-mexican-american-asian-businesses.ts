@@ -1,5 +1,5 @@
 import { QueryInterface, QueryTypes } from 'sequelize';
-import { UserRole, KitchenAssignment } from '../../models/UserModel';
+import { UserRole, KitchenAssignment } from '../../../models/UserModel';
 import dotenv from 'dotenv';
 import bcrypt from 'bcrypt';
 
@@ -282,6 +282,159 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   console.log(`   - 21 menu categories created`);
   console.log(`   - 15 menu items created`);
   console.log(`   - 12 tables created`);
+
+  // 🚀 MASSIVE RECIPE GENERATION - Take it to the next level!
+  console.log('🚀 Generating MASSIVE amounts of additional recipes for all businesses...');
+  
+  // Get all business IDs
+  const allBusinesses = await queryInterface.sequelize.query(
+    'SELECT id, slug FROM businesses WHERE slug IN (?, ?, ?)',
+    { type: QueryTypes.SELECT, replacements: ['taco-fiesta', 'american-diner', 'golden-dragon'] }
+  ) as any[];
+
+  for (const business of allBusinesses) {
+    const businessId = business.id;
+    const businessSlug = business.slug;
+    
+    console.log(`🚀 Generating MASSIVE recipes for ${businessSlug}...`);
+    
+    let recipeTemplates: any[] = [];
+    
+    if (businessSlug === 'taco-fiesta') {
+      recipeTemplates = [
+        { base: 'Taco', variations: ['Carne Asada', 'Al Pastor', 'Carnitas', 'Fish', 'Shrimp', 'Chicken', 'Veggie', 'Bean', 'Lengua', 'Tripa', 'Barbacoa', 'Birria', 'Chorizo', 'Pollo', 'Pescado', 'Camarones', 'Vegetariano', 'Frijoles', 'Nopales', 'Hongos'] },
+        { base: 'Burrito', variations: ['California', 'Mission', 'Wet', 'Breakfast', 'Veggie', 'Bean', 'Chicken', 'Steak', 'Carnitas', 'Shrimp', 'Fish', 'Pork', 'Lamb', 'Mixed', 'Deluxe', 'Special', 'Chef', 'Signature', 'House', 'Traditional'] },
+        { base: 'Quesadilla', variations: ['Chicken', 'Steak', 'Veggie', 'Bean', 'Shrimp', 'Mushroom', 'Spinach', 'Cheese', 'Mixed', 'Special', 'Deluxe', 'Premium', 'Traditional', 'Modern', 'Fusion', 'Gourmet', 'Artisan', 'Handmade', 'Fresh', 'Daily'] },
+        { base: 'Enchilada', variations: ['Red', 'Green', 'Mole', 'Cheese', 'Chicken', 'Beef', 'Veggie', 'Bean', 'Shrimp', 'Mixed', 'Deluxe', 'Special', 'Premium', 'Traditional', 'Modern', 'Fusion', 'Gourmet', 'Artisan', 'Handmade', 'Fresh'] }
+      ];
+    } else if (businessSlug === 'american-diner') {
+      recipeTemplates = [
+        { base: 'Burger', variations: ['Classic', 'Bacon', 'Cheese', 'Veggie', 'Turkey', 'Chicken', 'Mushroom', 'BBQ', 'Jalapeño', 'Deluxe', 'Premium', 'Gourmet', 'Artisan', 'Signature', 'House', 'Special', 'Chef', 'Traditional', 'Modern', 'Fusion'] },
+        { base: 'Sandwich', variations: ['Club', 'BLT', 'Reuben', 'Pastrami', 'Turkey', 'Chicken', 'Veggie', 'Tuna', 'Egg', 'Grilled Cheese', 'Roast Beef', 'Ham', 'Corned Beef', 'Salami', 'Provolone', 'Italian', 'French Dip', 'Philly', 'Monte Cristo', 'Cuban'] },
+        { base: 'Steak', variations: ['Ribeye', 'Filet Mignon', 'Strip', 'T-Bone', 'Porterhouse', 'Flank', 'Skirt', 'Hanger', 'Flat Iron', 'Tomahawk', 'Delmonico', 'New York', 'Kansas City', 'Denver', 'Chuck Eye', 'Top Sirloin', 'Bottom Sirloin', 'Tri-Tip', 'Brisket', 'Short Ribs'] },
+        { base: 'Salad', variations: ['Caesar', 'Cobb', 'Garden', 'Greek', 'Wedge', 'Spinach', 'Kale', 'Mixed Greens', 'Potato', 'Macaroni', 'Coleslaw', 'Waldorf', 'Nicoise', 'Caprese', 'Antipasto', 'Insalata', 'House', 'Chef', 'Signature', 'Special'] }
+      ];
+    } else if (businessSlug === 'golden-dragon') {
+      recipeTemplates = [
+        { base: 'Dim Sum', variations: ['Har Gow', 'Char Siu Bao', 'Siu Mai', 'Xiao Long Bao', 'Turnip Cake', 'Rice Noodle Roll', 'Egg Tart', 'Phoenix Claws', 'Beef Ball', 'Shrimp Toast', 'Chicken Feet', 'Pork Bun', 'Shrimp Dumpling', 'Beef Dumpling', 'Vegetable Dumpling', 'Custard Bun', 'Red Bean Bun', 'Sesame Ball', 'Taro Cake', 'Water Chestnut Cake'] },
+        { base: 'Noodle', variations: ['Chow Mein', 'Lo Mein', 'Pad Thai', 'Pho', 'Ramen', 'Udon', 'Soba', 'Rice Noodles', 'Glass Noodles', 'Wonton Noodles', 'Dan Dan Noodles', 'Beef Noodles', 'Chicken Noodles', 'Seafood Noodles', 'Vegetable Noodles', 'Spicy Noodles', 'Sour Noodles', 'Sweet Noodles', 'Hot Noodles', 'Cold Noodles'] },
+        { base: 'Rice', variations: ['Fried Rice', 'Steamed Rice', 'Sticky Rice', 'Bibimbap', 'Curry Rice', 'Teriyaki Rice', 'Kimchi Rice', 'Coconut Rice', 'Jasmine Rice', 'Brown Rice', 'Black Rice', 'Red Rice', 'Wild Rice', 'Basmati Rice', 'Arborio Rice', 'Sushi Rice', 'Yellow Rice', 'Green Rice', 'Purple Rice', 'White Rice'] },
+        { base: 'Stir Fry', variations: ['Kung Pao', 'Sweet and Sour', 'General Tso', 'Orange', 'Lemon', 'Garlic', 'Ginger', 'Szechuan', 'Teriyaki', 'Mongolian', 'Hunan', 'Cantonese', 'Mandarin', 'Shanghai', 'Beijing', 'Guangdong', 'Fujian', 'Jiangsu', 'Zhejiang', 'Anhui'] }
+      ];
+    }
+
+    // Generate 300-600 additional recipes per business
+    const additionalRecipesPerTemplate = 30 + Math.floor(Math.random() * 30); // 30-60 recipes per template
+    
+    for (const template of recipeTemplates) {
+      for (let i = 0; i < additionalRecipesPerTemplate; i++) {
+        const variation = template.variations[Math.floor(Math.random() * template.variations.length)] || 'Classic';
+        const recipeName = `${variation} ${template.base} ${i + 1}`;
+        
+        const recipe = {
+          businessId,
+          name: recipeName,
+          description: `Authentic ${variation.toLowerCase()} ${template.base.toLowerCase()} made with traditional methods`,
+          ingredients: `Premium ingredients, fresh herbs, quality spices, traditional methods`,
+          instructions: `Prepare ${variation.toLowerCase()} ingredients using traditional techniques, combine with ${template.base.toLowerCase()} base, serve authentic`,
+          prepTime: 15 + Math.floor(Math.random() * 45),
+          cookTime: 10 + Math.floor(Math.random() * 40),
+          servings: 2 + Math.floor(Math.random() * 6),
+          difficulty: Math.random() > 0.7 ? 'hard' : Math.random() > 0.4 ? 'medium' : 'easy',
+          cuisine: businessSlug === 'taco-fiesta' ? 'Mexican' : businessSlug === 'american-diner' ? 'American' : 'Asian',
+          category: template.base.toLowerCase(),
+          nutritionInfo: JSON.stringify({
+            calories: Math.floor(Math.random() * 600) + 200,
+            protein: Math.floor(Math.random() * 35) + 10,
+            carbs: Math.floor(Math.random() * 60) + 20,
+            fat: Math.floor(Math.random() * 25) + 5
+          }),
+          imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=300&fit=crop&crop=center',
+          isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+
+        await queryInterface.bulkInsert('recipes', [recipe]);
+      }
+      console.log(`✅ Generated ${additionalRecipesPerTemplate} additional ${template.base} recipes for ${businessSlug}`);
+    }
+
+    // 🚀 MASSIVE ITEM GENERATION for each business
+    console.log(`🚀 Generating MASSIVE amounts of additional items for ${businessSlug}...`);
+    
+    // Generate 500-1000 additional items per business
+    const additionalItemsCount = 500 + Math.floor(Math.random() * 500); // 500-1000 items
+    
+    let itemCategories: string[] = [];
+    let itemNames: string[] = [];
+    
+    if (businessSlug === 'taco-fiesta') {
+      itemCategories = ['meat', 'seafood', 'vegetables', 'grains', 'spices', 'sauces', 'dairy', 'ingredients', 'condiments', 'beverages'];
+      itemNames = [
+        'Carne Asada', 'Al Pastor', 'Carnitas', 'Lengua', 'Tripa', 'Barbacoa', 'Birria', 'Chorizo', 'Pollo', 'Pescado', 'Camarones',
+        'Corn Tortillas', 'Flour Tortillas', 'Taco Shells', 'Tostadas', 'Queso Fresco', 'Cotija Cheese', 'Oaxaca Cheese', 'Crema Mexicana',
+        'Salsa Verde', 'Salsa Roja', 'Pico de Gallo', 'Guacamole', 'Sour Cream', 'Refried Beans', 'Black Beans', 'Pinto Beans',
+        'Jalapeños', 'Serranos', 'Habaneros', 'Poblanos', 'Anaheim Peppers', 'Bell Peppers', 'Onions', 'Tomatoes', 'Cilantro', 'Limes'
+      ];
+    } else if (businessSlug === 'american-diner') {
+      itemCategories = ['meat', 'dairy', 'vegetables', 'grains', 'spices', 'sauces', 'ingredients', 'condiments', 'beverages', 'desserts'];
+      itemNames = [
+        'Ground Beef', 'Bacon', 'Ham', 'Turkey', 'Chicken Breast', 'Pork Chops', 'Steak', 'Sausage', 'Hot Dogs', 'Bologna',
+        'American Cheese', 'Cheddar Cheese', 'Swiss Cheese', 'Provolone Cheese', 'Mozzarella Cheese', 'Blue Cheese', 'Feta Cheese',
+        'Lettuce', 'Tomatoes', 'Onions', 'Pickles', 'Mustard', 'Ketchup', 'Mayonnaise', 'Relish', 'Hot Sauce', 'BBQ Sauce',
+        'Potato Chips', 'French Fries', 'Onion Rings', 'Mozzarella Sticks', 'Chicken Wings', 'Buffalo Wings', 'Ranch Dressing', 'Blue Cheese Dressing'
+      ];
+    } else if (businessSlug === 'golden-dragon') {
+      itemCategories = ['meat', 'seafood', 'vegetables', 'grains', 'spices', 'sauces', 'ingredients', 'condiments', 'beverages', 'desserts'];
+      itemNames = [
+        'Char Siu Pork', 'BBQ Pork', 'Roast Duck', 'Chicken', 'Beef', 'Lamb', 'Shrimp', 'Fish', 'Crab', 'Lobster',
+        'Rice Noodles', 'Egg Noodles', 'Wonton Wrappers', 'Dumpling Wrappers', 'Spring Roll Wrappers', 'Rice Paper',
+        'Soy Sauce', 'Oyster Sauce', 'Hoisin Sauce', 'Fish Sauce', 'Sesame Oil', 'Rice Wine', 'Mirin', 'Sake',
+        'Bok Choy', 'Chinese Cabbage', 'Snow Peas', 'Bamboo Shoots', 'Water Chestnuts', 'Bean Sprouts', 'Mushrooms', 'Ginger', 'Garlic', 'Scallions'
+      ];
+    }
+
+    for (let i = 0; i < additionalItemsCount; i++) {
+      const category = itemCategories[Math.floor(Math.random() * itemCategories.length)] || 'ingredients';
+      const baseName = itemNames[Math.floor(Math.random() * itemNames.length)] || 'Premium Item';
+      const itemName = `${baseName} ${i + 1}`;
+      
+      const item = {
+        businessId,
+        name: itemName,
+        description: `Premium ${category} for authentic cuisine`,
+        price: 0, // Items don't have direct prices
+        cost: Math.round((Math.random() * 100 + 1) * 100) / 100, // $1-$101
+        stock: Math.floor(Math.random() * 200) + 10, // 10-210
+        sku: `${businessSlug.substring(0, 2).toUpperCase()}-MASS-${category.toUpperCase().substring(0, 3)}-${(i + 1000).toString().padStart(4, '0')}`,
+        barcode: `123456789${(i + 4000 + businessId * 1000).toString().padStart(6, '0')}`,
+        category,
+        unit: ['pieces', 'pounds', 'kilograms', 'grams', 'ounces', 'bottles', 'jars', 'cans', 'bags', 'packets'][Math.floor(Math.random() * 10)],
+        minStock: 5,
+        maxStock: 500,
+        imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=300&fit=crop&crop=center',
+        isActive: true,
+        isPerishable: Math.random() > 0.3,
+        expirationDate: new Date(Date.now() + Math.floor(Math.random() * 365) * 24 * 60 * 60 * 1000),
+        manufacturingDate: new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000),
+        shelfLifeDays: Math.floor(Math.random() * 365) + 1,
+        lastSoldDate: null,
+        salesVelocity: Math.random() * 2,
+        daysSinceLastSale: Math.floor(Math.random() * 30),
+        isUnderperforming: Math.random() > 0.8,
+        isExpiringSoon: Math.random() > 0.9,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      await queryInterface.bulkInsert('items', [item]);
+    }
+
+    console.log(`🚀 MASSIVE item generation completed for ${businessSlug}! Generated ${additionalItemsCount} additional items`);
+  }
+
+  console.log('🎉 MASSIVE database generation for Mexican, American, and Asian businesses complete!');
 }
 
 export async function down(queryInterface: QueryInterface): Promise<void> {
