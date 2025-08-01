@@ -1,0 +1,939 @@
+{
+  "info": {
+    "name": "POS Engine API",
+    "description": "Complete API collection for the POS Engine system",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "businessId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "businessSlug",
+      "value": "bella-vista-italian",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            }
+          }
+        },
+        {
+          "name": "API Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"maria@bellavista.com\",\n  \"password\": \"cashier123\",\n  \"businessSlug\": \"{{businessSlug}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('token', response.token);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"cashier\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Businesses",
+      "item": [
+        {
+          "name": "Get All Businesses",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/businesses",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "businesses"]
+            }
+          }
+        },
+        {
+          "name": "Get Business by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/businesses/{{businessId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "businesses", "{{businessId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Business by Slug",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/businesses/slug/{{businessSlug}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "businesses", "slug", "{{businessSlug}}"]
+            }
+          }
+        },
+        {
+          "name": "Search Businesses",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/businesses/search?q=restaurant",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "businesses", "search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "restaurant"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            }
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "1"]
+            }
+          }
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"New User\",\n  \"email\": \"newuser@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"cashier\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            }
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated User\",\n  \"email\": \"updated@example.com\",\n  \"role\": \"cashier\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Items",
+      "item": [
+        {
+          "name": "Get All Items",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/items",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "items"]
+            }
+          }
+        },
+        {
+          "name": "Get Item by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/items/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "items", "1"]
+            }
+          }
+        },
+        {
+          "name": "Search Items",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/items/search?q=pizza",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "items", "search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "pizza"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Items by Category",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/items/category/main-course",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "items", "category", "main-course"]
+            }
+          }
+        },
+        {
+          "name": "Create Item",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Margherita Pizza\",\n  \"description\": \"Classic tomato and mozzarella pizza\",\n  \"price\": 12.99,\n  \"cost\": 8.50,\n  \"stock\": 50,\n  \"category\": \"Pizza\",\n  \"isActive\": true,\n  \"preparationTime\": 15,\n  \"isVegetarian\": true,\n  \"isVegan\": false,\n  \"isGlutenFree\": false,\n  \"isSpicy\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/items",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "items"]
+            }
+          }
+        },
+        {
+          "name": "Update Item",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Pizza\",\n  \"price\": 14.99,\n  \"stock\": 45\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/items/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "items", "1"]
+            }
+          }
+        },
+        {
+          "name": "Update Item Stock",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stock\": 40\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/items/1/stock",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "items", "1", "stock"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sales",
+      "item": [
+        {
+          "name": "Get All Sales",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/sales",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sales"]
+            }
+          }
+        },
+        {
+          "name": "Get Sales Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/sales/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sales", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Get Sale by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/sales/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sales", "1"]
+            }
+          }
+        },
+        {
+          "name": "Create Sale",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerName\": \"John Doe\",\n  \"customerEmail\": \"john@example.com\",\n  \"customerPhone\": \"+1234567890\",\n  \"items\": [\n    {\n      \"itemId\": 1,\n      \"quantity\": 2,\n      \"unitPrice\": 12.99\n    }\n  ],\n  \"subtotal\": 25.98,\n  \"tax\": 2.21,\n  \"discount\": 0,\n  \"total\": 28.19,\n  \"paymentMethod\": \"cash\",\n  \"status\": \"completed\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/sales",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sales"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "Get All Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders"]
+            }
+          }
+        },
+        {
+          "name": "Get Order by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders", "1"]
+            }
+          }
+        },
+        {
+          "name": "Create Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tableId\": 1,\n  \"customerName\": \"Jane Smith\",\n  \"items\": [\n    {\n      \"itemId\": 1,\n      \"quantity\": 1,\n      \"notes\": \"Extra cheese please\"\n    }\n  ],\n  \"orderType\": \"dine-in\",\n  \"status\": \"pending\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tables",
+      "item": [
+        {
+          "name": "Get All Tables",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tables",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tables"]
+            }
+          }
+        },
+        {
+          "name": "Get Table by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tables/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tables", "1"]
+            }
+          }
+        },
+        {
+          "name": "Create Table",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tableNumber\": \"A1\",\n  \"capacity\": 4,\n  \"section\": \"Main Dining\",\n  \"status\": \"available\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tables",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tables"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reservations",
+      "item": [
+        {
+          "name": "Get All Reservations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservations",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reservations"]
+            }
+          }
+        },
+        {
+          "name": "Create Reservation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerName\": \"John Doe\",\n  \"customerEmail\": \"john@example.com\",\n  \"customerPhone\": \"+1234567890\",\n  \"partySize\": 4,\n  \"reservationDate\": \"2025-01-15\",\n  \"reservationTime\": \"19:00\",\n  \"tableId\": 1,\n  \"status\": \"confirmed\",\n  \"notes\": \"Window seat preferred\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/reservations",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reservations"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Recipes",
+      "item": [
+        {
+          "name": "Get All Recipes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/recipes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "recipes"]
+            }
+          }
+        },
+        {
+          "name": "Get Recipe by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/recipes/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "recipes", "1"]
+            }
+          }
+        },
+        {
+          "name": "Create Recipe",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Margherita Pizza\",\n  \"description\": \"Classic Italian pizza\",\n  \"ingredients\": \"Tomato sauce, mozzarella, basil\",\n  \"instructions\": \"1. Roll out dough\\n2. Add sauce\\n3. Add cheese\\n4. Bake at 450°F\",\n  \"prepTime\": 30,\n  \"cookTime\": 15,\n  \"servings\": 4,\n  \"difficulty\": \"medium\",\n  \"cuisine\": \"Italian\",\n  \"category\": \"Pizza\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/recipes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "recipes"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Promotions",
+      "item": [
+        {
+          "name": "Get All Promotions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/promotions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "promotions"]
+            }
+          }
+        },
+        {
+          "name": "Create Promotion",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Happy Hour\",\n  \"description\": \"50% off all drinks\",\n  \"discountType\": \"percentage\",\n  \"discountValue\": 50,\n  \"startDate\": \"2025-01-01\",\n  \"endDate\": \"2025-12-31\",\n  \"startTime\": \"17:00\",\n  \"endTime\": \"19:00\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/promotions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "promotions"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Staff Messages",
+      "item": [
+        {
+          "name": "Get All Messages",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/staff-messages",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "staff-messages"]
+            }
+          }
+        },
+        {
+          "name": "Create Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messageType\": \"announcement\",\n  \"title\": \"Staff Meeting\",\n  \"content\": \"Weekly staff meeting tomorrow at 3 PM\",\n  \"recipientType\": \"all\",\n  \"priority\": \"normal\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/staff-messages",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "staff-messages"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Kitchen",
+      "item": [
+        {
+          "name": "Get Kitchen Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/kitchen/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "kitchen", "orders"]
+            }
+          }
+        },
+        {
+          "name": "Update Order Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"preparing\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/kitchen/orders/1/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "kitchen", "orders", "1", "status"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Mobile Notifications",
+      "item": [
+        {
+          "name": "Get Notifications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/mobile-notifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "mobile-notifications"]
+            }
+          }
+        },
+        {
+          "name": "Send Notification",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"New Order\",\n  \"message\": \"Order #123 is ready\",\n  \"type\": \"order_update\",\n  \"recipientId\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/mobile-notifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "mobile-notifications"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Smart Recipe Suggestions",
+      "item": [
+        {
+          "name": "Get Suggestions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/smart/suggestions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "smart", "suggestions"]
+            }
+          }
+        },
+        {
+          "name": "Generate Suggestions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ingredients\": [\"tomato\", \"mozzarella\", \"basil\"],\n  \"cuisine\": \"Italian\",\n  \"difficulty\": \"medium\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/smart/suggestions/generate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "smart", "suggestions", "generate"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "AI Recipe Generation",
+      "item": [
+        {
+          "name": "Generate Recipe",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ingredients\": [\"chicken\", \"rice\", \"vegetables\"],\n  \"cuisine\": \"Asian\",\n  \"dietaryRestrictions\": [\"gluten-free\"],\n  \"cookingTime\": 30\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/ai/recipes/generate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ai", "recipes", "generate"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Menu PDF",
+      "item": [
+        {
+          "name": "Generate Menu PDF",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"businessId\": {{businessId}},\n  \"template\": \"default\",\n  \"includePrices\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/menu/pdf/generate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "menu", "pdf", "generate"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Floor Plans",
+      "item": [
+        {
+          "name": "Get Floor Plans",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/floor-plans",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "floor-plans"]
+            }
+          }
+        },
+        {
+          "name": "Create Floor Plan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Main Floor\",\n  \"width\": 800,\n  \"height\": 600,\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/floor-plans",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "floor-plans"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Split Billing",
+      "item": [
+        {
+          "name": "Split Bill",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"saleId\": 1,\n  \"splitType\": \"equal\",\n  \"numberOfSplits\": 4\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/sales/split",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sales", "split"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+} 
