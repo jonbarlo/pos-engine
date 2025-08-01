@@ -26,6 +26,21 @@ Authorization: Bearer <your_jwt_token>
 - **kitchen_manager**: Extra manager permissions (assign orders, override statuses)
 - **none**: No extra kitchen permissions (default)
 
+## Multi-Currency Support
+The system supports multiple currencies with real-time conversion capabilities:
+
+### Supported Currencies
+- **CRC** (Costa Rican Colón) - Default currency
+- **USD** (US Dollar) - Secondary currency
+- Extensible for additional currencies
+
+### Currency Features
+- Business-level default currency
+- Real-time currency conversion
+- Multi-currency transaction tracking
+- Customer currency preferences
+- Dynamic pricing display
+
 ## Authentication Endpoints
 
 ### Login
@@ -104,6 +119,225 @@ Authorization: Bearer <your_jwt_token>
   "email": "marco@italiandelight.com",
   "businessId": 4,
   "role": "owner"
+}
+```
+
+---
+
+## Currency Endpoints
+
+### Get All Currencies
+**GET** `/currencies`
+
+**Headers:**
+- `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "currencies": [
+    {
+      "id": 1,
+      "code": "USD",
+      "name": "US Dollar",
+      "symbol": "$",
+      "decimalPlaces": 2,
+      "isActive": true,
+      "isDefault": false,
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "code": "CRC",
+      "name": "Costa Rican Colón",
+      "symbol": "₡",
+      "decimalPlaces": 2,
+      "isActive": true,
+      "isDefault": true,
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z"
+    }
+  ]
+}
+```
+
+### Get Currency by ID
+**GET** `/currencies/{id}`
+
+**Path Parameters:**
+- `id` (integer, required) - Currency ID
+
+**Response:**
+```json
+{
+  "id": 2,
+  "code": "CRC",
+  "name": "Costa Rican Colón",
+  "symbol": "₡",
+  "decimalPlaces": 2,
+  "isActive": true,
+  "isDefault": true,
+  "createdAt": "2025-01-01T00:00:00.000Z",
+  "updatedAt": "2025-01-01T00:00:00.000Z"
+}
+```
+
+### Get Currency by Code
+**GET** `/currencies/code/{code}`
+
+**Path Parameters:**
+- `code` (string, required) - Currency code (e.g., "USD", "CRC")
+
+**Response:**
+```json
+{
+  "id": 1,
+  "code": "USD",
+  "name": "US Dollar",
+  "symbol": "$",
+  "decimalPlaces": 2,
+  "isActive": true,
+  "isDefault": false,
+  "createdAt": "2025-01-01T00:00:00.000Z",
+  "updatedAt": "2025-01-01T00:00:00.000Z"
+}
+```
+
+### Get Exchange Rates for Currency
+**GET** `/currencies/{id}/exchange-rates`
+
+**Path Parameters:**
+- `id` (integer, required) - Currency ID
+
+**Response:**
+```json
+{
+  "currency": {
+    "id": 2,
+    "code": "CRC",
+    "name": "Costa Rican Colón"
+  },
+  "exchangeRates": [
+    {
+      "id": 1,
+      "fromCurrencyId": 2,
+      "toCurrencyId": 1,
+      "rate": 0.001923,
+      "effectiveDate": "2025-01-01T00:00:00.000Z",
+      "isActive": true,
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z"
+    }
+  ]
+}
+```
+
+### Convert Currency
+**POST** `/currency/convert`
+
+**Headers:**
+- `Authorization: Bearer <token>`
+
+**Request Body:**
+```json
+{
+  "amount": 25.99,
+  "fromCurrency": "CRC",
+  "toCurrency": "USD"
+}
+```
+
+**Response:**
+```json
+{
+  "originalAmount": 25.99,
+  "originalCurrency": "CRC",
+  "convertedAmount": 13.50,
+  "convertedCurrency": "USD",
+  "exchangeRate": 0.001923,
+  "effectiveDate": "2025-01-01T00:00:00.000Z"
+}
+```
+
+### Get Menu with Currency Conversion
+**GET** `/businesses/{businessId}/menu`
+
+**Path Parameters:**
+- `businessId` (integer, required) - Business ID
+
+**Query Parameters:**
+- `currency` (string, optional) - Currency code for price conversion (default: business default currency)
+
+**Response:**
+```json
+{
+  "businessId": 1,
+  "currency": "USD",
+  "menuItems": [
+    {
+      "id": 1,
+      "name": "Margherita Pizza",
+      "description": "Fresh mozzarella, basil, and tomato sauce",
+      "category": "pizzas",
+      "priceInBusinessCurrency": 18.99,
+      "priceInClientCurrency": 9.85,
+      "exchangeRate": 0.001923,
+      "isActive": true
+    }
+  ]
+}
+```
+
+### Update Customer Currency Preference
+**PUT** `/customers/{customerId}/currency-preference`
+
+**Path Parameters:**
+- `customerId` (integer, required) - Customer ID
+
+**Headers:**
+- `Authorization: Bearer <token>`
+
+**Request Body:**
+```json
+{
+  "preferredCurrencyId": 1
+}
+```
+
+**Response:**
+```json
+{
+  "customerId": 1,
+  "preferredCurrency": {
+    "id": 1,
+    "code": "USD",
+    "name": "US Dollar",
+    "symbol": "$"
+  },
+  "updatedAt": "2025-01-01T00:00:00.000Z"
+}
+```
+
+### Get Customer Currency Preference
+**GET** `/customers/{customerId}/currency-preference`
+
+**Path Parameters:**
+- `customerId` (integer, required) - Customer ID
+
+**Headers:**
+- `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "customerId": 1,
+  "preferredCurrency": {
+    "id": 1,
+    "code": "USD",
+    "name": "US Dollar",
+    "symbol": "$"
+  }
 }
 ```
 
@@ -241,7 +475,16 @@ Authorization: Bearer <your_jwt_token>
     "slug": "bella-vista-italian",
     "type": "restaurant",
     "taxRate": 8.5,
-    "currency": "USD",
+    "currencyId": 2,
+    "currency": {
+      "id": 2,
+      "code": "CRC",
+      "name": "Costa Rican Colón",
+      "symbol": "₡",
+      "decimalPlaces": 2,
+      "isActive": true,
+      "isDefault": true
+    },
     "timezone": "America/New_York",
     "isActive": true,
     "createdAt": "2025-01-01T00:00:00.000Z"
@@ -268,7 +511,7 @@ Authorization: Bearer <your_jwt_token>
 - `name` (string) - Business name
 - `type` (string) - Business type
 - `taxRate` (number) - Tax rate percentage
-- `currency` (string) - Currency code
+- `currencyId` (integer) - Currency ID (default: 2 for CRC)
 - `timezone` (string) - Timezone
 
 **Request Body:**
@@ -277,7 +520,7 @@ Authorization: Bearer <your_jwt_token>
   "name": "New Restaurant",
   "type": "restaurant",
   "taxRate": 8.5,
-  "currency": "USD",
+  "currencyId": 2,
   "timezone": "America/New_York"
 }
 ```
@@ -318,6 +561,13 @@ Authorization: Bearer <your_jwt_token>
     "barcode": "1234567890123",
     "stock": 50,
     "businessId": 1,
+    "currencyId": 2,
+    "currency": {
+      "id": 2,
+      "code": "CRC",
+      "name": "Costa Rican Colón",
+      "symbol": "₡"
+    },
     "createdAt": "2025-01-01T00:00:00.000Z",
     "updatedAt": "2025-01-01T00:00:00.000Z"
   }
@@ -454,20 +704,23 @@ Authorization: Bearer <your_jwt_token>
 
 **Required Fields:**
 - `userId` (integer) - User ID who created the sale
-- `totalAmount` (number) - Total sale amount
+- `totalAmount` (number) - Total sale amount in business currency
 - `businessId` (integer) - Business ID (required by database schema)
 
 **Optional Fields:**
 - `customerName` (string) - Customer name
 - `customerEmail` (string) - Customer email
 - `customerPhone` (string) - Customer phone
-- `subtotal` (number) - Subtotal before tax
-- `tax` (number) - Tax amount
-- `discount` (number) - Discount amount
+- `subtotal` (number) - Subtotal before tax in business currency
+- `tax` (number) - Tax amount in business currency
+- `discount` (number) - Discount amount in business currency
 - `paymentMethod` (string: "cash", "card", "mobile", "other")
 - `status` (string: "pending", "completed", "cancelled", "refunded")
 - `notes` (string)
 - `existingOrderId` (integer) - **NEW**: Optional order ID to link this sale to an existing order. If provided, the order status will be updated to 'completed' and table will be freed up.
+- `clientCurrencyId` (integer) - **NEW**: Client's preferred currency ID for multi-currency support
+- `totalInClientCurrency` (number) - **NEW**: Total amount in client's currency
+- `exchangeRate` (number) - **NEW**: Exchange rate used for conversion
 
 **Request Body:**
 ```json
@@ -483,7 +736,35 @@ Authorization: Bearer <your_jwt_token>
   "paymentMethod": "card",
   "status": "completed",
   "notes": "Customer requested extra napkins",
-  "existingOrderId": 13
+  "existingOrderId": 13,
+  "clientCurrencyId": 1,
+  "totalInClientCurrency": 620.00,
+  "exchangeRate": 0.001923
+}
+```
+
+**Response:**
+```json
+{
+  "id": 1,
+  "userId": 1,
+  "businessId": 1,
+  "customerName": "John Doe",
+  "customerEmail": "john@example.com",
+  "subtotal": 1099.99,
+  "tax": 93.50,
+  "discount": 0,
+  "totalAmount": 1193.49,
+  "totalInBusinessCurrency": 1193.49,
+  "totalInClientCurrency": 620.00,
+  "exchangeRate": 0.001923,
+  "businessCurrency": "CRC",
+  "clientCurrency": "USD",
+  "paymentMethod": "card",
+  "status": "completed",
+  "notes": "Customer requested extra napkins",
+  "createdAt": "2025-01-01T00:00:00.000Z",
+  "updatedAt": "2025-01-01T00:00:00.000Z"
 }
 ```
 
@@ -498,11 +779,14 @@ Authorization: Bearer <your_jwt_token>
 **Order Item Required Fields:**
 - `itemId` (integer) - Menu item ID (will be converted to inventory item ID)
 - `quantity` (integer) - Quantity ordered
-- `unitPrice` (number) - Unit price (REQUIRED - this was missing!)
+- `unitPrice` (number) - Unit price in business currency (REQUIRED - this was missing!)
 
 **Optional Fields:**
 - `customerName`, `customerEmail`, `subtotal`, `tax`, `discount`, `totalAmount`, `paymentMethod`, `status`
 - `existingOrderId` (integer) - **NEW**: Optional order ID to link this sale to an existing order. If provided, the order status will be updated to 'completed' and table will be freed up.
+- `clientCurrencyId` (integer) - **NEW**: Client's preferred currency ID for multi-currency support
+- `totalInClientCurrency` (number) - **NEW**: Total amount in client's currency
+- `exchangeRate` (number) - **NEW**: Exchange rate used for conversion
 
 **Request Body:**
 ```json
@@ -512,6 +796,9 @@ Authorization: Bearer <your_jwt_token>
   "customerName": "John Doe",
   "totalAmount": 1193.49,
   "existingOrderId": 13,
+  "clientCurrencyId": 1,
+  "totalInClientCurrency": 620.00,
+  "exchangeRate": 0.001923,
   "orderItems": [
     {
       "itemId": 1,
@@ -2560,82 +2847,6 @@ Authorization: Bearer <your_jwt_token>
 
 **Path Parameters:**
 - `id` (integer, required) - Floor plan ID
-
----
-
-## Table Position Management Endpoints
-
-### Get Table Positions for Floor Plan
-**GET** `/floor-plans/{floorPlanId}/table-positions`
-
-**Path Parameters:**
-- `floorPlanId` (integer, required) - Floor plan ID
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": 1,
-      "tableId": 1,
-      "tableNumber": "A1",
-      "tableCapacity": 4,
-      "tableStatus": "available",
-      "tableSection": "Main Floor",
-      "x": 150,
-      "y": 200,
-      "rotation": 0,
-      "width": 80,
-      "height": 60,
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z"
-    }
-  ]
-}
-```
-
-### Create Table Position
-**POST** `/floor-plans/{floorPlanId}/table-positions`
-
-**Path Parameters:**
-- `floorPlanId` (integer, required) - Floor plan ID
-
-**Required Fields:**
-- `tableId` (integer) - Table ID
-- `x` (integer) - X coordinate
-- `y` (integer) - Y coordinate
-
-**Optional Fields:**
-- `rotation` (integer, default: 0) - Rotation in degrees
-- `width` (integer, default: 80) - Width in pixels
-- `height` (integer, default: 60) - Height in pixels
-
-**Request Body:**
-```json
-{
-  "tableId": 1,
-  "x": 150,
-  "y": 200,
-  "rotation": 0,
-  "width": 80,
-  "height": 60
-}
-```
-
-### Update Table Position
-**PUT** `/floor-plans/{floorPlanId}/table-positions/{positionId}`
-
-**Path Parameters:**
-- `floorPlanId` (integer, required) - Floor plan ID
-- `positionId` (integer, required) - Table position ID
-
-### Delete Table Position
-**DELETE** `/floor-plans/{floorPlanId}/table-positions/{positionId}`
-
-**Path Parameters:**
-- `floorPlanId` (integer, required) - Floor plan ID
-- `positionId` (integer, required) - Table position ID
 
 ---
 

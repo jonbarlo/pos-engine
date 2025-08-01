@@ -13,6 +13,7 @@ export interface SaleAttributes {
   userId: number;
   saleNumber: string;
   totalAmount: number;
+  currencyId: number; // Required currency relationship
   paymentMethod?: string;
   status: SaleStatus;
   customerName?: string;
@@ -61,6 +62,7 @@ export class SaleModel extends Model<SaleAttributes, SaleCreationAttributes> imp
   public userId!: number;
   public saleNumber!: string;
   public totalAmount!: number;
+  public currencyId!: number; // Required currency relationship
   public paymentMethod?: string;
   public status!: SaleStatus;
   public customerName?: string;
@@ -131,6 +133,16 @@ export const initializeSaleModel = (sequelize: Sequelize): void => {
         validate: {
           min: 0
         }
+      },
+      currencyId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'currencies',
+          key: 'id'
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
       },
       paymentMethod: {
         type: DataTypes.STRING(50),

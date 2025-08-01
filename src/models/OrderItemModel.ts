@@ -17,6 +17,7 @@ export interface OrderItemAttributes {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
+  currencyId: number; // Required currency relationship
   status: OrderItemStatus;
   notes?: string;
   specialInstructions?: string;
@@ -51,6 +52,7 @@ export class OrderItemModel extends Model<OrderItemAttributes, OrderItemCreation
   public quantity!: number;
   public unitPrice!: number;
   public totalPrice!: number;
+  public currencyId!: number; // Required currency relationship
   public status!: OrderItemStatus;
   public notes?: string;
   public specialInstructions?: string;
@@ -121,6 +123,14 @@ export const initializeOrderItemModel = (sequelize: Sequelize): void => {
         defaultValue: 0.00,
         validate: {
           min: 0,
+        },
+      },
+      currencyId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'currencies',
+          key: 'id',
         },
       },
       status: {

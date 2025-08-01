@@ -689,6 +689,151 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
  *         message:
  *           type: string
  *           description: Success message with seating details
+ *     
+ *     Currency:
+ *       type: object
+ *       required:
+ *         - code
+ *         - name
+ *         - symbol
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: Unique identifier for the currency
+ *         code:
+ *           type: string
+ *           pattern: '^[A-Z]{3}$'
+ *           description: Currency code (ISO 4217 format)
+ *           example: "CRC"
+ *         name:
+ *           type: string
+ *           description: Currency name
+ *           example: "Costa Rican Colón"
+ *         symbol:
+ *           type: string
+ *           description: Currency symbol
+ *           example: "₡"
+ *         decimalPlaces:
+ *           type: integer
+ *           default: 2
+ *           description: Number of decimal places
+ *           example: 2
+ *         isActive:
+ *           type: boolean
+ *           default: true
+ *           description: Whether the currency is active
+ *           example: true
+ *         isDefault:
+ *           type: boolean
+ *           default: false
+ *           description: Whether this is the default currency
+ *           example: true
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           description: Creation timestamp
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *           description: Last update timestamp
+ *     
+ *     ExchangeRate:
+ *       type: object
+ *       required:
+ *         - fromCurrencyId
+ *         - toCurrencyId
+ *         - rate
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: Unique identifier for the exchange rate
+ *         fromCurrencyId:
+ *           type: integer
+ *           description: Source currency ID
+ *           example: 2
+ *         toCurrencyId:
+ *           type: integer
+ *           description: Target currency ID
+ *           example: 1
+ *         rate:
+ *           type: number
+ *           minimum: 0
+ *           description: Exchange rate
+ *           example: 0.001923
+ *         effectiveDate:
+ *           type: string
+ *           format: date-time
+ *           description: Effective date for the exchange rate
+ *           example: "2025-01-01T00:00:00.000Z"
+ *         isActive:
+ *           type: boolean
+ *           default: true
+ *           description: Whether the exchange rate is active
+ *           example: true
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           description: Creation timestamp
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *           description: Last update timestamp
+ *     
+ *     CurrencyConversion:
+ *       type: object
+ *       required:
+ *         - fromCurrencyId
+ *         - toCurrencyId
+ *         - amount
+ *         - convertedAmount
+ *         - rate
+ *       properties:
+ *         fromCurrencyId:
+ *           type: integer
+ *           description: Source currency ID
+ *           example: 2
+ *         toCurrencyId:
+ *           type: integer
+ *           description: Target currency ID
+ *           example: 1
+ *         amount:
+ *           type: number
+ *           minimum: 0
+ *           description: Original amount
+ *           example: 25.99
+ *         convertedAmount:
+ *           type: number
+ *           minimum: 0
+ *           description: Converted amount
+ *           example: 13.50
+ *         rate:
+ *           type: number
+ *           minimum: 0
+ *           description: Exchange rate used
+ *           example: 0.001923
+ *         effectiveDate:
+ *           type: string
+ *           format: date-time
+ *           description: Effective date for the exchange rate
+ *           example: "2025-01-01T00:00:00.000Z"
+ *     
+ *     Error:
+ *       type: object
+ *       required:
+ *         - success
+ *         - message
+ *       properties:
+ *         success:
+ *           type: boolean
+ *           example: false
+ *         message:
+ *           type: string
+ *           description: Error message
+ *           example: "Invalid currency ID"
+ *         error:
+ *           type: string
+ *           description: Detailed error information
+ *           example: "Currency not found"
  */
 
 /**
@@ -973,6 +1118,7 @@ async function startServer() {
     const aiRecipeGenerationRoutes = (await import('./routes/aiRecipeGeneration')).default;
     const menuPdfRoutes = (await import('./routes/menuPdf')).default;
     const customMenuTemplateRoutes = (await import('./routes/customMenuTemplates')).default;
+    const currencyRoutes = (await import('./routes/currencies')).default;
     // API routes
     app.use('/api/auth', authRoutes);
     app.use('/api/businesses', businessRoutes);
@@ -998,6 +1144,7 @@ async function startServer() {
     app.use('/api/smart', smartRecipeSuggestionRoutes);
     app.use('/api/smart', recipeCookingRoutes);
     app.use('/api/ai', aiRecipeGenerationRoutes);
+    app.use('/api/currencies', currencyRoutes);
 
     // Mobile app compatibility routes
     // Alias for /api/messages to redirect to staff-messages

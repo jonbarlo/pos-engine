@@ -19,6 +19,8 @@ import { initializePromotionModel } from './PromotionModel';
 import { initializePromotionItemModel } from './PromotionItemModel';
 import { initializeMobileNotificationModel } from './MobileNotificationModel';
 import { initializeCustomMenuTemplateModel } from './CustomMenuTemplateModel';
+import { initializeCurrencyModel } from './CurrencyModel';
+import { initializeExchangeRateModel } from './ExchangeRateModel';
 
 import { FloorPlanModel } from './FloorPlanModel';
 import { TablePositionModel } from './TablePositionModel';
@@ -46,6 +48,8 @@ import { PromotionItemModel } from './PromotionItemModel';
 import { MobileNotificationModel } from './MobileNotificationModel';
 import { StaffMessageModel } from './StaffMessageModel';
 import { CustomMenuTemplateModel } from './CustomMenuTemplateModel';
+import { CurrencyModel } from './CurrencyModel';
+import { ExchangeRateModel } from './ExchangeRateModel';
 
 export const initializeAllModels = (): void => {
   const sequelize = getSequelize();
@@ -70,6 +74,8 @@ export const initializeAllModels = (): void => {
   initializePromotionItemModel(sequelize);
   initializeMobileNotificationModel(sequelize);
   initializeCustomMenuTemplateModel(sequelize);
+  initializeCurrencyModel(sequelize);
+  initializeExchangeRateModel(sequelize);
   
   // Floor plan models are already initialized via default export
   // StaffMessageModel is already initialized via default export
@@ -459,6 +465,78 @@ export const setupAssociations = (): void => {
     foreignKey: 'businessId',
     as: 'business'
   });
+
+  // Currency associations
+  CurrencyModel.hasMany(BusinessModel, {
+    foreignKey: 'currencyId',
+    as: 'businesses'
+  });
+  CurrencyModel.hasMany(ItemModel, {
+    foreignKey: 'currencyId',
+    as: 'items'
+  });
+  CurrencyModel.hasMany(SaleModel, {
+    foreignKey: 'currencyId',
+    as: 'sales'
+  });
+  CurrencyModel.hasMany(OrderModel, {
+    foreignKey: 'currencyId',
+    as: 'orders'
+  });
+  CurrencyModel.hasMany(SaleItemModel, {
+    foreignKey: 'currencyId',
+    as: 'saleItems'
+  });
+  CurrencyModel.hasMany(OrderItemModel, {
+    foreignKey: 'currencyId',
+    as: 'orderItems'
+  });
+
+  // Exchange rate associations
+  ExchangeRateModel.belongsTo(CurrencyModel, {
+    foreignKey: 'fromCurrencyId',
+    as: 'fromCurrency'
+  });
+  ExchangeRateModel.belongsTo(CurrencyModel, {
+    foreignKey: 'toCurrencyId',
+    as: 'toCurrency'
+  });
+
+  // Business currency association
+  BusinessModel.belongsTo(CurrencyModel, {
+    foreignKey: 'currencyId',
+    as: 'currency'
+  });
+
+  // Item currency association
+  ItemModel.belongsTo(CurrencyModel, {
+    foreignKey: 'currencyId',
+    as: 'currency'
+  });
+
+  // Sale currency association
+  SaleModel.belongsTo(CurrencyModel, {
+    foreignKey: 'currencyId',
+    as: 'currency'
+  });
+
+  // Order currency association
+  OrderModel.belongsTo(CurrencyModel, {
+    foreignKey: 'currencyId',
+    as: 'currency'
+  });
+
+  // Sale item currency association
+  SaleItemModel.belongsTo(CurrencyModel, {
+    foreignKey: 'currencyId',
+    as: 'currency'
+  });
+
+  // Order item currency association
+  OrderItemModel.belongsTo(CurrencyModel, {
+    foreignKey: 'currencyId',
+    as: 'currency'
+  });
 };
 
 export { getSequelize };
@@ -487,7 +565,9 @@ export {
   StaffMessageModel,
   FloorPlanModel,
   TablePositionModel,
-  CustomMenuTemplateModel
+  CustomMenuTemplateModel,
+  CurrencyModel,
+  ExchangeRateModel
 };
 
 // Export enums

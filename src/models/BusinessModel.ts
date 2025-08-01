@@ -13,7 +13,7 @@ export interface BusinessAttributes {
   email?: string;
   website?: string;
   taxRate: number;
-  currency: string;
+  currencyId: number; // Required currency relationship
   timezone: string;
   isActive: boolean;
   type: 'generic' | 'restaurant';
@@ -38,7 +38,7 @@ export class BusinessModel extends Model<BusinessAttributes, BusinessCreationAtt
   public email?: string;
   public website?: string;
   public taxRate!: number;
-  public currency!: string;
+  public currencyId!: number; // Required currency relationship
   public timezone!: string;
   public isActive!: boolean;
   public type!: 'generic' | 'restaurant';
@@ -131,13 +131,15 @@ export const initializeBusinessModel = (sequelize: Sequelize): void => {
           max: 100
         }
       },
-      currency: {
-        type: DataTypes.STRING(3),
+      currencyId: {
+        type: DataTypes.INTEGER,
         allowNull: false,
-        defaultValue: 'USD',
-        validate: {
-          len: [3, 3]
-        }
+        references: {
+          model: 'currencies',
+          key: 'id'
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'RESTRICT'
       },
       timezone: {
         type: DataTypes.STRING(50),
@@ -179,6 +181,9 @@ export const initializeBusinessModel = (sequelize: Sequelize): void => {
         },
         {
           fields: ['isActive']
+        },
+        {
+          fields: ['currencyId']
         }
       ]
     }

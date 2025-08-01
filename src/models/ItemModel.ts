@@ -16,6 +16,7 @@ export interface ItemAttributes {
   unit: string;
   minStock: number;
   maxStock: number;
+  currencyId: number; // Required currency relationship
   // Preparation and dietary fields
   preparationTime?: number;
   isVegetarian: boolean;
@@ -58,6 +59,7 @@ export class ItemModel extends Model<ItemAttributes, ItemCreationAttributes> imp
   public unit!: string;
   public minStock!: number;
   public maxStock!: number;
+  public currencyId!: number; // Required currency relationship
   // Preparation and dietary fields
   public preparationTime?: number;
   public isVegetarian!: boolean;
@@ -186,6 +188,16 @@ export const initializeItemModel = (sequelize: Sequelize): void => {
         validate: {
           min: 0
         }
+      },
+      currencyId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'currencies',
+          key: 'id'
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
       },
       // Preparation and dietary fields
       preparationTime: {

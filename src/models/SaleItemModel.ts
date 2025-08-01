@@ -10,6 +10,7 @@ export interface SaleItemAttributes {
   totalPrice: number;
   discountAmount: number;
   finalPrice: number;
+  currencyId: number; // Required currency relationship
   notes?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -29,6 +30,7 @@ export class SaleItemModel extends Model<SaleItemAttributes, SaleItemCreationAtt
   public totalPrice!: number;
   public discountAmount!: number;
   public finalPrice!: number;
+  public currencyId!: number;
   public notes?: string;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -117,6 +119,16 @@ export const initializeSaleItemModel = (sequelize: Sequelize): void => {
         validate: {
           min: 0
         }
+      },
+      currencyId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'currencies',
+          key: 'id'
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
       },
       notes: {
         type: DataTypes.TEXT,

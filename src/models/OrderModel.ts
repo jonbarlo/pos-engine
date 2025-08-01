@@ -29,6 +29,7 @@ export interface OrderAttributes {
   taxAmount: number;
   discountAmount: number;
   totalAmount: number;
+  currencyId: number; // Required currency relationship
   notes?: string;
   specialInstructions?: string;
   estimatedReadyTime?: Date;
@@ -69,6 +70,7 @@ export class OrderModel extends Model<OrderAttributes, OrderCreationAttributes> 
   public taxAmount!: number;
   public discountAmount!: number;
   public totalAmount!: number;
+  public currencyId!: number; // Required currency relationship
   public notes?: string;
   public specialInstructions?: string;
   public estimatedReadyTime?: Date;
@@ -179,6 +181,14 @@ export const initializeOrderModel = (sequelize: Sequelize): void => {
           min: 0,
         },
       },
+      currencyId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'currencies',
+          key: 'id',
+        },
+      },
       notes: {
         type: DataTypes.TEXT,
         allowNull: true,
@@ -229,6 +239,9 @@ export const initializeOrderModel = (sequelize: Sequelize): void => {
         },
         {
           fields: ['businessId', 'orderType'],
+        },
+        {
+          fields: ['businessId', 'currencyId'],
         },
         {
           fields: ['createdAt'],
