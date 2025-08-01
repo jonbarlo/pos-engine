@@ -83,7 +83,7 @@ export class BusinessController {
         }
 
         try {
-            const { 
+                        const { 
                 name, 
                 slug, 
                 description, 
@@ -95,8 +95,8 @@ export class BusinessController {
                 email, 
                 website, 
                 taxRate, 
-                currency, 
-                timezone,
+                currencyId, 
+                timezone, 
                 type 
             } = req.body;
 
@@ -147,7 +147,7 @@ export class BusinessController {
                 email, 
                 website, 
                 taxRate: taxRate || 0, 
-                currency: currency || 'USD', 
+                currencyId: currencyId || 2, // Default to CRC (ID: 2) 
                 timezone: timezone || 'UTC',
                 type: type || 'generic'
             });
@@ -187,7 +187,7 @@ export class BusinessController {
                 email, 
                 website, 
                 taxRate, 
-                currency, 
+                currencyId, 
                 timezone, 
                 isActive 
             } = req.body;
@@ -205,7 +205,7 @@ export class BusinessController {
             if (email !== undefined) updateData.email = email;
             if (website !== undefined) updateData.website = website;
             if (taxRate !== undefined) updateData.taxRate = taxRate;
-            if (currency !== undefined) updateData.currency = currency;
+            if (currencyId !== undefined) updateData.currencyId = currencyId;
             if (timezone !== undefined) updateData.timezone = timezone;
             if (isActive !== undefined) updateData.isActive = isActive;
 
@@ -351,18 +351,24 @@ export class BusinessController {
     // Get businesses by currency
     public static getBusinessesByCurrency: RequestHandler = async (req: Request, res: Response) => {
         try {
-            const { currency } = req.params;
+            const { currencyId } = req.params;
             
-            if (!currency) {
-                res.status(400).json({ error: 'Currency is required' });
+            if (!currencyId) {
+                res.status(400).json({ error: 'Currency ID is required' });
                 return;
             }
 
-            logger(`API endpoint /businesses/currency/${currency} was called...`);
-            const businesses = await BusinessService.getBusinessesByCurrency(currency);
+            const currencyIdNum = parseInt(currencyId);
+            if (isNaN(currencyIdNum)) {
+                res.status(400).json({ error: 'Invalid currency ID' });
+                return;
+            }
+
+            logger(`API endpoint /businesses/currency/${currencyId} was called...`);
+            const businesses = await BusinessService.getBusinessesByCurrency(currencyIdNum);
             res.json(businesses);
         } catch (error) {
-            logger(`Error getting businesses by currency: ${error}`);
+            logger(`Error getting businesses by currency ID: ${error}`);
             res.status(500).json({ error: 'Internal server error' });
         }
     };

@@ -208,7 +208,7 @@ export class AuthService {
             email: business.email,
             website: business.website,
             taxRate: business.taxRate,
-            currency: business.currency,
+            currencyId: business.currencyId,
             timezone: business.timezone,
             isActive: business.isActive,
             type: business.type,

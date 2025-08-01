@@ -142,6 +142,7 @@ export class ItemController {
                 minStock: 0, // Add default minStock
                 maxStock: 1000, // Add default maxStock
                 businessId: req.user.businessId,
+                currencyId: 2, // Default to CRC (ID: 2)
                 // Add dietary fields with defaults
                 isVegetarian: false,
                 isVegan: false,

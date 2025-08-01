@@ -87,7 +87,8 @@ export class OrderService {
         totalAmount,
         paymentMethod: completionData.paymentMethod,
         status: SaleStatus.COMPLETED,
-        idempotencyKey: uuidv4()
+        idempotencyKey: uuidv4(),
+        currencyId: order.currencyId
       };
 
       // Only add optional fields if they exist
@@ -108,7 +109,8 @@ export class OrderService {
           unitPrice: orderItem.unitPrice,
           totalPrice: orderItem.totalPrice,
           discountAmount: 0,
-          finalPrice: orderItem.totalPrice
+          finalPrice: orderItem.totalPrice,
+          currencyId: order.currencyId
         };
 
         return SaleItemModel.create(saleItemData, { transaction });
@@ -232,7 +234,8 @@ export class OrderService {
             status: SaleStatus.COMPLETED,
             customerName: 'Table Customer',
             notes: `Auto-completed from table ${tableId}`,
-            idempotencyKey: uuidv4()
+            idempotencyKey: uuidv4(),
+            currencyId: order.currencyId
           };
 
           const sale = await SaleModel.create(saleData, { transaction });
@@ -247,7 +250,8 @@ export class OrderService {
               unitPrice: orderItem.unitPrice,
               totalPrice: orderItem.totalPrice,
               discountAmount: 0,
-              finalPrice: orderItem.totalPrice
+              finalPrice: orderItem.totalPrice,
+              currencyId: order.currencyId
             };
 
             return SaleItemModel.create(saleItemData, { transaction });

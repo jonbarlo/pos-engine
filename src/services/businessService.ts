@@ -158,7 +158,7 @@ export class BusinessService {
         totalSales,
         completedSales,
         totalRevenue: parseFloat(totalRevenue.toFixed(2)),
-        currency: business.currency,
+        currencyId: business.currencyId,
         taxRate: business.taxRate
       };
     } catch (error) {
@@ -195,16 +195,16 @@ export class BusinessService {
   }
 
   // Get businesses by currency
-  static async getBusinessesByCurrency(currency: string): Promise<BusinessAttributes[]> {
+  static async getBusinessesByCurrency(currencyId: number): Promise<BusinessAttributes[]> {
     try {
-      logger(`Getting businesses by currency: ${currency}`);
+      logger(`Getting businesses by currency ID: ${currencyId}`);
       const businessRepository = getBusinessRepository();
       return await businessRepository.findAll({
-        where: { currency, isActive: true },
+        where: { currencyId, isActive: true },
         order: [['name', 'ASC']]
       });
     } catch (error) {
-      logger(`Error getting businesses by currency: ${error}`);
+      logger(`Error getting businesses by currency ID: ${error}`);
       throw error;
     }
   }
@@ -234,7 +234,7 @@ export class BusinessService {
         attributes: [
           'id', 'name', 'slug', 'description', 'logo', 'primaryColor', 
           'secondaryColor', 'address', 'phone', 'email', 'website', 
-          'taxRate', 'currency', 'timezone', 'type', 'isActive'
+          'taxRate', 'currencyId', 'timezone', 'type', 'isActive'
         ]
       });
 

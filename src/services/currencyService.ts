@@ -1,5 +1,6 @@
-import { CurrencyModel, ExchangeRateModel } from '../models';
+import { CurrencyModel, ExchangeRateModel, BusinessModel, ItemModel, SaleModel, OrderModel, SaleItemModel, OrderItemModel } from '../models';
 import { logger } from '../utils/logger';
+import { Op } from 'sequelize';
 
 export interface CurrencyAttributes {
   id: number;
@@ -207,12 +208,12 @@ export class CurrencyService {
   static async getCurrencyUsageCount(currencyId: number): Promise<number> {
     try {
       const [businesses, items, sales, orders, saleItems, orderItems] = await Promise.all([
-        CurrencyModel.sequelize!.models.businesses.count({ where: { currencyId } }),
-        CurrencyModel.sequelize!.models.items.count({ where: { currencyId } }),
-        CurrencyModel.sequelize!.models.sales.count({ where: { currencyId } }),
-        CurrencyModel.sequelize!.models.orders.count({ where: { currencyId } }),
-        CurrencyModel.sequelize!.models.sale_items.count({ where: { currencyId } }),
-        CurrencyModel.sequelize!.models.order_items.count({ where: { currencyId } })
+        BusinessModel.count({ where: { currencyId } }),
+        ItemModel.count({ where: { currencyId } }),
+        SaleModel.count({ where: { currencyId } }),
+        OrderModel.count({ where: { currencyId } }),
+        SaleItemModel.count({ where: { currencyId } }),
+        OrderItemModel.count({ where: { currencyId } })
       ]);
 
       return businesses + items + sales + orders + saleItems + orderItems;
@@ -282,6 +283,31 @@ export class CurrencyService {
   }
 
   /**
+   * Get all exchange rates for a currency
+   */
+  static async getCurrencyExchangeRates(currencyId: number): Promise<ExchangeRateAttributes[]> {
+    try {
+      logger(`Getting all exchange rates for currency ID: ${currencyId}`);
+
+      const exchangeRates = await ExchangeRateModel.findAll({
+        where: {
+          [Op.or]: [
+            { fromCurrencyId: currencyId },
+            { toCurrencyId: currencyId }
+          ],
+          isActive: true
+        },
+        order: [['effectiveDate', 'DESC']]
+      });
+
+      return exchangeRates.map(rate => rate.toJSON());
+    } catch (error) {
+      logger(`Error getting exchange rates for currency: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
    * Get current exchange rate
    */
   static async getExchangeRate(fromCurrencyId: number, toCurrencyId: number): Promise<ExchangeRateAttributes | null> {
@@ -339,7 +365,10 @@ export class CurrencyService {
           effectiveDate
         },
         defaults: {
+          fromCurrencyId,
+          toCurrencyId,
           rate,
+          effectiveDate,
           isActive: true
         }
       });

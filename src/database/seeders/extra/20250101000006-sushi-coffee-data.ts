@@ -1,4 +1,4 @@
-import { QueryInterface, QueryTypes } from 'sequelize';
+import { QueryInterface, QueryTypes, Op } from 'sequelize';
 import { generateSku, generateBarcode } from '../../../utils/skuGenerator';
 import { generateMenuItemSkuWithCategory } from '../../../utils/menuItemSkuGenerator';
 import { generateInventoryImageUrl, generateMenuItemImageUrl, ItemData } from '../../../utils/dynamicImageGenerator';
@@ -242,26 +242,26 @@ export async function down(queryInterface: QueryInterface): Promise<void> {
   // Delete menu items first (due to foreign key constraints)
   await queryInterface.bulkDelete('menu_items', {
     sku: {
-      [QueryInterface.Op.like]: 'SU-%'
+      [Op.like]: 'SU-%'
     }
   });
   
   await queryInterface.bulkDelete('menu_items', {
     sku: {
-      [QueryInterface.Op.like]: 'CO-%'
+      [Op.like]: 'CO-%'
     }
   });
 
   // Delete inventory items
   await queryInterface.bulkDelete('items', {
     sku: {
-      [QueryInterface.Op.like]: 'SU-%'
+      [Op.like]: 'SU-%'
     }
   });
   
   await queryInterface.bulkDelete('items', {
     sku: {
-      [QueryInterface.Op.like]: 'CO-%'
+      [Op.like]: 'CO-%'
     }
   });
 

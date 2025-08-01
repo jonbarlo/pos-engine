@@ -33,7 +33,7 @@ export class CurrencyController {
    */
   static async getCurrencyById(req: Request, res: Response): Promise<void> {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params.id || '0');
       
       if (isNaN(id)) {
         res.status(400).json({
@@ -200,7 +200,7 @@ export class CurrencyController {
    */
   static async updateCurrency(req: Request, res: Response): Promise<void> {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params.id || '0');
       
       if (isNaN(id)) {
         res.status(400).json({
@@ -260,7 +260,7 @@ export class CurrencyController {
    */
   static async deleteCurrency(req: Request, res: Response): Promise<void> {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params.id || '0');
       
       if (isNaN(id)) {
         res.status(400).json({
@@ -346,13 +346,47 @@ export class CurrencyController {
   }
 
   /**
+   * Get all exchange rates for a currency
+   * GET /api/currencies/:id/exchange-rates
+   */
+  static async getCurrencyExchangeRates(req: Request, res: Response): Promise<void> {
+    try {
+      const id = parseInt(req.params.id || '0');
+
+      if (isNaN(id)) {
+        res.status(400).json({
+          success: false,
+          message: 'Invalid currency ID'
+        });
+        return;
+      }
+
+      logger(`Getting exchange rates for currency ID: ${id}`);
+      const exchangeRates = await CurrencyService.getCurrencyExchangeRates(id);
+
+      res.status(200).json({
+        success: true,
+        data: exchangeRates,
+        message: 'Exchange rates retrieved successfully'
+      });
+    } catch (error) {
+      logger(`Error getting exchange rates for currency: ${error}`);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to retrieve exchange rates',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  }
+
+  /**
    * Get exchange rate
    * GET /api/currencies/exchange-rate/:fromCurrencyId/:toCurrencyId
    */
   static async getExchangeRate(req: Request, res: Response): Promise<void> {
     try {
-      const fromCurrencyId = parseInt(req.params.fromCurrencyId);
-      const toCurrencyId = parseInt(req.params.toCurrencyId);
+      const fromCurrencyId = parseInt(req.params.fromCurrencyId || '0');
+      const toCurrencyId = parseInt(req.params.toCurrencyId || '0');
 
       if (isNaN(fromCurrencyId) || isNaN(toCurrencyId)) {
         res.status(400).json({

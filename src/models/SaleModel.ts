@@ -39,6 +39,7 @@ export interface SaleCreationAttributes {
   userId: number;
   saleNumber?: string;
   totalAmount: number;
+  currencyId: number; // Required currency relationship
   paymentMethod?: string;
   status?: SaleStatus;
   customerName?: string;

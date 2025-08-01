@@ -100,6 +100,51 @@ currencyRouter.get('/', authenticateToken, CurrencyController.getAllCurrencies);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
+/**
+ * @swagger
+ * /api/currencies/default:
+ *   get:
+ *     summary: Get default currency
+ *     tags: [Currencies]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Default currency details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/Currency'
+ *                 message:
+ *                   type: string
+ *                   example: "Default currency retrieved successfully"
+ *       404:
+ *         description: No default currency found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+currencyRouter.get('/default', authenticateToken, CurrencyController.getDefaultCurrency);
+
 currencyRouter.get('/:id', authenticateToken, CurrencyController.getCurrencyById);
 
 /**
@@ -164,6 +209,66 @@ currencyRouter.get('/code/:code', authenticateToken, CurrencyController.getCurre
 
 /**
  * @swagger
+ * /api/currencies/{id}/exchange-rates:
+ *   get:
+ *     summary: Get all exchange rates for a currency
+ *     tags: [Currencies]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Currency ID
+ *     responses:
+ *       200:
+ *         description: List of exchange rates for the currency
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/ExchangeRate'
+ *                 message:
+ *                   type: string
+ *                   example: "Exchange rates retrieved successfully"
+ *       400:
+ *         description: Invalid currency ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Currency not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+currencyRouter.get('/:id/exchange-rates', authenticateToken, CurrencyController.getCurrencyExchangeRates);
+
+/**
+ * @swagger
  * /api/currencies/default:
  *   get:
  *     summary: Get default currency
@@ -205,8 +310,6 @@ currencyRouter.get('/code/:code', authenticateToken, CurrencyController.getCurre
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-currencyRouter.get('/default', authenticateToken, CurrencyController.getDefaultCurrency);
-
 /**
  * @swagger
  * /api/currencies:

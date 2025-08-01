@@ -204,6 +204,111 @@ The system supports multiple currencies with real-time conversion capabilities:
 }
 ```
 
+### Get Default Currency
+**GET** `/currencies/default`
+
+**Headers:**
+- `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "id": 2,
+  "code": "CRC",
+  "name": "Costa Rican Colón",
+  "symbol": "₡",
+  "decimalPlaces": 2,
+  "isActive": true,
+  "isDefault": true,
+  "createdAt": "2025-01-01T00:00:00.000Z",
+  "updatedAt": "2025-01-01T00:00:00.000Z"
+}
+```
+
+### Create Currency
+**POST** `/currencies`
+
+**Headers:**
+- `Authorization: Bearer <token>`
+
+**Request Body:**
+```json
+{
+  "code": "EUR",
+  "name": "Euro",
+  "symbol": "€",
+  "decimalPlaces": 2,
+  "isActive": true,
+  "isDefault": false
+}
+```
+
+**Response:**
+```json
+{
+  "id": 3,
+  "code": "EUR",
+  "name": "Euro",
+  "symbol": "€",
+  "decimalPlaces": 2,
+  "isActive": true,
+  "isDefault": false,
+  "createdAt": "2025-01-01T00:00:00.000Z",
+  "updatedAt": "2025-01-01T00:00:00.000Z"
+}
+```
+
+### Update Currency
+**PUT** `/currencies/{id}`
+
+**Path Parameters:**
+- `id` (integer, required) - Currency ID
+
+**Headers:**
+- `Authorization: Bearer <token>`
+
+**Request Body:**
+```json
+{
+  "code": "EUR",
+  "name": "Euro",
+  "symbol": "€",
+  "decimalPlaces": 2,
+  "isActive": true,
+  "isDefault": false
+}
+```
+
+**Response:**
+```json
+{
+  "id": 3,
+  "code": "EUR",
+  "name": "Euro",
+  "symbol": "€",
+  "decimalPlaces": 2,
+  "isActive": true,
+  "isDefault": false,
+  "updatedAt": "2025-01-01T00:00:00.000Z"
+}
+```
+
+### Delete Currency
+**DELETE** `/currencies/{id}`
+
+**Path Parameters:**
+- `id` (integer, required) - Currency ID
+
+**Headers:**
+- `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "message": "Currency deleted successfully"
+}
+```
+
 ### Get Exchange Rates for Currency
 **GET** `/currencies/{id}/exchange-rates`
 
@@ -234,7 +339,7 @@ The system supports multiple currencies with real-time conversion capabilities:
 ```
 
 ### Convert Currency
-**POST** `/currency/convert`
+**POST** `/currencies/convert`
 
 **Headers:**
 - `Authorization: Bearer <token>`
@@ -242,9 +347,9 @@ The system supports multiple currencies with real-time conversion capabilities:
 **Request Body:**
 ```json
 {
-  "amount": 25.99,
-  "fromCurrency": "CRC",
-  "toCurrency": "USD"
+  "fromCurrencyId": 2,
+  "toCurrencyId": 1,
+  "amount": 25.99
 }
 ```
 
@@ -257,6 +362,55 @@ The system supports multiple currencies with real-time conversion capabilities:
   "convertedCurrency": "USD",
   "exchangeRate": 0.001923,
   "effectiveDate": "2025-01-01T00:00:00.000Z"
+}
+```
+
+### Get Exchange Rate Between Currencies
+**GET** `/currencies/exchange-rate/{fromCurrencyId}/{toCurrencyId}`
+
+**Path Parameters:**
+- `fromCurrencyId` (integer, required) - Source currency ID
+- `toCurrencyId` (integer, required) - Target currency ID
+
+**Headers:**
+- `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "fromCurrencyId": 2,
+  "toCurrencyId": 1,
+  "rate": 0.001923,
+  "effectiveDate": "2025-01-01T00:00:00.000Z",
+  "isActive": true
+}
+```
+
+### Update Exchange Rate
+**POST** `/currencies/exchange-rate`
+
+**Headers:**
+- `Authorization: Bearer <token>`
+
+**Request Body:**
+```json
+{
+  "fromCurrencyId": 2,
+  "toCurrencyId": 1,
+  "rate": 0.001923,
+  "effectiveDate": "2025-01-01T00:00:00.000Z"
+}
+```
+
+**Response:**
+```json
+{
+  "fromCurrencyId": 2,
+  "toCurrencyId": 1,
+  "rate": 0.001923,
+  "effectiveDate": "2025-01-01T00:00:00.000Z",
+  "isActive": true,
+  "updatedAt": "2025-01-01T00:00:00.000Z"
 }
 ```
 

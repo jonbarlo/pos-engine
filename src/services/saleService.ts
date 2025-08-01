@@ -8,6 +8,7 @@ import { OrderModel, OrderStatus, OrderType } from '../models/OrderModel';
 import { OrderItemModel } from '../models/OrderItemModel';
 import { KitchenOrderModel } from '../models/KitchenOrderModel';
 import { TableModel, TableStatus } from '../models/TableModel';
+import { BusinessModel } from '../models/BusinessModel';
 import { getSaleRepository } from '../repositories/RepositoryFactory';
 import { logger } from '../utils/logger';
 import { v4 as uuidv4 } from 'uuid';
@@ -274,6 +275,15 @@ export class SaleService {
       }
       const transaction = await sequelize.transaction();
       try {
+        // Get business to get currencyId
+        const business = await BusinessModel.findByPk(saleData.businessId);
+        if (!business) {
+          throw new Error('Business not found');
+        }
+
+        // Set currencyId on the sale data
+        saleData.currencyId = business.currencyId;
+        
         logger(`DEBUG: About to create sale with data: ${JSON.stringify(saleData)}`);
         // Create the sale
         const sale = await SaleModel.create(saleData, { transaction });
@@ -293,7 +303,8 @@ export class SaleService {
             unitPrice: item.unitPrice,
             totalPrice: finalPrice,
             discountAmount: discountAmount,
-            finalPrice: finalPrice
+            finalPrice: finalPrice,
+            currencyId: business.currencyId
           };
           
           logger(`DEBUG: Creating sale item: ${JSON.stringify(saleItemData)}`);

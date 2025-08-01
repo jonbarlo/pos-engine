@@ -41,6 +41,19 @@ dotenv.config();
 export async function up(queryInterface: QueryInterface): Promise<void> {
   console.log('🍣 Starting Sushi Master items seeder...');
 
+  // Get CRC currency ID
+  const [crcCurrency] = await queryInterface.sequelize.query(
+    'SELECT id FROM currencies WHERE code = ?',
+    { type: QueryTypes.SELECT, replacements: ['CRC'] }
+  ) as any[];
+
+  if (!crcCurrency) {
+    console.log('❌ CRC currency not found, skipping seeder...');
+    return;
+  }
+
+  const crcId = crcCurrency.id;
+
   // Get business ID for Sushi Master
   const [sushiBusiness] = await queryInterface.sequelize.query(
     'SELECT id FROM businesses WHERE slug = ?',
