@@ -303,6 +303,10 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   })));
   console.log('✅ Recipe suggestions created');
 
+  // ===== PHASE 9: FLOOR PLANS AND TABLES =====
+  // Note: Tables and floor plans are created in the comprehensive-data seeder
+  // to avoid duplicate entries. This seeder focuses on recipes only.
+
   console.log('🎉 Comprehensive recipes seeder completed successfully!');
 }
 
@@ -310,6 +314,7 @@ export async function down(queryInterface: QueryInterface): Promise<void> {
   console.log('🗑️ Rolling back comprehensive recipes seeder...');
   
   // Delete in reverse order to respect foreign key constraints
+  // Note: Tables and floor plans are managed by comprehensive-data seeder
   await queryInterface.bulkDelete('recipe_suggestions', {});
   await queryInterface.bulkDelete('recipe_ingredients', {});
   await queryInterface.bulkDelete('recipes', {});

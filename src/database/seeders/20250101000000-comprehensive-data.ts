@@ -3,7 +3,7 @@ import { generateSku, generateBarcode } from '../../utils/skuGenerator';
 import { generateMenuItemSku } from '../../utils/menuItemSkuGenerator';
 import { generateSeederOrderNumber } from '../../utils/orderNumberGenerator';
 import { generateSaleNumber } from '../../utils/saleNumberGenerator';
-import { generateMenuItemImageUrl } from '../../utils/dynamicImageGenerator';
+import { generateMenuItemImageUrl, generateBusinessImageUrl, generateCategoryImageUrl } from '../../utils/dynamicImageGenerator';
 import dotenv from 'dotenv';
 
 // Enums
@@ -127,6 +127,17 @@ let globalBarcodeCounter = 1;
       isActive: true
     }
   ];
+
+  // Generate business images
+  const businessDataWithImages = businessData.map(business => ({
+    ...business,
+    imageUrl: generateBusinessImageUrl({
+      name: business.name,
+      slug: business.slug,
+      type: business.type,
+      description: business.description
+    })
+  }));
   
   // Check if businesses already exist
   const existingBusinesses = await queryInterface.sequelize.query(
@@ -138,12 +149,13 @@ let globalBarcodeCounter = 1;
   const newBusinesses = businessData.filter(b => !existingBusinessSlugs.includes(b.slug));
   
   if (newBusinesses.length > 0) {
-    await queryInterface.bulkInsert('businesses', newBusinesses.map(b => ({
+    const businessesToInsert = businessDataWithImages.filter(b => !existingBusinessSlugs.includes(b.slug));
+    await queryInterface.bulkInsert('businesses', businessesToInsert.map(b => ({
       ...b,
       createdAt: new Date(),
       updatedAt: new Date()
     })));
-    console.log(`✅ Created ${newBusinesses.length} new businesses`);
+    console.log(`✅ Created ${businessesToInsert.length} new businesses with images`);
   } else {
     console.log('✅ Businesses already exist, skipping creation');
   }
@@ -273,10 +285,22 @@ let globalBarcodeCounter = 1;
     { businessSlug: 'italian-delight', name: 'Desserts', description: 'Sweet Italian treats' },
     { businessSlug: 'italian-delight', name: 'Beverages', description: 'Drinks and beverages' }
   ];
-  await queryInterface.bulkInsert('menu_categories', menuCategoryData.map(mc => ({
+
+  // Generate category images
+  const menuCategoryDataWithImages = menuCategoryData.map(category => ({
+    ...category,
+    imageUrl: generateCategoryImageUrl({
+      name: category.name,
+      businessSlug: category.businessSlug,
+      description: category.description
+    })
+  }));
+
+  await queryInterface.bulkInsert('menu_categories', menuCategoryDataWithImages.map(mc => ({
     businessId: businesses[mc.businessSlug],
     name: mc.name,
     description: mc.description,
+    imageUrl: mc.imageUrl,
     isActive: true,
     createdAt: new Date(),
     updatedAt: new Date()
@@ -299,11 +323,11 @@ let globalBarcodeCounter = 1;
   console.log('📦 Creating items (raw ingredients)...');
   const itemData = [
     // Italian Delight Ingredients
-    { businessSlug: 'italian-delight', name: 'Fresh Mozzarella', description: 'Fresh mozzarella cheese', price: 12.99, cost: 8.50, sku: generateSku('IT', globalBarcodeCounter++), barcode: generateBarcode('IT', globalBarcodeCounter++), stock: 15, unit: 'kg', category: 'dairy' },
-    { businessSlug: 'italian-delight', name: 'San Marzano Tomatoes', description: 'Premium Italian tomatoes', price: 8.99, cost: 5.20, sku: generateSku('IT', globalBarcodeCounter++), barcode: generateBarcode('IT', globalBarcodeCounter++), stock: 20, unit: 'kg', category: 'vegetables' },
-    { businessSlug: 'italian-delight', name: 'Fresh Basil', description: 'Fresh basil leaves', price: 4.99, cost: 2.50, sku: generateSku('IT', globalBarcodeCounter++), barcode: generateBarcode('IT', globalBarcodeCounter++), stock: 8, unit: 'bunches', category: 'herbs' },
-    { businessSlug: 'italian-delight', name: 'Extra Virgin Olive Oil', description: 'Premium olive oil', price: 15.99, cost: 10.00, sku: generateSku('IT', globalBarcodeCounter++), barcode: generateBarcode('IT', globalBarcodeCounter++), stock: 12, unit: 'bottles', category: 'oils' },
-    { businessSlug: 'italian-delight', name: '00 Flour', description: 'Italian 00 flour for pizza', price: 6.99, cost: 4.00, sku: generateSku('IT', globalBarcodeCounter++), barcode: generateBarcode('IT', globalBarcodeCounter++), stock: 25, unit: 'kg', category: 'grains' }
+    { businessSlug: 'italian-delight', name: 'Fresh Mozzarella', description: 'Fresh mozzarella cheese', price: 6495.00, cost: 4250.00, sku: generateSku('IT', globalBarcodeCounter++), barcode: generateBarcode('IT', globalBarcodeCounter++), stock: 15, unit: 'kg', category: 'dairy' },
+    { businessSlug: 'italian-delight', name: 'San Marzano Tomatoes', description: 'Premium Italian tomatoes', price: 4495.00, cost: 2600.00, sku: generateSku('IT', globalBarcodeCounter++), barcode: generateBarcode('IT', globalBarcodeCounter++), stock: 20, unit: 'kg', category: 'vegetables' },
+    { businessSlug: 'italian-delight', name: 'Fresh Basil', description: 'Fresh basil leaves', price: 2495.00, cost: 1250.00, sku: generateSku('IT', globalBarcodeCounter++), barcode: generateBarcode('IT', globalBarcodeCounter++), stock: 8, unit: 'bunches', category: 'herbs' },
+    { businessSlug: 'italian-delight', name: 'Extra Virgin Olive Oil', description: 'Premium olive oil', price: 7995.00, cost: 5000.00, sku: generateSku('IT', globalBarcodeCounter++), barcode: generateBarcode('IT', globalBarcodeCounter++), stock: 12, unit: 'bottles', category: 'oils' },
+    { businessSlug: 'italian-delight', name: '00 Flour', description: 'Italian 00 flour for pizza', price: 3495.00, cost: 2000.00, sku: generateSku('IT', globalBarcodeCounter++), barcode: generateBarcode('IT', globalBarcodeCounter++), stock: 25, unit: 'kg', category: 'grains' }
   ];
 
   const itemsToInsert = itemData.map(i => ({
@@ -349,14 +373,14 @@ let globalBarcodeCounter = 1;
   console.log('🍽️ Creating menu items (finished dishes)...');
   const menuItemData = [
     // Italian Delight Menu Items
-    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Pizza', name: 'Margherita Pizza', description: 'Fresh mozzarella, tomato sauce, basil', price: 18.99, cost: 8.50, sku: generateMenuItemSku('IT', 'Pizza', globalBarcodeCounter++), barcode: generateBarcode(`IT-MAR`, globalBarcodeCounter++), allergens: ['gluten', 'dairy'] },
-    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Pizza', name: 'Pepperoni Pizza', description: 'Classic pepperoni with mozzarella', price: 20.99, cost: 9.50, sku: generateMenuItemSku('IT', 'Pizza', globalBarcodeCounter++), barcode: generateBarcode(`IT-PEP`, globalBarcodeCounter++), allergens: ['gluten', 'dairy', 'pork'] },
-    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Pasta', name: 'Spaghetti Carbonara', description: 'Pasta with eggs, cheese, pancetta, black pepper', price: 16.99, cost: 7.20, sku: generateMenuItemSku('IT', 'Pasta', globalBarcodeCounter++), barcode: generateBarcode(`IT-SPA`, globalBarcodeCounter++), allergens: ['gluten', 'dairy', 'eggs', 'pork'] },
-    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Pasta', name: 'Fettuccine Alfredo', description: 'Creamy alfredo sauce with parmesan', price: 17.99, cost: 7.80, sku: generateMenuItemSku('IT', 'Pasta', globalBarcodeCounter++), barcode: generateBarcode(`IT-FET`, globalBarcodeCounter++), allergens: ['gluten', 'dairy'] },
-    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Desserts', name: 'Tiramisu', description: 'Classic Italian dessert with coffee and mascarpone', price: 8.99, cost: 3.50, sku: generateMenuItemSku('IT', 'Desserts', globalBarcodeCounter++), barcode: generateBarcode(`IT-TIR`, globalBarcodeCounter++), allergens: ['gluten', 'dairy', 'eggs'] },
-    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Desserts', name: 'Cannoli', description: 'Crispy shells filled with sweet ricotta', price: 6.99, cost: 2.50, sku: generateMenuItemSku('IT', 'Desserts', globalBarcodeCounter++), barcode: generateBarcode(`IT-CAN`, globalBarcodeCounter++), allergens: ['gluten', 'dairy'] },
-    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Beverages', name: 'House Red Wine', description: 'Glass of our signature red wine', price: 8.99, cost: 3.20, sku: generateMenuItemSku('IT', 'Beverages', globalBarcodeCounter++), barcode: generateBarcode(`IT-HOU`, globalBarcodeCounter++), allergens: [] },
-    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Beverages', name: 'Italian Soda', description: 'Refreshing Italian soda', price: 3.99, cost: 1.20, sku: generateMenuItemSku('IT', 'Beverages', globalBarcodeCounter++), barcode: generateBarcode(`IT-ITA`, globalBarcodeCounter++), allergens: [] }
+    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Pizza', name: 'Margherita Pizza', description: 'Fresh mozzarella, tomato sauce, basil', price: 9495.00, cost: 4250.00, sku: generateMenuItemSku('IT', 'Pizza', globalBarcodeCounter++), barcode: generateBarcode(`IT-MAR`, globalBarcodeCounter++), allergens: ['gluten', 'dairy'] },
+    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Pizza', name: 'Pepperoni Pizza', description: 'Classic pepperoni with mozzarella', price: 10495.00, cost: 4750.00, sku: generateMenuItemSku('IT', 'Pizza', globalBarcodeCounter++), barcode: generateBarcode(`IT-PEP`, globalBarcodeCounter++), allergens: ['gluten', 'dairy', 'pork'] },
+    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Pasta', name: 'Spaghetti Carbonara', description: 'Pasta with eggs, cheese, pancetta, black pepper', price: 8495.00, cost: 3600.00, sku: generateMenuItemSku('IT', 'Pasta', globalBarcodeCounter++), barcode: generateBarcode(`IT-SPA`, globalBarcodeCounter++), allergens: ['gluten', 'dairy', 'eggs', 'pork'] },
+    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Pasta', name: 'Fettuccine Alfredo', description: 'Creamy alfredo sauce with parmesan', price: 8995.00, cost: 3900.00, sku: generateMenuItemSku('IT', 'Pasta', globalBarcodeCounter++), barcode: generateBarcode(`IT-FET`, globalBarcodeCounter++), allergens: ['gluten', 'dairy'] },
+    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Desserts', name: 'Tiramisu', description: 'Classic Italian dessert with coffee and mascarpone', price: 4495.00, cost: 1750.00, sku: generateMenuItemSku('IT', 'Desserts', globalBarcodeCounter++), barcode: generateBarcode(`IT-TIR`, globalBarcodeCounter++), allergens: ['gluten', 'dairy', 'eggs'] },
+    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Desserts', name: 'Cannoli', description: 'Crispy shells filled with sweet ricotta', price: 3495.00, cost: 1250.00, sku: generateMenuItemSku('IT', 'Desserts', globalBarcodeCounter++), barcode: generateBarcode(`IT-CAN`, globalBarcodeCounter++), allergens: ['gluten', 'dairy'] },
+    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Beverages', name: 'House Red Wine', description: 'Glass of our signature red wine', price: 4495.00, cost: 1600.00, sku: generateMenuItemSku('IT', 'Beverages', globalBarcodeCounter++), barcode: generateBarcode(`IT-HOU`, globalBarcodeCounter++), allergens: [] },
+    { businessSlug: 'italian-delight', categoryKey: 'italian-delight-Beverages', name: 'Italian Soda', description: 'Refreshing Italian soda', price: 1995.00, cost: 600.00, sku: generateMenuItemSku('IT', 'Beverages', globalBarcodeCounter++), barcode: generateBarcode(`IT-ITA`, globalBarcodeCounter++), allergens: [] }
   ];
 
   // Generate dynamic images for menu items
@@ -478,6 +502,51 @@ let globalBarcodeCounter = 1;
   }
   console.log('✅ Floor plans created:', floorPlans);
 
+  // 11. Table Positions
+  console.log('📍 Creating table positions...');
+  const tablePositionData = [
+    {
+      floorPlanKey: 'italian-delight-Main Dining Room',
+      tableKey: 'italian-delight-A1',
+      x: 200,
+      y: 150,
+      rotation: 0,
+      width: 120,
+      height: 80
+    },
+    {
+      floorPlanKey: 'italian-delight-Main Dining Room',
+      tableKey: 'italian-delight-A2',
+      x: 400,
+      y: 150,
+      rotation: 0,
+      width: 140,
+      height: 100
+    },
+    {
+      floorPlanKey: 'italian-delight-Main Dining Room',
+      tableKey: 'italian-delight-B1',
+      x: 600,
+      y: 300,
+      rotation: 45,
+      width: 100,
+      height: 60
+    }
+  ];
+
+  await queryInterface.bulkInsert('table_positions', tablePositionData.map(tp => ({
+    floorPlanId: floorPlans[tp.floorPlanKey],
+    tableId: tables[tp.tableKey],
+    x: tp.x,
+    y: tp.y,
+    rotation: tp.rotation,
+    width: tp.width,
+    height: tp.height,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  })));
+  console.log('✅ Table positions created');
+
   // ===== PHASE 5: ORDERS AND SALES =====
 
   // 12. Orders
@@ -500,7 +569,7 @@ let globalBarcodeCounter = 1;
       orderNumber: generateSeederOrderNumber('IT', 1),
       status: 'pending',
       partySize: 4,
-      totalAmount: 35.98,
+      totalAmount: 17990.00,
       currencyId: currencies['CRC']
     },
     {
@@ -511,7 +580,7 @@ let globalBarcodeCounter = 1;
       orderNumber: generateSeederOrderNumber('IT', 2),
       status: 'pending',
       partySize: 2,
-      totalAmount: 20.99,
+      totalAmount: 10495.00,
       currencyId: currencies['CRC']
     }
   ];
@@ -607,9 +676,9 @@ let globalBarcodeCounter = 1;
   console.log('🍽️ Creating order items...');
   const orderItemData = [
     // Use the actual SKUs from menu items created above
-    { orderNumber: orderData[0]!.orderNumber, itemSku: menuItemData[0]!.sku, itemName: 'Margherita Pizza', quantity: 1, unitPrice: 18.99, totalPrice: 18.99, specialInstructions: 'Extra cheese', status: OrderItemStatus.IN_PROGRESS },
-    { orderNumber: orderData[0]!.orderNumber, itemSku: menuItemData[2]!.sku, itemName: 'Spaghetti Carbonara', quantity: 1, unitPrice: 16.99, totalPrice: 16.99, specialInstructions: null, status: OrderItemStatus.IN_PROGRESS },
-    { orderNumber: orderData[1]!.orderNumber, itemSku: menuItemData[1]!.sku, itemName: 'Pepperoni Pizza', quantity: 1, unitPrice: 20.99, totalPrice: 20.99, specialInstructions: 'Well done', status: OrderItemStatus.PENDING }
+    { orderNumber: orderData[0]!.orderNumber, itemSku: menuItemData[0]!.sku, itemName: 'Margherita Pizza', quantity: 1, unitPrice: 9495.00, totalPrice: 9495.00, specialInstructions: 'Extra cheese', status: OrderItemStatus.IN_PROGRESS },
+    { orderNumber: orderData[0]!.orderNumber, itemSku: menuItemData[2]!.sku, itemName: 'Spaghetti Carbonara', quantity: 1, unitPrice: 8495.00, totalPrice: 8495.00, specialInstructions: null, status: OrderItemStatus.IN_PROGRESS },
+    { orderNumber: orderData[1]!.orderNumber, itemSku: menuItemData[1]!.sku, itemName: 'Pepperoni Pizza', quantity: 1, unitPrice: 10495.00, totalPrice: 10495.00, specialInstructions: 'Well done', status: OrderItemStatus.PENDING }
   ];
 
   await queryInterface.bulkInsert('order_items', orderItemData.map(oi => {
@@ -644,10 +713,10 @@ let globalBarcodeCounter = 1;
       customerEmail: 'john.smith@email.com',
       saleNumber: await generateSaleNumber(businesses['italian-delight']!, 'IT'),
       status: SaleStatus.COMPLETED,
-      subtotal: 35.98,
-      taxAmount: 3.19,
+      subtotal: 17990.00,
+      taxAmount: 1595.00,
       discountAmount: 0.00,
-      totalAmount: 39.17,
+      totalAmount: 19585.00,
       paymentMethod: 'credit_card',
       currencyId: currencies['CRC']
     }
@@ -697,16 +766,16 @@ let globalBarcodeCounter = 1;
       itemSku: 'IT-001', // Use item SKU from items table
       itemName: 'Fresh Mozzarella',
       quantity: 1,
-      unitPrice: 12.99,
-      totalPrice: 12.99
+      unitPrice: 6495.00,
+      totalPrice: 6495.00
     },
     {
       saleNumber: saleData[0]!.saleNumber,
       itemSku: 'IT-003', // Use item SKU from items table
       itemName: 'San Marzano Tomatoes',
       quantity: 1,
-      unitPrice: 8.99,
-      totalPrice: 8.99
+      unitPrice: 4495.00,
+      totalPrice: 4495.00
     }
   ];
 
@@ -759,7 +828,63 @@ let globalBarcodeCounter = 1;
 
   // ===== PHASE 7: ADDITIONAL BUSINESS DATA =====
 
-  // 19. Staff Messages
+  // 19. Reservations
+  console.log('📅 Creating reservations...');
+  const reservationData = [
+    {
+      businessSlug: 'italian-delight',
+      tableKey: 'italian-delight-A1',
+      customerEmail: 'maria.garcia@email.com',
+      customerName: 'Maria Garcia',
+      customerPhone: '+506-8888-9999',
+      partySize: 4,
+      reservationDate: '2025-02-15',
+      reservationTime: '19:00',
+      duration: 120,
+      status: 'confirmed',
+      source: 'online',
+      specialRequests: 'Window seat preferred',
+      notes: 'Anniversary celebration'
+    },
+    {
+      businessSlug: 'italian-delight',
+      tableKey: 'italian-delight-B1',
+      customerEmail: 'carlos.rodriguez@email.com',
+      customerName: 'Carlos Rodriguez',
+      customerPhone: '+506-7777-8888',
+      partySize: 2,
+      reservationDate: '2025-02-16',
+      reservationTime: '20:30',
+      duration: 90,
+      status: 'pending',
+      source: 'phone',
+      specialRequests: 'Quiet table',
+      notes: 'First time visit'
+    }
+  ];
+
+  await queryInterface.bulkInsert('reservations', reservationData.map(res => ({
+    businessId: businesses[res.businessSlug],
+    tableId: tables[res.tableKey],
+    customerId: customers[res.customerEmail],
+    customerName: res.customerName,
+    customerEmail: res.customerEmail,
+    customerPhone: res.customerPhone,
+    partySize: res.partySize,
+    reservationDate: res.reservationDate,
+    reservationTime: res.reservationTime,
+    duration: res.duration,
+    status: res.status,
+    source: res.source,
+    specialRequests: res.specialRequests,
+    notes: res.notes,
+    confirmedAt: res.status === 'confirmed' ? new Date() : null,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  })));
+  console.log('✅ Reservations created');
+
+  // 20. Staff Messages
   console.log('💬 Creating staff messages...');
   const staffMessageData = [
     {
@@ -822,6 +947,7 @@ export async function down(queryInterface: QueryInterface): Promise<void> {
   console.log('🗑️ Rolling back comprehensive data seeder...');
   
   // Delete in reverse order to respect foreign key constraints
+  await queryInterface.bulkDelete('reservations', {});
   await queryInterface.bulkDelete('sale_items', {});
   await queryInterface.bulkDelete('sales', {});
   await queryInterface.bulkDelete('order_items', {});

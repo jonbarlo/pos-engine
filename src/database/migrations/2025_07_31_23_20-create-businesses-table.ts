@@ -79,6 +79,10 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       allowNull: false,
       defaultValue: 'generic',
     },
+    imageUrl: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
     createdAt: {
       type: DataTypes.DATE,
       allowNull: false,

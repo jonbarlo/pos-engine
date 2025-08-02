@@ -58,6 +58,43 @@ const VALID_UNSPLASH_IDS = {
     'Beverages': 'photo-1509042239860-f550ce710b93', // beverages
     'Desserts': 'photo-1565958011703-44f9829ba187', // desserts
     'default': 'photo-1565299624946-b28f40a0ca4b' // pizza as default
+  },
+
+  // Businesses (Restaurant/Food Business Images)
+  business: {
+    'italian': '1414235077428-338989a2e8c0', // Italian restaurant interior
+    'pizza': '1565299624946-b28f40a0ca4b', // Pizza restaurant
+    'pasta': '1551183053-b3d9d9b7cde6', // Pasta restaurant
+    'restaurant': '1414235077428-338989a2e8c0', // General restaurant
+    'cafe': '1509042239860-f550ce710b93', // Coffee shop
+    'bakery': '1509440159596-234908bf2d2d', // Bakery
+    'sushi': '1579584425555-c3d17c49fabb', // Sushi restaurant
+    'default': '1414235077428-338989a2e8c0' // Restaurant interior as default
+  },
+
+  // Menu Categories (Food Category Images)
+  category: {
+    'Pizza': '1565299624946-b28f40a0ca4b', // Pizza category
+    'Pasta': '1551183053-b3d9d9b7cde6', // Pasta category
+    'Desserts': '1565958011703-44f9829ba187', // Desserts category
+    'Beverages': '1509042239860-f550ce710b93', // Beverages category
+    'Salads': '1512621776951-a57141f2eefd', // Salads category
+    'Soups': '1547592166-23ac45744acd', // Soups category
+    'Appetizers': '1565299624946-b28f40a0ca4b', // Appetizers category
+    'Main Course': '1558030006-450675393462', // Main course category
+    'Sides': '1542838132-92c53300491e', // Side dishes category
+    'Drinks': '1509042239860-f550ce710b93', // Drinks category
+    'Coffee': '1509042239860-f550ce710b93', // Coffee category
+    'Tea': '1541167760496-1628856ab772', // Tea category
+    'Wine': '1510812431401-41d2bd2722f3', // Wine category
+    'Beer': '1556909114-f6e7ad7d3136', // Beer category
+    'Cocktails': '1509042239860-f550ce710b93', // Cocktails category
+    'Sushi': '1579584425555-c3d17c49fabb', // Sushi category
+    'Rolls': '1579584425555-c3d17c49fabb', // Sushi rolls category
+    'Nigiri': '1579584425555-c3d17c49fabb', // Sushi nigiri category
+    'Pastries': '1571877227200-a0d98ea607e9', // Pastries category
+    'Bread': '1628840042765-356cda07504e', // Bread category
+    'default': '1565299624946-b28f40a0ca4b' // Pizza as default
   }
 };
 
@@ -65,6 +102,21 @@ const VALID_UNSPLASH_IDS = {
 export interface ItemData {
   name: string;
   category: string;
+  businessSlug: string;
+  description?: string;
+}
+
+// Type definition for business data
+export interface BusinessData {
+  name: string;
+  slug: string;
+  type: string;
+  description?: string;
+}
+
+// Type definition for category data
+export interface CategoryData {
+  name: string;
   businessSlug: string;
   description?: string;
 }
@@ -115,6 +167,60 @@ function extractCategoryFromItem(item: ItemData): string {
 }
 
 /**
+ * Extracts business type for image selection
+ */
+function extractBusinessType(business: BusinessData): string {
+  const name = business.name.toLowerCase();
+  const slug = business.slug.toLowerCase();
+  const type = business.type.toLowerCase();
+  const description = business.description?.toLowerCase() || '';
+  
+  if (name.includes('italian') || slug.includes('italian') || description.includes('italian')) return 'italian';
+  if (name.includes('pizza') || slug.includes('pizza') || description.includes('pizza')) return 'pizza';
+  if (name.includes('pasta') || slug.includes('pasta') || description.includes('pasta')) return 'pasta';
+  if (name.includes('sushi') || slug.includes('sushi') || description.includes('sushi')) return 'sushi';
+  if (name.includes('cafe') || slug.includes('cafe') || description.includes('cafe')) return 'cafe';
+  if (name.includes('coffee') || slug.includes('coffee') || description.includes('coffee')) return 'cafe';
+  if (name.includes('bakery') || slug.includes('bakery') || description.includes('bakery')) return 'bakery';
+  if (type === 'restaurant') return 'restaurant';
+  if (type === 'cafe') return 'cafe';
+  if (type === 'bakery') return 'bakery';
+  
+  return 'default';
+}
+
+/**
+ * Extracts category name for image selection
+ */
+function extractCategoryName(category: CategoryData): string {
+  const name = category.name.toLowerCase();
+  const description = category.description?.toLowerCase() || '';
+  
+  if (name.includes('pizza')) return 'Pizza';
+  if (name.includes('pasta')) return 'Pasta';
+  if (name.includes('dessert')) return 'Desserts';
+  if (name.includes('beverage')) return 'Beverages';
+  if (name.includes('drink')) return 'Beverages';
+  if (name.includes('salad')) return 'Salads';
+  if (name.includes('soup')) return 'Soups';
+  if (name.includes('appetizer')) return 'Appetizers';
+  if (name.includes('main')) return 'Main Course';
+  if (name.includes('side')) return 'Sides';
+  if (name.includes('coffee')) return 'Coffee';
+  if (name.includes('tea')) return 'Tea';
+  if (name.includes('wine')) return 'Wine';
+  if (name.includes('beer')) return 'Beer';
+  if (name.includes('cocktail')) return 'Cocktails';
+  if (name.includes('sushi')) return 'Sushi';
+  if (name.includes('roll')) return 'Rolls';
+  if (name.includes('nigiri')) return 'Nigiri';
+  if (name.includes('pastry')) return 'Pastries';
+  if (name.includes('bread')) return 'Bread';
+  
+  return 'default';
+}
+
+/**
  * Generates image URL for inventory items (raw ingredients)
  * Uses valid Unsplash photo IDs for reliability
  */
@@ -134,6 +240,30 @@ export function generateMenuItemImageUrl(item: ItemData): string {
   const category = extractCategoryFromItem(item);
   const photoId = VALID_UNSPLASH_IDS.menu[category as keyof typeof VALID_UNSPLASH_IDS.menu] || 
                   VALID_UNSPLASH_IDS.menu.default;
+  
+  return `https://images.unsplash.com/photo-${photoId}?w=400&h=300&fit=crop&crop=center`;
+}
+
+/**
+ * Generates image URL for businesses (restaurant/food business images)
+ * Uses valid Unsplash photo IDs for reliability
+ */
+export function generateBusinessImageUrl(business: BusinessData): string {
+  const businessType = extractBusinessType(business);
+  const photoId = VALID_UNSPLASH_IDS.business[businessType as keyof typeof VALID_UNSPLASH_IDS.business] || 
+                  VALID_UNSPLASH_IDS.business.default;
+  
+  return `https://images.unsplash.com/photo-${photoId}?w=600&h=400&fit=crop&crop=center`;
+}
+
+/**
+ * Generates image URL for menu categories (food category images)
+ * Uses valid Unsplash photo IDs for reliability
+ */
+export function generateCategoryImageUrl(category: CategoryData): string {
+  const categoryName = extractCategoryName(category);
+  const photoId = VALID_UNSPLASH_IDS.category[categoryName as keyof typeof VALID_UNSPLASH_IDS.category] || 
+                  VALID_UNSPLASH_IDS.category.default;
   
   return `https://images.unsplash.com/photo-${photoId}?w=400&h=300&fit=crop&crop=center`;
 }
