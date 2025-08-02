@@ -1,6 +1,7 @@
 import { Request, Response, RequestHandler } from 'express';
 import { logger } from '../utils/logger';
 import { ItemService } from '../services/itemService';
+import { BusinessService } from '../services/businessService';
 
 interface AuthRequest extends Request {
     user?: {
@@ -129,6 +130,14 @@ export class ItemController {
             }
 
             logger('API endpoint POST /items was called...');
+            
+            // Get business to determine currency
+            const business = await BusinessService.getBusinessById(req.user.businessId);
+            if (!business) {
+                res.status(404).json({ error: 'Business not found' });
+                return;
+            }
+            
             const newItem = await ItemService.createItem({
                 name,
                 description,
@@ -142,7 +151,7 @@ export class ItemController {
                 minStock: 0, // Add default minStock
                 maxStock: 1000, // Add default maxStock
                 businessId: req.user.businessId,
-                currencyId: 2, // Default to CRC (ID: 2)
+                currencyId: business.currencyId,
                 // Add dietary fields with defaults
                 isVegetarian: false,
                 isVegan: false,
