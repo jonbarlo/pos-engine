@@ -44,6 +44,14 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       allowNull: true,
       defaultValue: 'none',
     },
+    language: {
+      type: DataTypes.STRING(10),
+      allowNull: false,
+      defaultValue: 'es-CR',
+      validate: {
+        isIn: [['en-US', 'es-CR']]
+      }
+    },
     createdAt: {
       type: DataTypes.DATE,
       allowNull: false,

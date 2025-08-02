@@ -295,10 +295,22 @@ export class SaleService {
           const totalPrice = item.quantity * item.unitPrice;
           const finalPrice = totalPrice - discountAmount;
           
+          // Get the menu item to find its associated inventory item
+          const menuItem = await MenuItemModel.findByPk(item.itemId);
+          if (!menuItem) {
+            logger(`WARNING: Menu item ${item.itemId} not found, skipping sale item creation`);
+            return null;
+          }
+          
+          if (!menuItem.itemId) {
+            logger(`WARNING: Menu item ${item.itemId} has no associated inventory item, skipping sale item creation`);
+            return null;
+          }
+          
           const saleItemData = {
             businessId: saleData.businessId,
             saleId: sale.id,
-            itemId: item.itemId, // Use the menu item ID directly (original logic)
+            itemId: menuItem.itemId, // Use the inventory item ID from the menu item
             quantity: item.quantity,
             unitPrice: item.unitPrice,
             totalPrice: finalPrice,

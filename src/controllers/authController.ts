@@ -18,7 +18,10 @@ export class AuthController {
             role
         });
 
-        res.status(201).json(result);
+        res.status(201).json({
+            message: req.t('auth.register.success'),
+            data: result
+        });
     });
 
     public static login: RequestHandler = asyncHandler(async (req: Request, res: Response) => {
@@ -33,7 +36,10 @@ export class AuthController {
             businessSlug
         });
 
-        res.json(result);
+        res.json({
+            message: req.t('auth.login.success'),
+            data: result
+        });
     });
 
     public static getProfile: RequestHandler = asyncHandler(async (req: Request, res: Response) => {
@@ -46,6 +52,9 @@ export class AuthController {
         
         const result = await AuthService.getProfile(userId, businessId);
 
-        res.json(result);
+        res.json({
+            message: req.t('auth.profile.title'),
+            data: result
+        });
     });
 } 

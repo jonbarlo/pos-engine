@@ -17,6 +17,7 @@ export interface BusinessAttributes {
   timezone: string;
   isActive: boolean;
   type: 'generic' | 'restaurant';
+  defaultLanguage: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -42,6 +43,7 @@ export class BusinessModel extends Model<BusinessAttributes, BusinessCreationAtt
   public timezone!: string;
   public isActive!: boolean;
   public type!: 'generic' | 'restaurant';
+  public defaultLanguage!: string;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 
@@ -155,6 +157,14 @@ export const initializeBusinessModel = (sequelize: Sequelize): void => {
         type: DataTypes.ENUM('generic', 'restaurant'),
         allowNull: false,
         defaultValue: 'generic'
+      },
+      defaultLanguage: {
+        type: DataTypes.STRING(10),
+        allowNull: false,
+        defaultValue: 'en-US',
+        validate: {
+          isIn: [['en-US', 'es-CR']]
+        }
       },
       createdAt: {
         type: DataTypes.DATE,

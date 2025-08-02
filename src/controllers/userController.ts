@@ -19,7 +19,7 @@ export class UserController {
             logger('API endpoint /users was called...');
             
             if (!req.user?.businessId) {
-                res.status(401).json({ error: 'Authentication required' });
+                res.status(401).json({ error: req.t('errors.server.unauthorized') });
                 return;
             }
 
@@ -27,7 +27,7 @@ export class UserController {
             res.json(users);
         } catch (error) {
             logger(`Error getting users: ${error}`);
-            res.status(500).json({ error: 'Internal server error' });
+            res.status(500).json({ error: req.t('errors.server.internal') });
         }
     };
 
@@ -37,19 +37,19 @@ export class UserController {
             const { id } = req.params;
             
             if (!id) {
-                res.status(400).json({ error: 'User ID is required' });
+                res.status(400).json({ error: req.t('errors.validation.userIdRequired') });
                 return;
             }
             
             if (!req.user?.businessId) {
-                res.status(401).json({ error: 'Authentication required' });
+                res.status(401).json({ error: req.t('errors.server.unauthorized') });
                 return;
             }
             
             const userId = parseInt(id);
             
             if (isNaN(userId)) {
-                res.status(400).json({ error: 'Invalid user ID' });
+                res.status(400).json({ error: req.t('errors.validation.invalidUserId') });
                 return;
             }
 
@@ -57,14 +57,14 @@ export class UserController {
             const user = await UserService.getUserById(userId, req.user.businessId);
             
             if (!user) {
-                res.status(404).json({ error: 'User not found' });
+                res.status(404).json({ error: req.t('errors.server.userNotFound') });
                 return;
             }
 
             res.json(user);
         } catch (error) {
             logger(`Error getting user by ID: ${error}`);
-            res.status(500).json({ error: 'Internal server error' });
+            res.status(500).json({ error: req.t('errors.server.internal') });
         }
     };
 
@@ -102,7 +102,8 @@ export class UserController {
                 password, 
                 businessId: req.user.businessId,
                 role: role || 'cashier',
-                assignment: assignment || null
+                assignment: assignment || null,
+                language: 'es-CR'
             });
             res.status(201).json(newUser);
         } catch (error) {

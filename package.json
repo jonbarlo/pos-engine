@@ -69,7 +69,10 @@
     "swagger-ui-express": "^5.0.1",
     "tedious": "^18.6.1",
     "umzug": "^3.8.2",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "i18next": "^23.10.0",
+    "i18next-http-middleware": "^3.5.0",
+    "i18next-fs-backend": "^2.3.1"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
@@ -80,6 +83,7 @@
     "@types/node": "^24.0.4",
     "@types/sequelize": "^4.28.20",
     "@types/supertest": "^6.0.3",
+    "@types/i18next": "^13.0.0",
     "@typescript-eslint/eslint-plugin": "^8.35.0",
     "@typescript-eslint/parser": "^8.35.0",
     "basic-ftp": "^5.0.4",

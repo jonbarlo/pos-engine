@@ -26,6 +26,7 @@ export interface UserAttributes {
   role: UserRole;
   isActive: boolean;
   assignment?: KitchenAssignment | null;
+  language: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -44,6 +45,7 @@ export class UserModel extends Model<UserAttributes, UserCreationAttributes> imp
   public role!: UserRole;
   public isActive!: boolean;
   public assignment!: KitchenAssignment | null;
+  public language!: string;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 
@@ -116,6 +118,14 @@ export const initializeUserModel = (sequelize: Sequelize): void => {
         defaultValue: KitchenAssignment.NONE,
         validate: {
           isIn: [Object.values(KitchenAssignment)]
+        }
+      },
+      language: {
+        type: DataTypes.STRING(10),
+        allowNull: false,
+        defaultValue: 'en-US',
+        validate: {
+          isIn: [['en-US', 'es-CR']]
         }
       },
       createdAt: {

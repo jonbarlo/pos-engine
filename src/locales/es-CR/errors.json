@@ -1,0 +1,29 @@
+{
+  "errors": {
+    "validation": {
+      "required": "Este campo es requerido",
+      "invalid": "Valor inválido",
+      "minLength": "Longitud mínima es {{min}} caracteres",
+      "maxLength": "Longitud máxima es {{max}} caracteres",
+      "email": "Formato de correo electrónico inválido",
+      "password": "La contraseña debe tener al menos 8 caracteres",
+      "invalidLanguage": "Código de idioma inválido",
+      "userIdRequired": "Se requiere ID de usuario",
+      "invalidUserId": "ID de usuario inválido"
+    },
+    "server": {
+      "internal": "Error interno del servidor",
+      "notFound": "Recurso no encontrado",
+      "unauthorized": "Acceso no autorizado",
+      "userNotFound": "Usuario no encontrado",
+      "forbidden": "Acceso prohibido",
+      "badRequest": "Solicitud incorrecta",
+      "conflict": "Conflicto de recurso"
+    },
+    "database": {
+      "connection": "Error de conexión a la base de datos",
+      "query": "Error de consulta a la base de datos",
+      "constraint": "Violación de restricción de base de datos"
+    }
+  }
+} 

@@ -149,7 +149,8 @@ export class BusinessController {
                 taxRate: taxRate || 0, 
                 currencyId: currencyId || 2, // Default to CRC (ID: 2) 
                 timezone: timezone || 'UTC',
-                type: type || 'generic'
+                type: type || 'generic',
+                defaultLanguage: 'en-US'
             });
             res.status(201).json(newBusiness);
         } catch (error) {

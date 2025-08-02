@@ -12,6 +12,8 @@ import {
   requestLogger, 
   sanitizeRequest
 } from './middleware/security';
+import { initializeI18n } from './config/i18n';
+import { i18nMiddleware, detectLanguage } from './middleware/i18n';
 import cors from 'cors';
 
 // Load environment variables FIRST - only if we're not in Railway production
@@ -1088,6 +1090,9 @@ async function startServer() {
     // Initialize models and associations AFTER database connection
     initializeAllModels();
     
+    // Initialize i18n for multi-language support
+    await initializeI18n();
+    
     // NO SYNC - Use migrations instead of automatic table creation
     // await dbService.sync(false); // REMOVED - This conflicts with migrations
     
@@ -1119,6 +1124,13 @@ async function startServer() {
     const menuPdfRoutes = (await import('./routes/menuPdf')).default;
     const customMenuTemplateRoutes = (await import('./routes/customMenuTemplates')).default;
     const currencyRoutes = (await import('./routes/currencies')).default;
+    // i18n middleware for language detection and translation
+    app.use(detectLanguage);
+    app.use(i18nMiddleware);
+    
+    // Import language routes
+    const languageRoutes = (await import('./routes/language')).default;
+    
     // API routes
     app.use('/api/auth', authRoutes);
     app.use('/api/businesses', businessRoutes);
@@ -1145,6 +1157,7 @@ async function startServer() {
     app.use('/api/smart', recipeCookingRoutes);
     app.use('/api/ai', aiRecipeGenerationRoutes);
     app.use('/api/currencies', currencyRoutes);
+    app.use('/api/language', languageRoutes);
 
     // Mobile app compatibility routes
     // Alias for /api/messages to redirect to staff-messages

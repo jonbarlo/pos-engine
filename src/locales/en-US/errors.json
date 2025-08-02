@@ -1,0 +1,29 @@
+{
+  "errors": {
+    "validation": {
+      "required": "This field is required",
+      "invalid": "Invalid value",
+      "minLength": "Minimum length is {{min}} characters",
+      "maxLength": "Maximum length is {{max}} characters",
+      "email": "Invalid email format",
+      "password": "Password must be at least 8 characters",
+      "invalidLanguage": "Invalid language code",
+      "userIdRequired": "User ID is required",
+      "invalidUserId": "Invalid user ID"
+    },
+    "server": {
+      "internal": "Internal server error",
+      "notFound": "Resource not found",
+      "unauthorized": "Unauthorized access",
+      "userNotFound": "User not found",
+      "forbidden": "Access forbidden",
+      "badRequest": "Bad request",
+      "conflict": "Resource conflict"
+    },
+    "database": {
+      "connection": "Database connection error",
+      "query": "Database query error",
+      "constraint": "Database constraint violation"
+    }
+  }
+} 

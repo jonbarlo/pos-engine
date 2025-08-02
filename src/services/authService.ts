@@ -82,7 +82,8 @@ export class AuthService {
             email,
             password: hashedPassword,
             businessId: targetBusinessId,
-            role: role === 'admin' ? UserRole.ADMIN : UserRole.CASHIER
+            role: role === 'admin' ? UserRole.ADMIN : UserRole.CASHIER,
+            language: 'es-CR'
         });
 
         // Generate JWT token

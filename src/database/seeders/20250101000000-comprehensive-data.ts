@@ -215,9 +215,10 @@ let globalBarcodeCounter = 1;
     businessId: businesses[u.businessSlug],
     email: u.email,
     name: u.name,
-    password: '$2b$10$Lb4NxNI99C7aNkIu7tYlme2SHO3Jkktl0tDwaoFP1twBjgzSpQ1mW', // Password123
+    password: '$2b$10$qpi1h6HeARFxI2/MJSsaiOA9LrA4/xKvLFVv/lrf3AiM/bPIfiwZW', // Password123
     role: u.role,
     assignment: u.assignment,
+    language: 'es-CR',
     isActive: u.isActive,
     createdAt: new Date(),
     updatedAt: new Date()

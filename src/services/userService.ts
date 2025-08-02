@@ -200,4 +200,32 @@ export class UserService {
       throw error;
     }
   }
+
+  /**
+   * Update user language preference
+   */
+  static async updateLanguage(userId: number, language: string): Promise<void> {
+    try {
+      logger(`Updating language for user ${userId} to ${language}`);
+      const userRepository = getUserRepository();
+      await userRepository.update(userId, { language });
+    } catch (error) {
+      logger(`Error updating language for user ${userId}: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Get user by ID (for language controller)
+   */
+  static async getUserByIdForLanguage(userId: number): Promise<UserAttributes | null> {
+    try {
+      logger(`Getting user ${userId}`);
+      const userRepository = getUserRepository();
+      return await userRepository.findOne({ id: userId, isActive: true });
+    } catch (error) {
+      logger(`Error getting user ${userId}: ${error}`);
+      throw error;
+    }
+  }
 } 
