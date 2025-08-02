@@ -103,7 +103,11 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     }
   }
 
-  console.log('📋 Item maps created:', Object.keys(itemMaps).map(bizId => `${bizId}: ${Object.keys(itemMaps[bizId]).length} items`));
+  console.log('📋 Item maps created:', Object.keys(itemMaps).map((bizId: string) => {
+    const businessId = parseInt(bizId);
+    const itemMap = itemMaps[businessId];
+    return `${bizId}: ${itemMap ? Object.keys(itemMap).length : 0} items`;
+  }));
 
   // ===== PHASE 8: RECIPES AND PROMOTIONS =====
 
@@ -114,12 +118,14 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       businessSlug: 'italian-delight',
       name: 'Margherita Pizza',
       description: 'Classic Italian pizza with fresh mozzarella, tomato sauce, and basil',
+      ingredients: 'Fresh mozzarella, San Marzano tomatoes, fresh basil, extra virgin olive oil, 00 flour',
       instructions: '1. Prepare pizza dough\n2. Spread tomato sauce\n3. Add fresh mozzarella\n4. Bake at 450°F for 12-15 minutes\n5. Garnish with fresh basil',
       servings: 4,
       prepTime: 30,
       cookTime: 15,
       difficulty: 'medium',
       cuisine: 'Italian',
+      category: 'Pizza',
       tags: ['pizza', 'vegetarian', 'classic'],
       nutritionInfo: calculateNutrition(['fresh basil', 'cherry tomatoes'], 4)
     },
@@ -127,33 +133,72 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       businessSlug: 'italian-delight',
       name: 'Spaghetti Carbonara',
       description: 'Traditional Roman pasta with eggs, cheese, pancetta, and black pepper',
+      ingredients: '00 flour, fresh mozzarella, extra virgin olive oil, eggs, pancetta, black pepper',
       instructions: '1. Cook spaghetti al dente\n2. Cook pancetta until crispy\n3. Beat eggs with cheese\n4. Combine pasta with egg mixture\n5. Add black pepper to taste',
       servings: 2,
       prepTime: 15,
       cookTime: 20,
       difficulty: 'medium',
       cuisine: 'Italian',
+      category: 'Pasta',
       tags: ['pasta', 'carbonara', 'traditional'],
       nutritionInfo: calculateNutrition(['premium black truffle pasta'], 2)
     }
   ];
 
-  await queryInterface.bulkInsert('recipes', recipeData.map(r => ({
-    businessId: businessMap[r.businessSlug],
-    name: r.name,
-    description: r.description,
-    instructions: r.instructions,
-    servings: r.servings,
-    prepTime: r.prepTime,
-    cookTime: r.cookTime,
-    difficulty: r.difficulty,
-    cuisine: r.cuisine,
-    tags: JSON.stringify(r.tags),
-    nutritionInfo: r.nutritionInfo,
-    isActive: true,
-    createdAt: new Date(),
-    updatedAt: new Date()
-  })));
+  // Check if recipes already exist
+  const existingRecipes = await queryInterface.sequelize.query(
+    'SELECT businessId, name FROM recipes WHERE businessId = ?',
+    { type: QueryTypes.SELECT, replacements: [businessMap['italian-delight']] }
+  ) as any[];
+
+  console.log('🔍 Existing recipes found:', existingRecipes);
+
+  const existingRecipeNames = existingRecipes.map((r: any) => r.name);
+  const newRecipes = recipeData.filter(r => !existingRecipeNames.includes(r.name));
+  
+  if (newRecipes.length > 0) {
+    try {
+      console.log(`🔍 Attempting to insert ${newRecipes.length} recipes...`);
+      const recipesToInsert = newRecipes.map(r => ({
+        businessId: businessMap[r.businessSlug],
+        name: r.name,
+        description: r.description,
+        ingredients: r.ingredients,
+        instructions: r.instructions,
+        servings: r.servings,
+        prepTime: r.prepTime,
+        cookTime: r.cookTime,
+        difficulty: r.difficulty,
+        cuisine: r.cuisine,
+        category: r.category,
+        nutritionInfo: r.nutritionInfo,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }));
+      
+      console.log('🔍 Recipe data to insert:', JSON.stringify(recipesToInsert, null, 2));
+      
+      await queryInterface.bulkInsert('recipes', recipesToInsert);
+      console.log(`✅ Created ${newRecipes.length} new recipes`);
+    } catch (error: any) {
+      console.error('❌ Error inserting recipes:', error);
+      console.error('❌ Error details:', error.message);
+      if (error.parent) {
+        console.error('❌ Parent error:', error.parent.message);
+        if (error.parent.errors) {
+          console.error('❌ Child errors:', error.parent.errors.map((e: any) => e.message));
+        }
+      }
+      if (error.sql) {
+        console.error('❌ SQL that failed:', error.sql);
+      }
+      throw error;
+    }
+  } else {
+    console.log('✅ Recipes already exist, skipping creation');
+  }
 
   // Query recipes by name and business for IDs
   const recipes: { [key: string]: number } = {};
@@ -184,9 +229,19 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
 
   const recipeIngredientsToInsert = recipeIngredientData.map(ri => {
     const recipeId = recipes[ri.recipeKey];
-    const businessSlug = ri.recipeKey.split('-')[0];
+    // Fix: Extract business slug properly from recipe key
+    const businessSlug = ri.recipeKey.split('-')[0] + '-' + ri.recipeKey.split('-')[1];
+    if (!businessSlug) {
+      console.log(`⚠️ Invalid recipe key format: ${ri.recipeKey}`);
+      return null;
+    }
     const businessId = businessMap[businessSlug];
-    const itemId = businessId && itemMaps[businessId] ? (itemMaps[businessId] as { [name: string]: number })[ri.itemName.toLowerCase()] : undefined;
+    if (!businessId) {
+      console.log(`⚠️ Business not found for slug: ${businessSlug}`);
+      return null;
+    }
+    const itemMap = itemMaps[businessId];
+    const itemId = itemMap ? itemMap[ri.itemName.toLowerCase()] : undefined;
     
     if (!recipeId) {
       throw new Error(`Recipe not found for key: ${ri.recipeKey}`);
@@ -235,10 +290,13 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
 
   await queryInterface.bulkInsert('recipe_suggestions', recipeSuggestionData.map(rs => ({
     recipeId: recipes[rs.recipeKey],
-    businessId: businessMap[rs.businessSlug],
-    suggestion: rs.suggestion,
-    type: rs.type,
+    businessId: businessMap[rs.businessSlug] || 0,
+    suggestionType: rs.type,
+    reason: rs.suggestion,
     priority: rs.priority,
+    targetAudience: 'chefs',
+    aiGenerated: false,
+    status: 'pending',
     isActive: true,
     createdAt: new Date(),
     updatedAt: new Date()

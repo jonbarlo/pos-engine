@@ -85,8 +85,8 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       name: 'Truffle Oil (Underperforming)',
       description: 'Premium black truffle oil',
       category: 'oils',
-      sku: generateSku('IT', 1000),
-      barcode: generateBarcode('IT', 1000),
+             sku: generateSku('IT', 1000),
+       barcode: generateBarcode('IT', 1000),
       price: 23.40,
       cost: 18.00,
       stock: 8,
@@ -192,7 +192,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     'SELECT id, name, sku FROM items WHERE sku IN (?)',
     { type: QueryTypes.SELECT, replacements: [newItemSkus] }
   ) as any[];
-
+  
   console.log(`✅ Verified ${createdItems.length} items were created successfully`);
   console.log('📦 Created items:', createdItems.map(item => `${item.name} (${item.sku})`));
 

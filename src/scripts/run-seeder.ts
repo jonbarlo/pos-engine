@@ -19,8 +19,8 @@ async function runSeeder() {
     // Define all seeders in order
     const seeders = [
       '20250101000000-comprehensive-data',      
-      //'20250101000005-comprehensive-items',
-      //'20250101000004-comprehensive-recipes'
+      '20250101000005-comprehensive-items',
+      '20250101000004-comprehensive-recipes'
     ];
     
     for (const seederName of seeders) {

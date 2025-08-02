@@ -36,7 +36,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   console.log('🚀 Starting comprehensive data seeder with proper foreign key order...');
 
   // Global counter for unique SKUs/barcodes
-  let globalBarcodeCounter = 1;
+let globalBarcodeCounter = 1;
 
   // ===== PHASE 1: FOUNDATION DATA =====
   
@@ -52,15 +52,15 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     'SELECT code FROM currencies WHERE code IN (?, ?)',
     { type: QueryTypes.SELECT, replacements: ['USD', 'CRC'] }
   ) as any[];
-  
+
   const existingCodes = existingCurrencies.map((c: any) => c.code);
   const newCurrencies = currencyData.filter(c => !existingCodes.includes(c.code));
   
   if (newCurrencies.length > 0) {
     await queryInterface.bulkInsert('currencies', newCurrencies.map(c => ({
       ...c,
-      createdAt: new Date(),
-      updatedAt: new Date()
+        createdAt: new Date(),
+        updatedAt: new Date()
     })));
     console.log(`✅ Created ${newCurrencies.length} new currencies`);
   } else {
@@ -71,9 +71,9 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   const currencies: { [key: string]: number } = {};
   for (const currency of currencyData) {
     const [curr] = await queryInterface.sequelize.query(
-      'SELECT id FROM currencies WHERE code = ?',
+    'SELECT id FROM currencies WHERE code = ?',
       { type: QueryTypes.SELECT, replacements: [currency.code] }
-    ) as any[];
+  ) as any[];
     currencies[currency.code] = curr.id;
   }
   console.log('✅ Currencies created:', currencies);
@@ -90,7 +90,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     'SELECT fromCurrencyId, toCurrencyId FROM exchange_rates WHERE (fromCurrencyId = ? AND toCurrencyId = ?) OR (fromCurrencyId = ? AND toCurrencyId = ?)',
     { type: QueryTypes.SELECT, replacements: [currencies['USD'], currencies['CRC'], currencies['CRC'], currencies['USD']] }
   ) as any[];
-  
+
   const existingRatePairs = existingExchangeRates.map((er: any) => `${er.fromCurrencyId}-${er.toCurrencyId}`);
   const newExchangeRates = exchangeRateData.filter(er => 
     !existingRatePairs.includes(`${er.fromCurrencyId}-${er.toCurrencyId}`)
@@ -189,13 +189,21 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       role: 'cashier',
       assignment: 'none',
       isActive: true
+    },
+    {
+      businessSlug: 'italian-delight',
+      email: 'carlo@italiandelight.com',
+      name: 'Carlo Admin',
+      role: 'admin',
+      assignment: 'none',
+      isActive: true
     }
   ];
   await queryInterface.bulkInsert('users', userData.map(u => ({
     businessId: businesses[u.businessSlug],
     email: u.email,
     name: u.name,
-    password: '$2b$10$dummy.hash.for.testing', // Required field - dummy hash for testing
+    password: '$2b$10$Lb4NxNI99C7aNkIu7tYlme2SHO3Jkktl0tDwaoFP1twBjgzSpQ1mW', // Password123
     role: u.role,
     assignment: u.assignment,
     isActive: u.isActive,
@@ -300,20 +308,20 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
 
   const itemsToInsert = itemData.map(i => ({
     businessId: businesses[i.businessSlug],
-    name: i.name,
-    description: i.description,
-    price: i.price,
-    cost: i.cost,
-    sku: i.sku,
-    barcode: i.barcode,
+      name: i.name,
+      description: i.description,
+      price: i.price,
+      cost: i.cost,
+      sku: i.sku,
+      barcode: i.barcode,
     stock: i.stock,
     minStock: 5,
     maxStock: 50,
-    unit: i.unit,
+      unit: i.unit,
     category: i.category,
     currencyId: currencies['CRC'],
     allergens: JSON.stringify([]),
-    isActive: true,
+      isActive: true,
     isPerishable: false,
     isUnderperforming: false,
     isExpiringSoon: false,
@@ -321,8 +329,8 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     isVegan: false,
     isGlutenFree: false,
     isSpicy: false,
-    createdAt: new Date(),
-    updatedAt: new Date()
+      createdAt: new Date(),
+      updatedAt: new Date()
   }));
   await queryInterface.bulkInsert('items', itemsToInsert);
 
@@ -361,7 +369,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       description: item.description
     })
   }));
-
+  
   const menuItemsToInsert = menuItemDataWithImages.map(mi => {
     const categoryId = menuCategories[mi.categoryKey];
     
@@ -391,7 +399,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       updatedAt: new Date()
     };
   });
-
+  
   await queryInterface.bulkInsert('menu_items', menuItemsToInsert);
 
   // Query menu items by sku for IDs
@@ -521,21 +529,21 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   });
 
   await queryInterface.bulkInsert('orders', orderData.map(o => ({
-    businessId: businesses[o.businessSlug],
+      businessId: businesses[o.businessSlug],
     tableId: tables[o.tableKey],
     serverId: users[o.serverEmail],
     customerId: customers[o.customerEmail],
-    orderNumber: o.orderNumber,
-    status: o.status,
+      orderNumber: o.orderNumber,
+      status: o.status,
     orderType: 'dine_in',
     subtotal: o.totalAmount,
-    totalAmount: o.totalAmount,
+      totalAmount: o.totalAmount,
     taxAmount: 0.00,
     discountAmount: 0.00,
     tipAmount: 0.00,
     currencyId: o.currencyId,
-    createdAt: new Date(),
-    updatedAt: new Date()
+      createdAt: new Date(),
+      updatedAt: new Date()
   })));
 
   // Query orders by order number for IDs
@@ -734,17 +742,17 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       saleId: saleId,
       itemId: itemId,
       currencyId: currencies['CRC'],
-      quantity: si.quantity,
-      unitPrice: si.unitPrice,
-      totalPrice: si.totalPrice,
-      discountAmount: 0.00,
-      finalPrice: si.totalPrice,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+        quantity: si.quantity,
+        unitPrice: si.unitPrice,
+        totalPrice: si.totalPrice,
+        discountAmount: 0.00,
+        finalPrice: si.totalPrice,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
     
     console.log(`🔍 DEBUG - Insert data for ${si.itemSku}:`, insertData);
-    
+
     return insertData;
   }));
   console.log('✅ Sale items created');
