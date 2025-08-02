@@ -8,7 +8,7 @@ import { Op } from 'sequelize';
  * Format: {BUSINESS_CODE}-{YEAR}-{SEQUENTIAL_NUMBER}
  * Example: IT-2024-001, IT-2024-002
  */
-export async function generateOrderNumber(businessId: number, businessCode?: string): Promise<string> {
+export async function generateOrderNumber(businessId: number, businessCode?: string, counter?: number): Promise<string> {
   try {
     const currentYear = new Date().getFullYear();
     let businessPrefix = businessCode || 'BIZ';
@@ -33,28 +33,8 @@ export async function generateOrderNumber(businessId: number, businessCode?: str
       }
     }
     
-    // Get the last order number for this business in the current year
-    const lastOrder = await OrderModel.findOne({
-      where: {
-        businessId,
-        orderNumber: {
-          [Op.like]: `${businessPrefix}-${currentYear}-%`
-        }
-      },
-      order: [['orderNumber', 'DESC']],
-      attributes: ['orderNumber']
-    });
-
-    let nextNumber = 1;
+    let nextNumber = counter || 1;
     
-    if (lastOrder && lastOrder.orderNumber) {
-      // Extract the number from the last order number
-      const match = lastOrder.orderNumber.match(new RegExp(`${businessPrefix}-${currentYear}-(\\d+)`));
-      if (match && match[1]) {
-        nextNumber = parseInt(match[1], 10) + 1;
-      }
-    }
-
     // Format the number with leading zeros (3 digits)
     const formattedNumber = nextNumber.toString().padStart(3, '0');
     const orderNumber = `${businessPrefix}-${currentYear}-${formattedNumber}`;
@@ -63,11 +43,21 @@ export async function generateOrderNumber(businessId: number, businessCode?: str
     return orderNumber;
   } catch (error) {
     logger(`Error generating order number: ${error}`);
-    // Fallback to timestamp-based number if there's an error
-    const timestamp = Date.now();
+    // Fallback to counter-based number if there's an error
     const businessPrefix = businessCode || 'BIZ';
-    return `${businessPrefix}-${timestamp}`;
+    const fallbackCounter = counter || 1;
+    return `${businessPrefix}-${fallbackCounter}`;
   }
+}
+
+/**
+ * Generates a simple order number for seeders (synchronous)
+ * Format: {BUSINESS_CODE}-ORD-{SEQUENTIAL_NUMBER}
+ * Example: IT-ORD-001, IT-ORD-002
+ */
+export function generateSeederOrderNumber(businessCode: string, counter: number): string {
+  const formattedNumber = counter.toString().padStart(3, '0');
+  return `${businessCode}-ORD-${formattedNumber}`;
 }
 
 /**

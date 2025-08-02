@@ -73,7 +73,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   const businesses = await queryInterface.sequelize.query(
     'SELECT id, slug FROM businesses WHERE slug IN (?)',
     { type: QueryTypes.SELECT, replacements: ['italian-delight'] }
-    ) as any[];
+  ) as any[];
 
   const businessMap: { [slug: string]: number } = {};
   for (const business of businesses) {
@@ -101,316 +101,160 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     if (item.name) {
       itemMaps[businessId][(item.name as string).toLowerCase()] = item.id;
     }
-    if (item.sku) {
-      itemMaps[businessId][(item.sku as string).toLowerCase()] = item.id;
-    }
   }
 
-  // Create comprehensive recipes - THOUSANDS of REAL recipes using ACTUAL ingredients
-  const comprehensiveRecipes: any[] = [];
+  console.log('📋 Item maps created:', Object.keys(itemMaps).map(bizId => `${bizId}: ${Object.keys(itemMaps[bizId]).length} items`));
 
-  // Group items by business and category for REAL recipe creation
-  const itemsByBusiness: { [businessId: number]: any[] } = {};
-  for (const item of allItems) {
-    if (!item.businessId) continue;
-    const businessId = item.businessId as number;
-    if (!itemsByBusiness[businessId]) {
-      itemsByBusiness[businessId] = [];
+  // ===== PHASE 8: RECIPES AND PROMOTIONS =====
+
+  // 20. Recipes
+  console.log('📖 Creating recipes...');
+  const recipeData = [
+    {
+      businessSlug: 'italian-delight',
+      name: 'Margherita Pizza',
+      description: 'Classic Italian pizza with fresh mozzarella, tomato sauce, and basil',
+      instructions: '1. Prepare pizza dough\n2. Spread tomato sauce\n3. Add fresh mozzarella\n4. Bake at 450°F for 12-15 minutes\n5. Garnish with fresh basil',
+      servings: 4,
+      prepTime: 30,
+      cookTime: 15,
+      difficulty: 'medium',
+      cuisine: 'Italian',
+      tags: ['pizza', 'vegetarian', 'classic'],
+      nutritionInfo: calculateNutrition(['fresh basil', 'cherry tomatoes'], 4)
+    },
+    {
+      businessSlug: 'italian-delight',
+      name: 'Spaghetti Carbonara',
+      description: 'Traditional Roman pasta with eggs, cheese, pancetta, and black pepper',
+      instructions: '1. Cook spaghetti al dente\n2. Cook pancetta until crispy\n3. Beat eggs with cheese\n4. Combine pasta with egg mixture\n5. Add black pepper to taste',
+      servings: 2,
+      prepTime: 15,
+      cookTime: 20,
+      difficulty: 'medium',
+      cuisine: 'Italian',
+      tags: ['pasta', 'carbonara', 'traditional'],
+      nutritionInfo: calculateNutrition(['premium black truffle pasta'], 2)
     }
-    itemsByBusiness[businessId].push(item);
+  ];
+
+  await queryInterface.bulkInsert('recipes', recipeData.map(r => ({
+    businessId: businessMap[r.businessSlug],
+    name: r.name,
+    description: r.description,
+    instructions: r.instructions,
+    servings: r.servings,
+    prepTime: r.prepTime,
+    cookTime: r.cookTime,
+    difficulty: r.difficulty,
+    cuisine: r.cuisine,
+    tags: JSON.stringify(r.tags),
+    nutritionInfo: r.nutritionInfo,
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  })));
+
+  // Query recipes by name and business for IDs
+  const recipes: { [key: string]: number } = {};
+  for (const recipe of recipeData) {
+    const [rec] = await queryInterface.sequelize.query(
+      'SELECT id FROM recipes WHERE businessId = ? AND name = ?',
+      { type: QueryTypes.SELECT, replacements: [businessMap[recipe.businessSlug], recipe.name] }
+    ) as any[];
+    recipes[`${recipe.businessSlug}-${recipe.name}`] = rec.id;
+  }
+  console.log('✅ Recipes created:', recipes);
+
+  // 21. Recipe Ingredients
+  console.log('🥘 Creating recipe ingredients...');
+  const recipeIngredientData = [
+    // Margherita Pizza ingredients
+    { recipeKey: 'italian-delight-Margherita Pizza', itemName: 'Fresh Mozzarella', quantity: 200, unit: 'g', notes: 'Fresh mozzarella, torn into pieces' },
+    { recipeKey: 'italian-delight-Margherita Pizza', itemName: 'San Marzano Tomatoes', quantity: 150, unit: 'g', notes: 'Crushed tomatoes for sauce' },
+    { recipeKey: 'italian-delight-Margherita Pizza', itemName: 'Fresh Basil', quantity: 10, unit: 'g', notes: 'Fresh basil leaves for garnish' },
+    { recipeKey: 'italian-delight-Margherita Pizza', itemName: 'Extra Virgin Olive Oil', quantity: 30, unit: 'ml', notes: 'For drizzling' },
+    { recipeKey: 'italian-delight-Margherita Pizza', itemName: '00 Flour', quantity: 300, unit: 'g', notes: 'For pizza dough' },
+    
+    // Spaghetti Carbonara ingredients
+    { recipeKey: 'italian-delight-Spaghetti Carbonara', itemName: '00 Flour', quantity: 200, unit: 'g', notes: 'For pasta dough' },
+    { recipeKey: 'italian-delight-Spaghetti Carbonara', itemName: 'Fresh Mozzarella', quantity: 100, unit: 'g', notes: 'Grated cheese' },
+    { recipeKey: 'italian-delight-Spaghetti Carbonara', itemName: 'Extra Virgin Olive Oil', quantity: 15, unit: 'ml', notes: 'For cooking' }
+  ];
+
+  const recipeIngredientsToInsert = recipeIngredientData.map(ri => {
+    const recipeId = recipes[ri.recipeKey];
+    const businessSlug = ri.recipeKey.split('-')[0];
+    const businessId = businessMap[businessSlug];
+    const itemId = businessId && itemMaps[businessId] ? (itemMaps[businessId] as { [name: string]: number })[ri.itemName.toLowerCase()] : undefined;
+    
+    if (!recipeId) {
+      throw new Error(`Recipe not found for key: ${ri.recipeKey}`);
+    }
+    if (!itemId) {
+      console.log(`⚠️ Item not found: ${ri.itemName} for business ${businessId}. Available items: ${businessId ? Object.keys(itemMaps[businessId] || {}).join(', ') : 'none'}`);
+      return null; // Skip this ingredient if item doesn't exist
+    }
+    
+    return {
+      recipeId: recipeId,
+      itemId: itemId,
+      quantity: ri.quantity,
+      unit: ri.unit,
+      notes: ri.notes,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+  }).filter((item): item is NonNullable<typeof item> => item !== null); // Remove null entries with proper typing
+
+  if (recipeIngredientsToInsert.length > 0) {
+    await queryInterface.bulkInsert('recipe_ingredients', recipeIngredientsToInsert);
+    console.log(`✅ Recipe ingredients created: ${recipeIngredientsToInsert.length} ingredients`);
+  } else {
+    console.log('⚠️ No recipe ingredients created - no matching items found');
   }
 
-  // REAL RECIPE TEMPLATES using actual ingredients
-  const realRecipeTemplates = {
-    'italian-delight': [
-      {
-        name: 'Truffle Pasta with Wagyu Beef',
-        mainIngredients: ['Premium Black Truffle Pasta', 'Wagyu Beef (Premium)'],
-        supportingIngredients: ['Fresh Basil', 'Cherry Tomatoes', 'Truffle Oil (Underperforming)'],
-        instructions: 'Cook Premium Black Truffle Pasta al dente. Sear Wagyu Beef to medium-rare. Toss pasta with Fresh Basil, Cherry Tomatoes, and Truffle Oil. Top with sliced Wagyu Beef.',
-        prepTime: 15,
-        cookTime: 20,
-        servings: 2,
-        difficulty: 'hard',
-        cuisine: 'Italian',
-        category: 'Pasta',
-        nutritionInfo: 'Calories: 850, Protein: 45g, Carbs: 60g, Fat: 35g',
-        imageUrl: 'https://images.unsplash.com/photo-1621996346565-e3dbc353d946',
-        isActive: true
-      },
-      {
-        name: 'Lobster Ravioli with Saffron Sauce',
-        mainIngredients: ['Premium Lobster Ravioli'],
-        supportingIngredients: ['Premium Saffron (Underperforming)', 'Fresh Basil'],
-        instructions: 'Boil Premium Lobster Ravioli until floating. Create sauce with Premium Saffron, Fresh Basil, and butter. Toss ravioli in saffron sauce.',
-        prepTime: 10,
-        cookTime: 15,
-        servings: 4,
-        difficulty: 'medium',
-        cuisine: 'Italian',
-        category: 'Pasta',
-        nutritionInfo: 'Calories: 650, Protein: 28g, Carbs: 45g, Fat: 32g',
-        imageUrl: 'https://images.unsplash.com/photo-1563379091339-03246963d958',
-        isActive: true
-      },
-      {
-        name: 'Wagyu Beef Carpaccio',
-        mainIngredients: ['Wagyu Beef (Premium)'],
-        supportingIngredients: ['Truffle Oil (Underperforming)', 'Fresh Basil', 'Cherry Tomatoes'],
-        instructions: 'Thinly slice Wagyu Beef. Arrange on plate. Drizzle with Truffle Oil. Garnish with Fresh Basil and Cherry Tomatoes.',
-        prepTime: 20,
-        cookTime: 0,
-        servings: 6,
-        difficulty: 'medium',
-        cuisine: 'Italian',
-        category: 'Appetizer',
-        nutritionInfo: 'Calories: 320, Protein: 35g, Carbs: 5g, Fat: 18g',
-        imageUrl: 'https://images.unsplash.com/photo-1544025162-d76694265947',
-        isActive: true
-      }
-    ]
-  };
-
-    // Generate LOTS of recipes using templates + available items
-  
-  for (const [businessSlug, businessId] of Object.entries(businessMap)) {
-    const businessIdNum = businessId as number;
-    const businessItems = itemsByBusiness[businessIdNum] || [];
-    
-    if (businessItems.length === 0) {
-      console.log(`⚠️ No items found for business ${businessSlug}, skipping...`);
-      continue;
+  // 22. Recipe Suggestions
+  console.log('💡 Creating recipe suggestions...');
+  const recipeSuggestionData = [
+    {
+      recipeKey: 'italian-delight-Margherita Pizza',
+      businessSlug: 'italian-delight',
+      suggestion: 'Try adding fresh arugula after baking for a peppery kick',
+      type: 'enhancement',
+      priority: 'medium'
+    },
+    {
+      recipeKey: 'italian-delight-Spaghetti Carbonara',
+      businessSlug: 'italian-delight',
+      suggestion: 'Add a pinch of red pepper flakes for extra heat',
+      type: 'enhancement',
+      priority: 'low'
     }
+  ];
 
-    // Get templates for this business
-    const templates = realRecipeTemplates[businessSlug as keyof typeof realRecipeTemplates] || [];
-    
-    // Create MANY recipes (800+ per business)
-    const recipesPerBusiness = Math.min(800, businessItems.length * 2);
-    
-    for (let i = 0; i < recipesPerBusiness; i++) {
-      let recipe;
-      
-      // First create template-based recipes
-      if (i < templates.length) {
-        const template = templates[i];
-        
-        if (template) {
-          // Get all template ingredients
-          const allTemplateIngredients = [...template.mainIngredients, ...template.supportingIngredients];
-          
-          // Find actual items that match template ingredients
-          const matchedIngredients = allTemplateIngredients
-            .map(ingredientName => {
-              const item = businessItems.find(item => 
-                item.name && item.name.toLowerCase().includes(ingredientName.toLowerCase())
-              );
-              return item;
-            })
-            .filter(Boolean);
-          
-          if (matchedIngredients.length > 0) {
-            // Create recipe from template - ALL COLUMNS EXPLICITLY DEFINED
-            recipe = {
-              businessId: businessIdNum,
-              name: template.name,
-              description: `Authentic ${businessSlug === 'italian-delight' ? 'Italian' : businessSlug === 'sushi-master' ? 'Japanese' : 'Coffee'} recipe using premium ingredients.`,
-              ingredients: matchedIngredients.map(item => item.name).join(', '),
-              instructions: template.instructions,
-              prepTime: template.prepTime,
-              cookTime: template.cookTime,
-              servings: template.servings || 2,
-              difficulty: template.difficulty || 'medium',
-              cuisine: template.cuisine || (businessSlug === 'italian-delight' ? 'Italian' : businessSlug === 'sushi-master' ? 'Japanese' : 'Coffee'),
-              category: template.category || (businessSlug === 'italian-delight' ? 'Pasta' : businessSlug === 'sushi-master' ? 'Sushi' : 'Coffee'),
-              nutritionInfo: template.nutritionInfo || calculateNutrition([...template.mainIngredients, ...template.supportingIngredients], template.servings || 2),
-              imageUrl: template.imageUrl || 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b',
-              isActive: template.isActive !== undefined ? template.isActive : true,
-              createdAt: new Date(),
-              updatedAt: new Date()
-            };
-          }
-        }
-      }
-      
-      // If no template recipe created, create one from available items
-      if (!recipe) {
-        const availableItems = businessItems.filter(item => item.category && item.category !== 'beverages');
-        const mainItem = availableItems[Math.floor(Math.random() * availableItems.length)];
-        const supportingItems = availableItems.filter(item => item.id !== mainItem.id).slice(0, 3);
-        
-        if (!mainItem) continue;
-        
-        // Create diverse recipe names based on cuisine
-        const cuisineSuffixes = {
-          'italian-delight': ['Pasta', 'Risotto', 'Pizza', 'Antipasto', 'Primi Piatti']
-        };
-        
-        const suffixes = cuisineSuffixes[businessSlug as keyof typeof cuisineSuffixes] || ['Specialty'];
-        const suffix = suffixes[Math.floor(Math.random() * suffixes.length)];
-        const servings = 1 + Math.floor(Math.random() * 4);
-        
-        // Create random recipe - ALL COLUMNS EXPLICITLY DEFINED
-        recipe = {
-          businessId: businessIdNum,
-          name: `${mainItem.name} ${suffix}`,
-          description: `Authentic Italian recipe using premium ingredients.`,
-          ingredients: [mainItem, ...supportingItems].map(item => item.name).join(', '),
-          instructions: `Prepare ${mainItem.name} with ${supportingItems.map(item => item.name).join(', ')}. Cook to perfection.`,
-          prepTime: 10 + Math.floor(Math.random() * 20),
-          cookTime: 15 + Math.floor(Math.random() * 30),
-          servings: servings,
-          difficulty: ['easy', 'medium', 'hard'][Math.floor(Math.random() * 3)] as 'easy' | 'medium' | 'hard',
-          cuisine: 'Italian',
-          category: 'Pasta',
-          nutritionInfo: calculateNutrition([mainItem, ...supportingItems].map(item => item.name), servings),
-          imageUrl: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b',
-          isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        };
-      }
-      
-      comprehensiveRecipes.push(recipe);
-    }
-  }
+  await queryInterface.bulkInsert('recipe_suggestions', recipeSuggestionData.map(rs => ({
+    recipeId: recipes[rs.recipeKey],
+    businessId: businessMap[rs.businessSlug],
+    suggestion: rs.suggestion,
+    type: rs.type,
+    priority: rs.priority,
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  })));
+  console.log('✅ Recipe suggestions created');
 
-  console.log(`🍳 Total recipes created: ${comprehensiveRecipes.length}`);
-
-  // Insert recipes in chunks
-  if (comprehensiveRecipes.length > 0) {
-    console.log(`🍳 Inserting ${comprehensiveRecipes.length} recipes in chunks...`);
-    
-    const chunkSize = 100;
-    for (let i = 0; i < comprehensiveRecipes.length; i += chunkSize) {
-      const chunk = comprehensiveRecipes.slice(i, i + chunkSize);
-      await queryInterface.bulkInsert('recipes', chunk);
-      console.log(`🍳 Inserted recipe chunk ${Math.floor(i / chunkSize) + 1}/${Math.ceil(comprehensiveRecipes.length / chunkSize)}`);
-    }
-  }
-
-  // 🔗 Create Recipe Ingredients (N:N relationship) for comprehensive recipes
-  console.log('🔗 Creating recipe-ingredient relationships for comprehensive recipes...');
-
-  // Get all existing items for mapping
-  const allItemsForIngredients = await queryInterface.sequelize.query(
-    'SELECT id, businessId, name, sku FROM items WHERE businessId IS NOT NULL',
-    { type: QueryTypes.SELECT }
-  ) as any[];
-
-  // Create item lookup maps by business
-  const itemMapsForIngredients: { [businessId: number]: { [name: string]: number } } = {};
-  for (const item of allItemsForIngredients) {
-    if (!item.businessId) continue;
-    const businessId = item.businessId as number;
-    if (!itemMapsForIngredients[businessId]) {
-      itemMapsForIngredients[businessId] = {};
-    }
-    if (item.name) {
-      itemMapsForIngredients[businessId][(item.name as string).toLowerCase()] = item.id;
-    }
-    if (item.sku) {
-      itemMapsForIngredients[businessId][(item.sku as string).toLowerCase()] = item.id;
-    }
-  }
-
-  // Get the recipes we just created with their business info
-  const createdRecipes = await queryInterface.sequelize.query(
-    `SELECT r.id, r.businessId, r.name, r.ingredients, b.slug as businessSlug 
-     FROM recipes r 
-     JOIN businesses b ON r.businessId = b.id 
-     WHERE r.createdAt >= ? AND b.slug IN (?)`,
-    { type: QueryTypes.SELECT, replacements: [new Date(Date.now() - 60000), 'italian-delight'] }
-  ) as any[];
-
-  // Create recipe ingredients using the actual ingredients from recipe creation
-  const recipeIngredients: any[] = [];
-
-  for (const recipe of createdRecipes) {
-    const businessId = recipe.businessId;
-    const itemMap = itemMapsForIngredients[businessId];
-    
-    if (!itemMap) {
-      console.log(`⚠️ No item map for business ${businessId}, skipping recipe ${recipe.id}`);
-      continue;
-    }
-
-    // Parse the ingredients string from the recipe to get the actual items used
-    const ingredientNames = recipe.ingredients.split(', ').map((name: string) => name.trim());
-    
-    // Find the actual item IDs for each ingredient
-    for (const ingredientName of ingredientNames) {
-      const itemId = itemMap[ingredientName.toLowerCase()];
-      
-      if (!itemId) {
-        console.log(`⚠️ Item "${ingredientName}" not found for recipe "${recipe.name}"`);
-        continue;
-      }
-
-      const recipeIngredient = {
-        recipeId: recipe.id,
-        itemId: itemId,
-        quantity: 1 + Math.floor(Math.random() * 3), // 1-3 pieces
-        unit: 'pieces',
-        notes: `Essential ingredient for ${recipe.name}`,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-      recipeIngredients.push(recipeIngredient);
-    }
-  }
-
-  // Insert recipe ingredients in chunks with error handling
-  if (recipeIngredients.length > 0) {
-    console.log(`🔗 Inserting ${recipeIngredients.length} recipe-ingredient relationships in chunks...`);
-    
-    const ingredientChunkSize = 100;
-    for (let i = 0; i < recipeIngredients.length; i += ingredientChunkSize) {
-      const chunk = recipeIngredients.slice(i, i + ingredientChunkSize);
-      try {
-        await queryInterface.bulkInsert('recipe_ingredients', chunk);
-        console.log(`🔗 Inserted ingredient chunk ${Math.floor(i / ingredientChunkSize) + 1}/${Math.ceil(recipeIngredients.length / ingredientChunkSize)}`);
-      } catch (error) {
-        console.log(`⚠️ Error inserting ingredient chunk ${Math.floor(i / ingredientChunkSize) + 1}, trying individual inserts...`);
-        console.log(`Error details: ${error}`);
-        
-        // Fallback to individual inserts with error handling
-        for (const ingredient of chunk) {
-          try {
-            await queryInterface.bulkInsert('recipe_ingredients', [ingredient]);
-          } catch (individualError: any) {
-            // Check if it's a unique constraint violation (duplicate recipe-ingredient)
-            const errorMessage = individualError.toString();
-            if (errorMessage.includes('UQ_recipe_ingredient') || errorMessage.includes('duplicate')) {
-              console.log(`ℹ️ Skipping duplicate recipe-ingredient combination: recipeId ${ingredient.recipeId}, itemId ${ingredient.itemId}`);
-            } else if (errorMessage.includes('foreign key') || errorMessage.includes('FK_')) {
-              console.log(`⚠️ Skipping ingredient with itemId ${ingredient.itemId} - item may not exist`);
-            } else {
-              console.log(`⚠️ Error inserting ingredient: ${errorMessage}`);
-            }
-          }
-        }
-      }
-    }
-  }
-
-  console.log('✅ Comprehensive recipes seeder completed successfully!');
+  console.log('🎉 Comprehensive recipes seeder completed successfully!');
 }
 
 export async function down(queryInterface: QueryInterface): Promise<void> {
-  console.log('🔄 Rolling back comprehensive recipes seeder...');
-
-  // Delete recipe ingredients first (due to foreign key constraints)
-  await queryInterface.sequelize.query(
-    'DELETE FROM recipe_ingredients WHERE recipeId IN (SELECT id FROM recipes WHERE businessId IN (SELECT id FROM businesses WHERE slug IN (?)))',
-    { replacements: ['italian-delight'] }
-  );
-
-  // Delete recipes
-  await queryInterface.sequelize.query(
-    'DELETE FROM recipes WHERE businessId IN (SELECT id FROM businesses WHERE slug IN (?))',
-    { replacements: ['italian-delight'] }
-  );
-
+  console.log('🗑️ Rolling back comprehensive recipes seeder...');
+  
+  // Delete in reverse order to respect foreign key constraints
+  await queryInterface.bulkDelete('recipe_suggestions', {});
+  await queryInterface.bulkDelete('recipe_ingredients', {});
+  await queryInterface.bulkDelete('recipes', {});
+  
   console.log('✅ Comprehensive recipes seeder rolled back successfully!');
 }
