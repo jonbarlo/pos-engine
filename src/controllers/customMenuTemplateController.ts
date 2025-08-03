@@ -6,14 +6,14 @@ export class CustomMenuTemplateController {
     try {
       const businessIdParam = req.params.businessId;
       if (!businessIdParam) {
-        res.status(400).json({ success: false, message: 'Business ID is required' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.businessIdRequired') });
         return;
       }
       
       const businessId = parseInt(businessIdParam);
       
       if (isNaN(businessId)) {
-        res.status(400).json({ success: false, message: 'Invalid business ID' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.invalidBusinessId') });
         return;
       }
 
@@ -25,7 +25,7 @@ export class CustomMenuTemplateController {
       });
     } catch (error) {
       console.error('Error getting custom templates:', error);
-      res.status(500).json({ success: false, message: 'Internal server error' });
+      res.status(500).json({ success: false, message: req.t('customMenuTemplate.getTemplates.error') });
     }
   }
 
@@ -33,21 +33,21 @@ export class CustomMenuTemplateController {
     try {
       const businessIdParam = req.params.businessId;
       if (!businessIdParam) {
-        res.status(400).json({ success: false, message: 'Business ID is required' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.businessIdRequired') });
         return;
       }
       
       const businessId = parseInt(businessIdParam);
       
       if (isNaN(businessId)) {
-        res.status(400).json({ success: false, message: 'Invalid business ID' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.invalidBusinessId') });
         return;
       }
 
       const { name, description, css, html, isDefault } = req.body;
 
       if (!name || !css) {
-        res.status(400).json({ success: false, message: 'Name and CSS are required' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.templateFieldsRequired') });
         return;
       }
 
@@ -66,7 +66,7 @@ export class CustomMenuTemplateController {
       });
     } catch (error) {
       console.error('Error creating custom template:', error);
-      res.status(500).json({ success: false, message: 'Internal server error' });
+      res.status(500).json({ success: false, message: req.t('customMenuTemplate.create.error') });
     }
   }
 
@@ -100,7 +100,7 @@ export class CustomMenuTemplateController {
       });
 
       if (!template) {
-        res.status(404).json({ success: false, message: 'Template not found' });
+        res.status(404).json({ success: false, message: req.t('errors.server.templateNotFound') });
         return;
       }
 
@@ -110,7 +110,7 @@ export class CustomMenuTemplateController {
       });
     } catch (error) {
       console.error('Error updating custom template:', error);
-      res.status(500).json({ success: false, message: 'Internal server error' });
+      res.status(500).json({ success: false, message: req.t('customMenuTemplate.update.error') });
     }
   }
 
@@ -120,7 +120,7 @@ export class CustomMenuTemplateController {
       const templateIdParam = req.params.templateId;
       
       if (!businessIdParam || !templateIdParam) {
-        res.status(400).json({ success: false, message: 'Business ID and template ID are required' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.businessAndTemplateIdRequired') });
         return;
       }
       
@@ -128,24 +128,24 @@ export class CustomMenuTemplateController {
       const templateId = parseInt(templateIdParam);
       
       if (isNaN(businessId) || isNaN(templateId)) {
-        res.status(400).json({ success: false, message: 'Invalid business ID or template ID' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.invalidBusinessOrTemplateId') });
         return;
       }
 
       const deleted = await MenuPdfService.deleteCustomTemplate(templateId, businessId);
 
       if (!deleted) {
-        res.status(404).json({ success: false, message: 'Template not found' });
+        res.status(404).json({ success: false, message: req.t('errors.server.templateNotFound') });
         return;
       }
 
       res.status(200).json({
         success: true,
-        message: 'Template deleted successfully'
+        message: req.t('customMenuTemplate.delete.success')
       });
     } catch (error) {
       console.error('Error deleting custom template:', error);
-      res.status(500).json({ success: false, message: 'Internal server error' });
+      res.status(500).json({ success: false, message: req.t('customMenuTemplate.delete.error') });
     }
   }
 }

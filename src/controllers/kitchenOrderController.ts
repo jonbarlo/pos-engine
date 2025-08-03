@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import { KitchenOrderService, KitchenOrderFilters } from '../services/kitchenOrderService';
 import { logger } from '../utils/logger';
 import { AuthRequest } from '../middleware/auth';
@@ -7,11 +7,11 @@ export class KitchenOrderController {
   /**
    * Get all kitchen orders with optional filtering
    */
-  public static getKitchenOrders = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  public static getKitchenOrders = async (req: AuthRequest, res: Response) => {
     try {
       const businessId = req.user?.businessId;
       if (!businessId) {
-        res.status(401).json({ success: false, message: 'Authentication required' });
+        res.status(401).json({ success: false, message: req.t('errors.server.unauthorized') });
         return;
       }
 
@@ -36,7 +36,7 @@ export class KitchenOrderController {
       });
     } catch (error) {
       logger(`Error getting kitchen orders: ${error}`);
-      res.status(500).json({ success: false, message: 'Internal server error' });
+      res.status(500).json({ success: false, message: req.t('kitchenOrder.getKitchenOrders.error') });
     }
   };
 
@@ -47,19 +47,19 @@ export class KitchenOrderController {
     try {
       const businessId = req.user?.businessId;
       if (!businessId) {
-        res.status(401).json({ success: false, message: 'Authentication required' });
+        res.status(401).json({ success: false, message: req.t('errors.server.unauthorized') });
         return;
       }
 
       const { id } = req.params;
       if (!id) {
-        res.status(400).json({ success: false, message: 'Order ID is required' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.orderIdRequired') });
         return;
       }
 
       const orderId = parseInt(id);
       if (isNaN(orderId)) {
-        res.status(400).json({ success: false, message: 'Invalid order ID' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.invalidOrderId') });
         return;
       }
 
@@ -68,7 +68,7 @@ export class KitchenOrderController {
       const order = await KitchenOrderService.getKitchenOrderById(orderId, businessId);
       
       if (!order) {
-        res.status(404).json({ success: false, message: 'Kitchen order not found' });
+        res.status(404).json({ success: false, message: req.t('errors.server.kitchenOrderNotFound') });
         return;
       }
 
@@ -78,7 +78,7 @@ export class KitchenOrderController {
       });
     } catch (error) {
       logger(`Error getting kitchen order by ID: ${error}`);
-      res.status(500).json({ success: false, message: 'Internal server error' });
+      res.status(500).json({ success: false, message: req.t('kitchenOrder.getKitchenOrderById.error') });
     }
   };
 
@@ -89,25 +89,25 @@ export class KitchenOrderController {
     try {
       const businessId = req.user?.businessId;
       if (!businessId) {
-        res.status(401).json({ success: false, message: 'Authentication required' });
+        res.status(401).json({ success: false, message: req.t('errors.server.unauthorized') });
         return;
       }
 
       const { id } = req.params;
       if (!id) {
-        res.status(400).json({ success: false, message: 'Order ID is required' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.orderIdRequired') });
         return;
       }
 
       const orderId = parseInt(id);
       if (isNaN(orderId)) {
-        res.status(400).json({ success: false, message: 'Invalid order ID' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.invalidOrderId') });
         return;
       }
 
       const updateData = req.body;
       if (Object.keys(updateData).length === 0) {
-        res.status(400).json({ success: false, message: 'No fields to update' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.noFieldsToUpdate') });
         return;
       }
 
@@ -116,18 +116,18 @@ export class KitchenOrderController {
       const updatedOrder = await KitchenOrderService.updateKitchenOrder(orderId, businessId, updateData);
       
       if (!updatedOrder) {
-        res.status(404).json({ success: false, message: 'Kitchen order not found' });
+        res.status(404).json({ success: false, message: req.t('errors.server.kitchenOrderNotFound') });
         return;
       }
 
       res.json({
         success: true,
         data: updatedOrder,
-        message: 'Kitchen order updated successfully'
+        message: req.t('kitchenOrder.updateKitchenOrder.success')
       });
     } catch (error) {
       logger(`Error updating kitchen order: ${error}`);
-      res.status(500).json({ success: false, message: 'Internal server error' });
+      res.status(500).json({ success: false, message: req.t('kitchenOrder.updateKitchenOrder.error') });
     }
   };
 
@@ -138,19 +138,19 @@ export class KitchenOrderController {
     try {
       const businessId = req.user?.businessId;
       if (!businessId) {
-        res.status(401).json({ success: false, message: 'Authentication required' });
+        res.status(401).json({ success: false, message: req.t('errors.server.unauthorized') });
         return;
       }
 
       const { id } = req.params;
       if (!id) {
-        res.status(400).json({ success: false, message: 'Order ID is required' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.orderIdRequired') });
         return;
       }
 
       const orderId = parseInt(id);
       if (isNaN(orderId)) {
-        res.status(400).json({ success: false, message: 'Invalid order ID' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.invalidOrderId') });
         return;
       }
 
@@ -161,18 +161,18 @@ export class KitchenOrderController {
       const updatedOrder = await KitchenOrderService.startPreparing(orderId, businessId, assignedTo);
       
       if (!updatedOrder) {
-        res.status(404).json({ success: false, message: 'Kitchen order not found' });
+        res.status(404).json({ success: false, message: req.t('errors.server.kitchenOrderNotFound') });
         return;
       }
 
       res.json({
         success: true,
         data: updatedOrder,
-        message: 'Kitchen order started preparing'
+        message: req.t('kitchenOrder.startPreparing.success')
       });
     } catch (error) {
       logger(`Error starting preparation: ${error}`);
-      res.status(500).json({ success: false, message: 'Internal server error' });
+      res.status(500).json({ success: false, message: req.t('kitchenOrder.startPreparing.error') });
     }
   };
 
@@ -183,19 +183,19 @@ export class KitchenOrderController {
     try {
       const businessId = req.user?.businessId;
       if (!businessId) {
-        res.status(401).json({ success: false, message: 'Authentication required' });
+        res.status(401).json({ success: false, message: req.t('errors.server.unauthorized') });
         return;
       }
 
       const { id } = req.params;
       if (!id) {
-        res.status(400).json({ success: false, message: 'Order ID is required' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.orderIdRequired') });
         return;
       }
 
       const orderId = parseInt(id);
       if (isNaN(orderId)) {
-        res.status(400).json({ success: false, message: 'Invalid order ID' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.invalidOrderId') });
         return;
       }
 
@@ -204,18 +204,18 @@ export class KitchenOrderController {
       const updatedOrder = await KitchenOrderService.markReady(orderId, businessId);
       
       if (!updatedOrder) {
-        res.status(404).json({ success: false, message: 'Kitchen order not found' });
+        res.status(404).json({ success: false, message: req.t('errors.server.kitchenOrderNotFound') });
         return;
       }
 
       res.json({
         success: true,
         data: updatedOrder,
-        message: 'Kitchen order marked as ready'
+        message: req.t('kitchenOrder.markReady.success')
       });
     } catch (error) {
       logger(`Error marking order as ready: ${error}`);
-      res.status(500).json({ success: false, message: 'Internal server error' });
+      res.status(500).json({ success: false, message: req.t('kitchenOrder.markReady.error') });
     }
   };
 
@@ -226,19 +226,19 @@ export class KitchenOrderController {
     try {
       const businessId = req.user?.businessId;
       if (!businessId) {
-        res.status(401).json({ success: false, message: 'Authentication required' });
+        res.status(401).json({ success: false, message: req.t('errors.server.unauthorized') });
         return;
       }
 
       const { id } = req.params;
       if (!id) {
-        res.status(400).json({ success: false, message: 'Order ID is required' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.orderIdRequired') });
         return;
       }
 
       const orderId = parseInt(id);
       if (isNaN(orderId)) {
-        res.status(400).json({ success: false, message: 'Invalid order ID' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.invalidOrderId') });
         return;
       }
 
@@ -247,18 +247,18 @@ export class KitchenOrderController {
       const updatedOrder = await KitchenOrderService.markServed(orderId, businessId);
       
       if (!updatedOrder) {
-        res.status(404).json({ success: false, message: 'Kitchen order not found' });
+        res.status(404).json({ success: false, message: req.t('errors.server.kitchenOrderNotFound') });
         return;
       }
 
       res.json({
         success: true,
         data: updatedOrder,
-        message: 'Kitchen order marked as served'
+        message: req.t('kitchenOrder.markServed.success')
       });
     } catch (error) {
       logger(`Error marking order as served: ${error}`);
-      res.status(500).json({ success: false, message: 'Internal server error' });
+      res.status(500).json({ success: false, message: req.t('kitchenOrder.markServed.error') });
     }
   };
 
@@ -269,26 +269,26 @@ export class KitchenOrderController {
     try {
       const businessId = req.user?.businessId;
       if (!businessId) {
-        res.status(401).json({ success: false, message: 'Authentication required' });
+        res.status(401).json({ success: false, message: req.t('errors.server.unauthorized') });
         return;
       }
 
       const { orderId, itemId } = req.params;
       if (!orderId || !itemId) {
-        res.status(400).json({ success: false, message: 'Order ID and Item ID are required' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.orderAndItemIdRequired') });
         return;
       }
 
       const orderIdNum = parseInt(orderId);
       const itemIdNum = parseInt(itemId);
       if (isNaN(orderIdNum) || isNaN(itemIdNum)) {
-        res.status(400).json({ success: false, message: 'Invalid order ID or item ID' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.invalidOrderOrItemId') });
         return;
       }
 
       const { status, assignedTo } = req.body;
       if (!status) {
-        res.status(400).json({ success: false, message: 'Status is required' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.statusRequired') });
         return;
       }
 
@@ -297,18 +297,18 @@ export class KitchenOrderController {
       const updatedItem = await KitchenOrderService.updateItemStatus(orderIdNum, itemIdNum, businessId, status, assignedTo);
       
       if (!updatedItem) {
-        res.status(404).json({ success: false, message: 'Kitchen order or item not found' });
+        res.status(404).json({ success: false, message: req.t('errors.server.kitchenOrderOrItemNotFound') });
         return;
       }
 
       res.json({
         success: true,
         data: updatedItem,
-        message: 'Item status updated successfully'
+        message: req.t('kitchenOrder.updateItemStatus.success')
       });
     } catch (error) {
       logger(`Error updating item status: ${error}`);
-      res.status(500).json({ success: false, message: 'Internal server error' });
+      res.status(500).json({ success: false, message: req.t('kitchenOrder.updateItemStatus.error') });
     }
   };
 
@@ -319,25 +319,25 @@ export class KitchenOrderController {
     try {
       const businessId = req.user?.businessId;
       if (!businessId) {
-        res.status(401).json({ success: false, message: 'Authentication required' });
+        res.status(401).json({ success: false, message: req.t('errors.server.unauthorized') });
         return;
       }
 
       const { id } = req.params;
       if (!id) {
-        res.status(400).json({ success: false, message: 'Order ID is required' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.orderIdRequired') });
         return;
       }
 
       const orderId = parseInt(id);
       if (isNaN(orderId)) {
-        res.status(400).json({ success: false, message: 'Invalid order ID' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.invalidOrderId') });
         return;
       }
 
       const { assignedTo } = req.body;
       if (!assignedTo) {
-        res.status(400).json({ success: false, message: 'AssignedTo user ID is required' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.assignedToRequired') });
         return;
       }
 
@@ -346,18 +346,18 @@ export class KitchenOrderController {
       const updatedOrder = await KitchenOrderService.assignOrder(orderId, businessId, assignedTo);
       
       if (!updatedOrder) {
-        res.status(404).json({ success: false, message: 'Kitchen order not found' });
+        res.status(404).json({ success: false, message: req.t('errors.server.kitchenOrderNotFound') });
         return;
       }
 
       res.json({
         success: true,
         data: updatedOrder,
-        message: 'Kitchen order assigned successfully'
+        message: req.t('kitchenOrder.assignOrder.success')
       });
     } catch (error) {
       logger(`Error assigning order: ${error}`);
-      res.status(500).json({ success: false, message: 'Internal server error' });
+      res.status(500).json({ success: false, message: req.t('kitchenOrder.assignOrder.error') });
     }
   };
 
@@ -368,7 +368,7 @@ export class KitchenOrderController {
     try {
       const businessId = req.user?.businessId;
       if (!businessId) {
-        res.status(401).json({ success: false, message: 'Authentication required' });
+        res.status(401).json({ success: false, message: req.t('errors.server.unauthorized') });
         return;
       }
 
@@ -382,7 +382,7 @@ export class KitchenOrderController {
       });
     } catch (error) {
       logger(`Error getting kitchen stats: ${error}`);
-      res.status(500).json({ success: false, message: 'Internal server error' });
+      res.status(500).json({ success: false, message: req.t('kitchenOrder.getKitchenStats.error') });
     }
   };
 } 

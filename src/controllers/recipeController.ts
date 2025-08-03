@@ -40,7 +40,7 @@ export class RecipeController {
       });
     } catch (error) {
       logger(`Error in getRecipes: ${error}`);
-      res.status(500).json({ error: 'Failed to get recipes' });
+      res.status(500).json({ error: req.t('recipes.getAll.error') });
     }
   }
 
@@ -53,21 +53,21 @@ export class RecipeController {
       const { id } = req.params;
 
       if (!id) {
-        res.status(400).json({ error: 'Recipe ID is required' });
+        res.status(400).json({ error: req.t('errors.validation.recipeIdRequired') });
         return;
       }
 
       const recipe = await RecipeService.getRecipeById(parseInt(id), businessId);
 
       if (!recipe) {
-        res.status(404).json({ error: 'Recipe not found' });
+        res.status(404).json({ error: req.t('errors.server.recipeNotFound') });
         return;
       }
 
       res.status(200).json({ data: recipe });
     } catch (error) {
       logger(`Error in getRecipeById: ${error}`);
-      res.status(500).json({ error: 'Failed to get recipe' });
+      res.status(500).json({ error: req.t('recipes.getById.error') });
     }
   }
 
@@ -85,14 +85,14 @@ export class RecipeController {
       // Validate required fields
       if (!recipeData.name || !recipeData.ingredients || !recipeData.instructions) {
         res.status(400).json({ 
-          error: 'Missing required fields: name, ingredients, instructions' 
+          error: req.t('errors.validation.recipeBasicFieldsRequired') 
         });
         return;
       }
 
       if (!recipeData.prepTime || !recipeData.cookTime || !recipeData.difficulty) {
         res.status(400).json({ 
-          error: 'Missing required fields: prepTime, cookTime, difficulty' 
+          error: req.t('errors.validation.recipeTimeFieldsRequired') 
         });
         return;
       }
@@ -100,12 +100,12 @@ export class RecipeController {
       const recipe = await RecipeService.createRecipe(recipeData);
 
       res.status(201).json({ 
-        message: 'Recipe created successfully',
+        message: req.t('recipes.create.success'),
         data: recipe 
       });
     } catch (error) {
       logger(`Error in createRecipe: ${error}`);
-      res.status(500).json({ error: 'Failed to create recipe' });
+      res.status(500).json({ error: req.t('recipes.create.error') });
     }
   }
 
@@ -119,24 +119,24 @@ export class RecipeController {
       const updateData = req.body;
 
       if (!id) {
-        res.status(400).json({ error: 'Recipe ID is required' });
+        res.status(400).json({ error: req.t('errors.validation.recipeIdRequired') });
         return;
       }
 
       const recipe = await RecipeService.updateRecipe(parseInt(id), businessId, updateData);
 
       if (!recipe) {
-        res.status(404).json({ error: 'Recipe not found' });
+        res.status(404).json({ error: req.t('errors.server.recipeNotFound') });
         return;
       }
 
       res.status(200).json({ 
-        message: 'Recipe updated successfully',
+        message: req.t('recipes.update.success'),
         data: recipe 
       });
     } catch (error) {
       logger(`Error in updateRecipe: ${error}`);
-      res.status(500).json({ error: 'Failed to update recipe' });
+      res.status(500).json({ error: req.t('recipes.update.error') });
     }
   }
 
@@ -149,21 +149,21 @@ export class RecipeController {
       const { id } = req.params;
 
       if (!id) {
-        res.status(400).json({ error: 'Recipe ID is required' });
+        res.status(400).json({ error: req.t('errors.validation.recipeIdRequired') });
         return;
       }
 
       const success = await RecipeService.deleteRecipe(parseInt(id), businessId);
 
       if (!success) {
-        res.status(404).json({ error: 'Recipe not found' });
+        res.status(404).json({ error: req.t('errors.server.recipeNotFound') });
         return;
       }
 
-      res.status(200).json({ message: 'Recipe deleted successfully' });
+      res.status(200).json({ message: req.t('recipes.delete.success') });
     } catch (error) {
       logger(`Error in deleteRecipe: ${error}`);
-      res.status(500).json({ error: 'Failed to delete recipe' });
+      res.status(500).json({ error: req.t('recipes.delete.error') });
     }
   }
 
@@ -176,7 +176,7 @@ export class RecipeController {
       const { q } = req.query;
 
       if (!q || typeof q !== 'string') {
-        res.status(400).json({ error: 'Search query is required' });
+        res.status(400).json({ error: req.t('errors.validation.searchQueryRequired') });
         return;
       }
 
@@ -188,7 +188,7 @@ export class RecipeController {
       });
     } catch (error) {
       logger(`Error in searchRecipes: ${error}`);
-      res.status(500).json({ error: 'Failed to search recipes' });
+      res.status(500).json({ error: req.t('recipes.search.error') });
     }
   }
 
@@ -201,7 +201,7 @@ export class RecipeController {
       const { difficulty } = req.params;
 
       if (!difficulty || !['easy', 'medium', 'hard'].includes(difficulty)) {
-        res.status(400).json({ error: 'Valid difficulty level is required' });
+        res.status(400).json({ error: req.t('errors.validation.validDifficultyRequired') });
         return;
       }
 
@@ -216,7 +216,7 @@ export class RecipeController {
       });
     } catch (error) {
       logger(`Error in getRecipesByDifficulty: ${error}`);
-      res.status(500).json({ error: 'Failed to get recipes by difficulty' });
+      res.status(500).json({ error: req.t('recipes.getByDifficulty.error') });
     }
   }
 
@@ -230,29 +230,29 @@ export class RecipeController {
       const { imageUrl } = req.body;
 
       if (!id) {
-        res.status(400).json({ error: 'Recipe ID is required' });
+        res.status(400).json({ error: req.t('errors.validation.recipeIdRequired') });
         return;
       }
 
       if (!imageUrl) {
-        res.status(400).json({ error: 'Image URL is required' });
+        res.status(400).json({ error: req.t('errors.validation.imageUrlRequired') });
         return;
       }
 
       const recipe = await RecipeService.uploadImage(parseInt(id), businessId, imageUrl);
 
       if (!recipe) {
-        res.status(404).json({ error: 'Recipe not found' });
+        res.status(404).json({ error: req.t('errors.server.recipeNotFound') });
         return;
       }
 
       res.status(200).json({ 
-        message: 'Image uploaded successfully',
+        message: req.t('recipes.uploadImage.success'),
         data: recipe 
       });
     } catch (error) {
       logger(`Error in uploadImage: ${error}`);
-      res.status(500).json({ error: 'Failed to upload image' });
+      res.status(500).json({ error: req.t('recipes.uploadImage.error') });
     }
   }
 
@@ -271,7 +271,7 @@ export class RecipeController {
       });
     } catch (error) {
       logger(`Error in getRecipeSuggestions: ${error}`);
-      res.status(500).json({ error: 'Failed to get recipe suggestions' });
+      res.status(500).json({ error: req.t('recipes.getSuggestions.error') });
     }
   }
 
@@ -284,7 +284,7 @@ export class RecipeController {
       const { recipeId, suggestionType, reason, priority, targetAudience, aiGenerated, confidence, suggestedPrice } = req.body;
 
       if (!recipeId || !suggestionType || !reason || !priority || !targetAudience) {
-        res.status(400).json({ error: 'Recipe ID, suggestion type, reason, priority, and target audience are required' });
+        res.status(400).json({ error: req.t('errors.validation.recipeSuggestionFieldsRequired') });
         return;
       }
 
@@ -301,12 +301,12 @@ export class RecipeController {
       );
 
       res.status(201).json({ 
-        message: 'Recipe suggestion created successfully',
+        message: req.t('recipes.createSuggestion.success'),
         data: suggestion 
       });
     } catch (error) {
       logger(`Error in createRecipeSuggestion: ${error}`);
-      res.status(500).json({ error: 'Failed to create recipe suggestion' });
+      res.status(500).json({ error: req.t('recipes.createSuggestion.error') });
     }
   }
 
@@ -322,7 +322,7 @@ export class RecipeController {
       res.status(200).json({ data: stats });
     } catch (error) {
       logger(`Error in getRecipeStats: ${error}`);
-      res.status(500).json({ error: 'Failed to get recipe statistics' });
+      res.status(500).json({ error: req.t('recipes.getStats.error') });
     }
   }
 
@@ -340,7 +340,7 @@ export class RecipeController {
       const result = await RecipeService.bulkLinkRecipesToItems(businessId, force === 'true');
       
       res.status(200).json({
-        message: 'Bulk linking completed successfully',
+        message: req.t('recipes.bulkLink.success'),
         data: {
           totalRecipes: result.totalRecipes,
           totalItems: result.totalItems,
@@ -351,7 +351,7 @@ export class RecipeController {
       });
     } catch (error) {
       logger(`Error in bulkLinkRecipesToItems: ${error}`);
-      res.status(500).json({ error: 'Failed to bulk link recipes to items' });
+      res.status(500).json({ error: req.t('recipes.bulkLink.error') });
     }
   }
 } 

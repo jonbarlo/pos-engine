@@ -22,6 +22,383 @@
     "no": "No",
     "confirm": "Confirmar",
     "required": "Requerido",
-    "optional": "Opcional"
+    "optional": "Opcional",
+    "users": {
+      "delete": {
+        "success": "Usuario eliminado exitosamente"
+      }
+    },
+    "sales": {
+      "create": {
+        "success": "Venta creada exitosamente"
+      },
+      "update": {
+        "success": "Venta actualizada exitosamente"
+      },
+      "delete": {
+        "success": "Venta eliminada exitosamente"
+      },
+      "createWithItems": {
+        "success": "Venta con elementos creada exitosamente"
+      },
+      "createMissingOrders": {
+        "success": "Creación de pedidos faltantes completada"
+      }
+    },
+    "items": {
+      "delete": {
+        "success": "Artículo eliminado exitosamente"
+      }
+    },
+    "businesses": {
+      "delete": {
+        "success": "Negocio eliminado exitosamente"
+      }
+    },
+    "currencies": {
+      "getAll": {
+        "success": "Monedas recuperadas exitosamente",
+        "error": "Error al recuperar monedas"
+      },
+      "getById": {
+        "success": "Moneda recuperada exitosamente",
+        "error": "Error al recuperar moneda"
+      },
+      "getByCode": {
+        "success": "Moneda recuperada exitosamente",
+        "error": "Error al recuperar moneda"
+      },
+      "getDefault": {
+        "success": "Moneda predeterminada recuperada exitosamente",
+        "error": "Error al recuperar moneda predeterminada"
+      },
+      "create": {
+        "success": "Moneda creada exitosamente",
+        "error": "Error al crear moneda"
+      },
+      "update": {
+        "success": "Moneda actualizada exitosamente",
+        "error": "Error al actualizar moneda"
+      },
+      "delete": {
+        "success": "Moneda eliminada exitosamente",
+        "error": "Error al eliminar moneda"
+      },
+      "convert": {
+        "success": "Moneda convertida exitosamente",
+        "error": "Error al convertir moneda"
+      },
+      "exchangeRates": {
+        "success": "Tasas de cambio recuperadas exitosamente",
+        "error": "Error al recuperar tasas de cambio"
+      },
+      "exchangeRate": {
+        "success": "Tasa de cambio recuperada exitosamente",
+        "error": "Error al recuperar tasa de cambio"
+      },
+      "updateExchangeRate": {
+        "success": "Tasa de cambio actualizada exitosamente",
+        "error": "Error al actualizar tasa de cambio"
+      }
+    },
+    "menuPdf": {
+      "generate": {
+        "error": "Error al generar menú PDF"
+      },
+      "templates": {
+        "error": "Error al recuperar plantillas PDF"
+      },
+      "preview": {
+        "error": "Error al previsualizar menú"
+      }
+    },
+    "customMenuTemplate": {
+      "getTemplates": {
+        "error": "Error al recuperar plantillas personalizadas"
+      },
+      "create": {
+        "error": "Error al crear plantilla personalizada"
+      },
+      "update": {
+        "error": "Error al actualizar plantilla personalizada"
+      },
+      "delete": {
+        "success": "Plantilla eliminada exitosamente",
+        "error": "Error al eliminar plantilla personalizada"
+      }
+    },
+    "recipes": {
+      "getAll": {
+        "error": "Error al obtener recetas"
+      },
+      "getById": {
+        "error": "Error al obtener receta"
+      },
+      "create": {
+        "success": "Receta creada exitosamente",
+        "error": "Error al crear receta"
+      },
+      "update": {
+        "success": "Receta actualizada exitosamente",
+        "error": "Error al actualizar receta"
+      },
+      "delete": {
+        "success": "Receta eliminada exitosamente",
+        "error": "Error al eliminar receta"
+      },
+      "search": {
+        "error": "Error al buscar recetas"
+      },
+      "getByDifficulty": {
+        "error": "Error al obtener recetas por dificultad"
+      },
+      "uploadImage": {
+        "success": "Imagen subida exitosamente",
+        "error": "Error al subir imagen"
+      },
+      "getSuggestions": {
+        "error": "Error al obtener sugerencias de recetas"
+      },
+      "createSuggestion": {
+        "success": "Sugerencia de receta creada exitosamente",
+        "error": "Error al crear sugerencia de receta"
+      },
+      "getStats": {
+        "error": "Error al obtener estadísticas de recetas"
+      },
+      "bulkLink": {
+        "success": "Vinculación masiva completada exitosamente",
+        "error": "Error al vincular masivamente recetas a artículos"
+      }
+    },
+    "smartRecipeSuggestion": {
+      "updateTracking": {
+        "success": "Datos de seguimiento de inventario actualizados exitosamente",
+        "error": "Error al actualizar datos de seguimiento"
+      },
+      "noExpiringItems": "No se encontraron artículos próximos a expirar",
+      "wastePreventionGenerated": "Sugerencias de prevención de desperdicios generadas exitosamente",
+      "wastePreventionError": "Error al generar sugerencias de prevención de desperdicios"
+    },
+    "promotions": {
+      "create": {
+        "success": "Promoción creada exitosamente",
+        "error": "Error al crear promoción"
+      },
+      "getById": {
+        "success": "Promoción recuperada exitosamente",
+        "error": "Error al obtener promoción"
+      },
+      "getAll": {
+        "success": "Promociones recuperadas exitosamente",
+        "error": "Error al obtener promociones"
+      },
+      "update": {
+        "success": "Promoción actualizada exitosamente",
+        "error": "Error al actualizar promoción"
+      },
+      "delete": {
+        "success": "Promoción eliminada exitosamente",
+        "error": "Error al eliminar promoción"
+      },
+      "search": {
+        "success": "Búsqueda de promociones completada",
+        "error": "Error al buscar promociones"
+      },
+      "getActive": {
+        "success": "Promociones activas recuperadas exitosamente",
+        "error": "Error al obtener promociones activas"
+      },
+      "getStats": {
+        "success": "Estadísticas de promoción recuperadas exitosamente",
+        "error": "Error al obtener estadísticas de promoción"
+      },
+      "addItems": {
+        "success": "Elementos agregados a promoción exitosamente",
+        "error": "Error al agregar elementos a promoción"
+      },
+      "getItems": {
+        "success": "Elementos de promoción recuperados exitosamente",
+        "error": "Error al obtener elementos de promoción"
+      },
+      "removeItems": {
+        "success": "Elementos eliminados de promoción exitosamente",
+        "error": "Error al eliminar elementos de promoción"
+      }
+    },
+    "recipeCooking": {
+      "cook": {
+        "error": "Error al cocinar receta"
+      },
+      "getHistory": {
+        "error": "Error al recuperar historial de cocción"
+      },
+      "getAnalytics": {
+        "error": "Error al recuperar análisis de cocción"
+      }
+    },
+    "mobileNotification": {
+      "getAll": {
+        "error": "Error al obtener notificaciones móviles"
+      },
+      "getById": {
+        "error": "Error al obtener notificación móvil por ID"
+      },
+      "create": {
+        "error": "Error al crear notificación móvil"
+      },
+      "update": {
+        "error": "Error al actualizar notificación móvil"
+      },
+      "delete": {
+        "success": "Notificación móvil eliminada exitosamente",
+        "error": "Error al eliminar notificación móvil"
+      },
+      "search": {
+        "error": "Error al buscar notificaciones móviles"
+      },
+      "getStats": {
+        "error": "Error al obtener estadísticas de notificación móvil"
+      }
+    },
+    "table": {
+      "getTablesWithOrders": {
+        "success": "Se encontraron {{count}} mesas",
+        "error": "Error al obtener mesas con pedidos"
+      },
+      "getTableWithOrders": {
+        "success": "Mesa {{tableNumber}} recuperada exitosamente",
+        "error": "Error al obtener mesa con pedidos"
+      },
+      "updateTableStatus": {
+        "success": "Estado de mesa actualizado a {{status}}",
+        "error": "Error al actualizar estado de mesa"
+      },
+      "assignTable": {
+        "success": "Mesa asignada al servidor {{serverId}}",
+        "error": "Error al asignar mesa"
+      },
+      "getTableStats": {
+        "success": "Estadísticas de mesa recuperadas exitosamente",
+        "error": "Error al obtener estadísticas de mesa"
+      },
+      "getTablesNeedingAttention": {
+        "success": "Se encontraron {{count}} mesas que necesitan atención",
+        "error": "Error al obtener mesas que necesitan atención"
+      },
+      "seatTable": {
+        "success": "Mesa {{tableNumber}} sentada exitosamente con {{partySize}} clientes",
+        "error": "Error al sentar clientes en mesa"
+      }
+    },
+    "floorPlan": {
+      "getFloorPlans": {
+        "error": "Error al obtener planos de planta"
+      },
+      "getFloorPlanById": {
+        "error": "Error al obtener plano de planta"
+      },
+      "getFloorPlanWithTables": {
+        "error": "Error al obtener plano de planta con mesas"
+      },
+      "createFloorPlan": {
+        "error": "Error al crear plano de planta"
+      },
+      "updateFloorPlan": {
+        "error": "Error al actualizar plano de planta"
+      },
+      "deleteFloorPlan": {
+        "success": "Plano de planta eliminado exitosamente",
+        "error": "Error al eliminar plano de planta"
+      },
+      "updateTablePosition": {
+        "error": "Error al actualizar posición de mesa"
+      },
+      "removeTableFromFloorPlan": {
+        "success": "Mesa removida del plano de planta exitosamente",
+        "error": "Error al remover mesa del plano de planta"
+      },
+      "getAvailableTables": {
+        "error": "Error al obtener mesas disponibles"
+      }
+    },
+    "order": {
+      "completeOrder": {
+        "success": "Pedido completado exitosamente",
+        "error": "Error al completar pedido"
+      },
+      "clearTable": {
+        "success": "Mesa limpiada exitosamente. Completados {{ordersCompleted}} pedidos, creadas {{salesCreated}} ventas",
+        "error": "Error al limpiar mesa"
+      },
+      "getOrdersByTable": {
+        "success": "Se encontraron {{count}} pedidos para mesa {{tableId}}",
+        "error": "Error al obtener pedidos por mesa"
+      },
+      "getPendingOrders": {
+        "success": "Se encontraron {{count}} pedidos pendientes",
+        "error": "Error al obtener pedidos pendientes"
+      },
+      "getCompletedOrders": {
+        "success": "Se encontraron {{count}} pedidos completados",
+        "error": "Error al obtener pedidos completados"
+      },
+      "getOrderStats": {
+        "success": "Estadísticas de pedidos recuperadas exitosamente",
+        "error": "Error al obtener estadísticas de pedidos"
+      }
+    },
+    "kitchenOrder": {
+      "getKitchenOrders": {
+        "error": "Error al obtener pedidos de cocina"
+      },
+      "getKitchenOrderById": {
+        "error": "Error al obtener pedido de cocina"
+      },
+      "updateKitchenOrder": {
+        "success": "Pedido de cocina actualizado exitosamente",
+        "error": "Error al actualizar pedido de cocina"
+      },
+      "startPreparing": {
+        "success": "Pedido de cocina comenzó a prepararse",
+        "error": "Error al comenzar preparación"
+      },
+      "markReady": {
+        "success": "Pedido de cocina marcado como listo",
+        "error": "Error al marcar pedido como listo"
+      },
+      "markServed": {
+        "success": "Pedido de cocina marcado como servido",
+        "error": "Error al marcar pedido como servido"
+      },
+      "updateItemStatus": {
+        "success": "Estado de artículo actualizado exitosamente",
+        "error": "Error al actualizar estado de artículo"
+      },
+      "assignOrder": {
+        "success": "Pedido de cocina asignado exitosamente",
+        "error": "Error al asignar pedido"
+      },
+      "getKitchenStats": {
+        "error": "Error al obtener estadísticas de cocina"
+      }
+    },
+    "splitBilling": {
+      "createSplitSale": {
+        "error": "Error al crear venta dividida"
+      },
+      "addPayment": {
+        "error": "Error al agregar pago"
+      },
+      "getSaleWithPayments": {
+        "error": "Error al obtener venta con pagos"
+      },
+      "refundPayment": {
+        "error": "Error al reembolsar pago"
+      },
+      "getSplitBillingStats": {
+        "error": "Error al obtener estadísticas de facturación dividida"
+      }
+    }
   }
 } 

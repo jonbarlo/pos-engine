@@ -20,7 +20,7 @@ export class MobileNotificationController {
             logger('API endpoint /mobile-notifications was called...');
             
             if (!req.user?.businessId) {
-                res.status(401).json({ error: 'Authentication required' });
+                res.status(401).json({ error: req.t('errors.server.unauthorized') });
                 return;
             }
 
@@ -40,7 +40,7 @@ export class MobileNotificationController {
             res.json(notifications);
         } catch (error) {
             logger(`Error getting mobile notifications: ${error}`);
-            res.status(500).json({ error: 'Internal server error' });
+            res.status(500).json({ error: req.t('mobileNotification.getAll.error') });
         }
     };
 
@@ -50,19 +50,19 @@ export class MobileNotificationController {
             const { id } = req.params;
             
             if (!id) {
-                res.status(400).json({ error: 'Notification ID is required' });
+                res.status(400).json({ error: req.t('errors.validation.notificationIdRequired') });
                 return;
             }
             
             if (!req.user?.businessId) {
-                res.status(401).json({ error: 'Authentication required' });
+                res.status(401).json({ error: req.t('errors.server.unauthorized') });
                 return;
             }
             
             const notificationId = parseInt(id);
             
             if (isNaN(notificationId)) {
-                res.status(400).json({ error: 'Invalid notification ID' });
+                res.status(400).json({ error: req.t('errors.validation.invalidNotificationId') });
                 return;
             }
 
@@ -70,14 +70,14 @@ export class MobileNotificationController {
             const notification = await MobileNotificationController.notificationService.getNotificationById(notificationId, req.user.businessId);
             
             if (!notification) {
-                res.status(404).json({ error: 'Mobile notification not found' });
+                res.status(404).json({ error: req.t('errors.server.notificationNotFound') });
                 return;
             }
 
             res.json(notification);
         } catch (error) {
             logger(`Error getting mobile notification by ID: ${error}`);
-            res.status(500).json({ error: 'Internal server error' });
+            res.status(500).json({ error: req.t('mobileNotification.getById.error') });
         }
     };
 
@@ -85,7 +85,7 @@ export class MobileNotificationController {
     public static createNotification: RequestHandler = async (req: AuthRequest, res: Response) => {
         try {
             if (!req.user?.businessId) {
-                res.status(401).json({ error: 'Authentication required' });
+                res.status(401).json({ error: req.t('errors.server.unauthorized') });
                 return;
             }
 
@@ -94,7 +94,7 @@ export class MobileNotificationController {
             // Validate input
             if (!type || !title || !message || !targetAudience) {
                 res.status(400).json({ 
-                    error: 'Type, title, message, and targetAudience are required' 
+                    error: req.t('errors.validation.notificationFieldsRequired') 
                 });
                 return;
             }
@@ -102,7 +102,7 @@ export class MobileNotificationController {
             // Validate type
             if (!['promotion', 'recipe', 'general'].includes(type)) {
                 res.status(400).json({ 
-                    error: 'Type must be one of: promotion, recipe, general' 
+                    error: req.t('errors.validation.invalidNotificationType') 
                 });
                 return;
             }
@@ -110,7 +110,7 @@ export class MobileNotificationController {
             // Validate targetAudience
             if (!['waitstaff', 'loyalty', 'all'].includes(targetAudience)) {
                 res.status(400).json({ 
-                    error: 'TargetAudience must be one of: waitstaff, loyalty, all' 
+                    error: req.t('errors.validation.invalidTargetAudience') 
                 });
                 return;
             }
@@ -130,7 +130,7 @@ export class MobileNotificationController {
             res.status(201).json(newNotification);
         } catch (error) {
             logger(`Error creating mobile notification: ${error}`);
-            res.status(500).json({ error: 'Internal server error' });
+            res.status(500).json({ error: req.t('mobileNotification.create.error') });
         }
     };
 
@@ -140,19 +140,19 @@ export class MobileNotificationController {
             const { id } = req.params;
             
             if (!id) {
-                res.status(400).json({ error: 'Notification ID is required' });
+                res.status(400).json({ error: req.t('errors.validation.notificationIdRequired') });
                 return;
             }
             
             if (!req.user?.businessId) {
-                res.status(401).json({ error: 'Authentication required' });
+                res.status(401).json({ error: req.t('errors.server.unauthorized') });
                 return;
             }
             
             const notificationId = parseInt(id);
             
             if (isNaN(notificationId)) {
-                res.status(400).json({ error: 'Invalid notification ID' });
+                res.status(400).json({ error: req.t('errors.validation.invalidNotificationId') });
                 return;
             }
 
@@ -162,7 +162,7 @@ export class MobileNotificationController {
             if (type) {
                 if (!['promotion', 'recipe', 'general'].includes(type)) {
                     res.status(400).json({ 
-                        error: 'Type must be one of: promotion, recipe, general' 
+                        error: req.t('errors.validation.invalidNotificationType') 
                     });
                     return;
                 }
@@ -173,7 +173,7 @@ export class MobileNotificationController {
             if (targetAudience) {
                 if (!['waitstaff', 'loyalty', 'all'].includes(targetAudience)) {
                     res.status(400).json({ 
-                        error: 'TargetAudience must be one of: waitstaff, loyalty, all' 
+                        error: req.t('errors.validation.invalidTargetAudience') 
                     });
                     return;
                 }
@@ -182,7 +182,7 @@ export class MobileNotificationController {
             if (isActive !== undefined) updateData.isActive = isActive;
 
             if (Object.keys(updateData).length === 0) {
-                res.status(400).json({ error: 'No fields to update' });
+                res.status(400).json({ error: req.t('errors.validation.noFieldsToUpdate') });
                 return;
             }
 
@@ -190,14 +190,14 @@ export class MobileNotificationController {
             const updatedNotification = await MobileNotificationController.notificationService.updateNotification(notificationId, req.user.businessId, updateData);
             
             if (!updatedNotification) {
-                res.status(404).json({ error: 'Mobile notification not found' });
+                res.status(404).json({ error: req.t('errors.server.notificationNotFound') });
                 return;
             }
 
             res.json(updatedNotification);
         } catch (error) {
             logger(`Error updating mobile notification: ${error}`);
-            res.status(500).json({ error: 'Internal server error' });
+            res.status(500).json({ error: req.t('mobileNotification.update.error') });
         }
     };
 
@@ -207,19 +207,19 @@ export class MobileNotificationController {
             const { id } = req.params;
             
             if (!id) {
-                res.status(400).json({ error: 'Notification ID is required' });
+                res.status(400).json({ error: req.t('errors.validation.notificationIdRequired') });
                 return;
             }
             
             if (!req.user?.businessId) {
-                res.status(401).json({ error: 'Authentication required' });
+                res.status(401).json({ error: req.t('errors.server.unauthorized') });
                 return;
             }
             
             const notificationId = parseInt(id);
             
             if (isNaN(notificationId)) {
-                res.status(400).json({ error: 'Invalid notification ID' });
+                res.status(400).json({ error: req.t('errors.validation.invalidNotificationId') });
                 return;
             }
 
@@ -227,14 +227,14 @@ export class MobileNotificationController {
             const deleted = await MobileNotificationController.notificationService.deleteNotification(notificationId, req.user.businessId);
             
             if (!deleted) {
-                res.status(404).json({ error: 'Mobile notification not found' });
+                res.status(404).json({ error: req.t('errors.server.notificationNotFound') });
                 return;
             }
 
-            res.json({ message: 'Mobile notification deleted successfully' });
+            res.json({ message: req.t('mobileNotification.delete.success') });
         } catch (error) {
             logger(`Error deleting mobile notification: ${error}`);
-            res.status(500).json({ error: 'Internal server error' });
+            res.status(500).json({ error: req.t('mobileNotification.delete.error') });
         }
     };
 
@@ -242,14 +242,14 @@ export class MobileNotificationController {
     public static searchNotifications: RequestHandler = async (req: AuthRequest, res: Response) => {
         try {
             if (!req.user?.businessId) {
-                res.status(401).json({ error: 'Authentication required' });
+                res.status(401).json({ error: req.t('errors.server.unauthorized') });
                 return;
             }
 
             const { q } = req.query;
             
             if (!q || typeof q !== 'string') {
-                res.status(400).json({ error: 'Search query is required' });
+                res.status(400).json({ error: req.t('errors.validation.searchQueryRequired') });
                 return;
             }
 
@@ -264,7 +264,7 @@ export class MobileNotificationController {
             res.json(results);
         } catch (error) {
             logger(`Error searching mobile notifications: ${error}`);
-            res.status(500).json({ error: 'Internal server error' });
+            res.status(500).json({ error: req.t('mobileNotification.search.error') });
         }
     };
 
@@ -272,7 +272,7 @@ export class MobileNotificationController {
     public static getNotificationStats: RequestHandler = async (req: AuthRequest, res: Response) => {
         try {
             if (!req.user?.businessId) {
-                res.status(401).json({ error: 'Authentication required' });
+                res.status(401).json({ error: req.t('errors.server.unauthorized') });
                 return;
             }
 
@@ -282,7 +282,7 @@ export class MobileNotificationController {
             res.json(stats);
         } catch (error) {
             logger(`Error getting mobile notification stats: ${error}`);
-            res.status(500).json({ error: 'Internal server error' });
+            res.status(500).json({ error: req.t('mobileNotification.getStats.error') });
         }
     };
 } 

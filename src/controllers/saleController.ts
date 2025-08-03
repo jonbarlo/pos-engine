@@ -12,7 +12,7 @@ export class SaleController {
       const { existingOrderId, ...saleData } = req.body;
       
       if (!saleData.userId || saleData.totalAmount === undefined || !saleData.businessId) {
-        res.status(400).json({ error: 'User ID, business ID, and total amount are required' });
+        res.status(400).json({ error: req.t('errors.validation.saleFieldsRequired') });
         return;
       }
 
@@ -21,12 +21,12 @@ export class SaleController {
       const sale = await SaleService.createSale(saleData, existingOrderId);
       
       res.status(201).json({
-        message: 'Sale created successfully',
+        message: req.t('sales.create.success'),
         sale
       });
     } catch (error) {
       logger(`Error creating sale: ${error}`);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: req.t('errors.server.internal') });
     }
   };
 
@@ -38,14 +38,14 @@ export class SaleController {
       const { id } = req.params;
       
       if (!id) {
-        res.status(400).json({ error: 'Sale ID is required' });
+        res.status(400).json({ error: req.t('errors.validation.saleIdRequired') });
         return;
       }
       
       const saleId = parseInt(id);
       
       if (isNaN(saleId)) {
-        res.status(400).json({ error: 'Invalid sale ID' });
+        res.status(400).json({ error: req.t('errors.validation.invalidSaleId') });
         return;
       }
 
@@ -54,14 +54,14 @@ export class SaleController {
       const sale = await SaleService.getSaleById(saleId, businessId);
       
       if (!sale) {
-        res.status(404).json({ error: 'Sale not found' });
+        res.status(404).json({ error: req.t('errors.server.saleNotFound') });
         return;
       }
 
       res.json(sale);
     } catch (error) {
       logger(`Error getting sale: ${error}`);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: req.t('errors.server.internal') });
     }
   };
 
@@ -86,7 +86,7 @@ export class SaleController {
       res.json(sales);
     } catch (error) {
       logger(`Error getting sales: ${error}`);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: req.t('errors.server.internal') });
     }
   };
 
@@ -99,19 +99,19 @@ export class SaleController {
       const updateData = req.body;
       
       if (!id) {
-        res.status(400).json({ error: 'Sale ID is required' });
+        res.status(400).json({ error: req.t('errors.validation.saleIdRequired') });
         return;
       }
       
       const saleId = parseInt(id);
       
       if (isNaN(saleId)) {
-        res.status(400).json({ error: 'Invalid sale ID' });
+        res.status(400).json({ error: req.t('errors.validation.invalidSaleId') });
         return;
       }
 
       if (Object.keys(updateData).length === 0) {
-        res.status(400).json({ error: 'No fields to update' });
+        res.status(400).json({ error: req.t('errors.validation.noFieldsToUpdate') });
         return;
       }
 
@@ -120,17 +120,17 @@ export class SaleController {
       const updatedSale = await SaleService.updateSale(saleId, businessId, updateData);
       
       if (!updatedSale) {
-        res.status(404).json({ error: 'Sale not found' });
+        res.status(404).json({ error: req.t('errors.server.saleNotFound') });
         return;
       }
 
       res.json({
-        message: 'Sale updated successfully',
+        message: req.t('sales.update.success'),
         sale: updatedSale
       });
     } catch (error) {
       logger(`Error updating sale: ${error}`);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: req.t('errors.server.internal') });
     }
   };
 
@@ -142,14 +142,14 @@ export class SaleController {
       const { id } = req.params;
       
       if (!id) {
-        res.status(400).json({ error: 'Sale ID is required' });
+        res.status(400).json({ error: req.t('errors.validation.saleIdRequired') });
         return;
       }
       
       const saleId = parseInt(id);
       
       if (isNaN(saleId)) {
-        res.status(400).json({ error: 'Invalid sale ID' });
+        res.status(400).json({ error: req.t('errors.validation.invalidSaleId') });
         return;
       }
 
@@ -158,14 +158,14 @@ export class SaleController {
       const deleted = await SaleService.deleteSale(saleId, businessId);
       
       if (!deleted) {
-        res.status(404).json({ error: 'Sale not found' });
+        res.status(404).json({ error: req.t('errors.server.saleNotFound') });
         return;
       }
 
-      res.json({ message: 'Sale deleted successfully' });
+      res.json({ message: req.t('sales.delete.success') });
     } catch (error) {
       logger(`Error deleting sale: ${error}`);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: req.t('errors.server.internal') });
     }
   };
 
@@ -177,14 +177,14 @@ export class SaleController {
       const { userId } = req.params;
       
       if (!userId) {
-        res.status(400).json({ error: 'User ID is required' });
+        res.status(400).json({ error: req.t('errors.validation.userIdRequired') });
         return;
       }
       
       const userIdNum = parseInt(userId);
       
       if (isNaN(userIdNum)) {
-        res.status(400).json({ error: 'Invalid user ID' });
+        res.status(400).json({ error: req.t('errors.validation.invalidUserId') });
         return;
       }
 
@@ -195,7 +195,7 @@ export class SaleController {
       res.json(sales);
     } catch (error) {
       logger(`Error getting sales by user: ${error}`);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: req.t('errors.server.internal') });
     }
   };
 
@@ -210,7 +210,7 @@ export class SaleController {
       res.json(stats);
     } catch (error) {
       logger(`Error getting sales stats: ${error}`);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: req.t('errors.server.internal') });
     }
   };
 
@@ -227,13 +227,13 @@ export class SaleController {
       logger(`DEBUG: Existing order ID: ${existingOrderId}`);
 
       if (!orderItems || !Array.isArray(orderItems) || orderItems.length === 0) {
-        res.status(400).json({ error: 'Order items are required and must be an array' });
+        res.status(400).json({ error: req.t('errors.validation.orderItemsRequired') });
         return;
       }
 
       // Validate required fields for sale creation
       if (!saleData.userId || !saleData.businessId) {
-        res.status(400).json({ error: 'User ID and business ID are required' });
+        res.status(400).json({ error: req.t('errors.validation.userAndBusinessIdRequired') });
         return;
       }
 
@@ -241,7 +241,7 @@ export class SaleController {
       for (const item of orderItems) {
         if (!item.itemId || !item.quantity || !item.unitPrice) {
           res.status(400).json({ 
-            error: 'Each order item must have itemId, quantity, and unitPrice' 
+            error: req.t('errors.validation.orderItemFieldsRequired') 
           });
           return;
         }
@@ -261,13 +261,13 @@ export class SaleController {
       }
       
       res.status(201).json({
-        message: 'Sale with items created successfully',
+        message: req.t('sales.createWithItems.success'),
         sale
       });
     } catch (error) {
       logger('ERROR: Full error object:');
       logger(`ERROR: ${error instanceof Error ? error.message : String(error)}`);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: req.t('errors.server.internal') });
     }
   };
 
@@ -279,14 +279,14 @@ export class SaleController {
       const { id } = req.params;
       
       if (!id) {
-        res.status(400).json({ error: 'Sale ID is required' });
+        res.status(400).json({ error: req.t('errors.validation.saleIdRequired') });
         return;
       }
       
       const saleId = parseInt(id);
       
       if (isNaN(saleId)) {
-        res.status(400).json({ error: 'Invalid sale ID' });
+        res.status(400).json({ error: req.t('errors.validation.invalidSaleId') });
         return;
       }
 
@@ -295,14 +295,14 @@ export class SaleController {
       const sale = await SaleService.getSaleWithItems(saleId, businessId);
       
       if (!sale) {
-        res.status(404).json({ error: 'Sale not found' });
+        res.status(404).json({ error: req.t('errors.server.saleNotFound') });
         return;
       }
 
       res.json(sale);
     } catch (error) {
       logger(`Error getting sale with items: ${error}`);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: req.t('errors.server.internal') });
     }
   };
 
@@ -314,7 +314,7 @@ export class SaleController {
       const { startDate, endDate } = req.query;
       
       if (!startDate || !endDate) {
-        res.status(400).json({ error: 'Start date and end date are required' });
+        res.status(400).json({ error: req.t('errors.validation.dateRangeRequired') });
         return;
       }
       
@@ -322,7 +322,7 @@ export class SaleController {
       const end = new Date(endDate as string);
       
       if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-        res.status(400).json({ error: 'Invalid date format' });
+        res.status(400).json({ error: req.t('errors.validation.invalidDateFormat') });
         return;
       }
 
@@ -333,7 +333,7 @@ export class SaleController {
       res.json(sales);
     } catch (error) {
       logger(`Error getting sales by date range: ${error}`);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: req.t('errors.server.internal') });
     }
   };
 
@@ -351,7 +351,7 @@ export class SaleController {
       const result = await SaleService.createMissingOrdersForSales(businessId);
       
       res.json({
-        message: 'Missing orders creation completed',
+        message: req.t('sales.createMissingOrders.success'),
         result: {
           success: result.success,
           failed: result.failed,
@@ -361,7 +361,7 @@ export class SaleController {
       });
     } catch (error) {
       logger(`Error creating missing orders: ${error}`);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: req.t('errors.server.internal') });
     }
   };
 
@@ -398,7 +398,7 @@ export class SaleController {
       res.json(analytics);
     } catch (error) {
       logger(`Error getting item analytics: ${error}`);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: req.t('errors.server.internal') });
     }
   };
 
@@ -433,7 +433,7 @@ export class SaleController {
       res.json(analytics);
     } catch (error) {
       logger(`Error getting revenue analytics: ${error}`);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: req.t('errors.server.internal') });
     }
   };
 
@@ -468,7 +468,7 @@ export class SaleController {
       res.json(analytics);
     } catch (error) {
       logger(`Error getting staff analytics: ${error}`);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: req.t('errors.server.internal') });
     }
   };
 
@@ -505,7 +505,7 @@ export class SaleController {
       res.json(analytics);
     } catch (error) {
       logger(`Error getting customer analytics: ${error}`);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: req.t('errors.server.internal') });
     }
   };
 
@@ -522,7 +522,7 @@ export class SaleController {
       res.json(analytics);
     } catch (error) {
       logger(`Error getting inventory analytics: ${error}`);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: req.t('errors.server.internal') });
     }
   };
 } 

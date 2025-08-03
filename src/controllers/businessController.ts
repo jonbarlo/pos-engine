@@ -12,7 +12,7 @@ export class BusinessController {
             res.json(businesses);
         } catch (error) {
             logger(`Error getting businesses: ${error}`);
-            res.status(500).json({ error: 'Internal server error' });
+            res.status(500).json({ error: req.t('errors.server.internal') });
         }
     };
 
@@ -22,14 +22,14 @@ export class BusinessController {
             const { id } = req.params;
             
             if (!id) {
-                res.status(400).json({ error: 'Business ID is required' });
+                res.status(400).json({ error: req.t('errors.validation.businessIdRequired') });
                 return;
             }
             
             const businessId = parseInt(id);
             
             if (isNaN(businessId)) {
-                res.status(400).json({ error: 'Invalid business ID' });
+                res.status(400).json({ error: req.t('errors.validation.invalidBusinessId') });
                 return;
             }
 
@@ -37,14 +37,14 @@ export class BusinessController {
             const business = await BusinessService.getBusinessById(businessId);
             
             if (!business) {
-                res.status(404).json({ error: 'Business not found' });
+                res.status(404).json({ error: req.t('errors.server.businessNotFound') });
                 return;
             }
 
             res.json(business);
         } catch (error) {
             logger(`Error getting business by ID: ${error}`);
-            res.status(500).json({ error: 'Internal server error' });
+            res.status(500).json({ error: req.t('errors.server.internal') });
         }
     };
 
@@ -54,7 +54,7 @@ export class BusinessController {
             const { slug } = req.params;
             
             if (!slug) {
-                res.status(400).json({ error: 'Business slug is required' });
+                res.status(400).json({ error: req.t('errors.validation.businessSlugRequired') });
                 return;
             }
 
@@ -62,14 +62,14 @@ export class BusinessController {
             const business = await BusinessService.getBusinessBySlug(slug);
             
             if (!business) {
-                res.status(404).json({ error: 'Business not found' });
+                res.status(404).json({ error: req.t('errors.server.businessNotFound') });
                 return;
             }
 
             res.json(business);
         } catch (error) {
             logger(`Error getting business by slug: ${error}`);
-            res.status(500).json({ error: 'Internal server error' });
+            res.status(500).json({ error: req.t('errors.server.internal') });
         }
     };
 
@@ -78,7 +78,7 @@ export class BusinessController {
         // Require admin role
         const user = (req as any).user;
         if (!user || user.role !== 'admin') {
-            res.status(403).json({ error: 'Only admin users can create new businesses' });
+            res.status(403).json({ error: req.t('errors.server.adminOnly') });
             return;
         }
 
@@ -103,7 +103,7 @@ export class BusinessController {
             // Validate required fields
             if (!name || !slug) {
                 res.status(400).json({ 
-                    error: 'Name and slug are required' 
+                    error: req.t('errors.validation.businessNameAndSlugRequired') 
                 });
                 return;
             }
@@ -112,7 +112,7 @@ export class BusinessController {
             const slugRegex = /^[a-z0-9-]+$/;
             if (!slugRegex.test(slug)) {
                 res.status(400).json({ 
-                    error: 'Slug must contain only lowercase letters, numbers, and hyphens' 
+                    error: req.t('errors.validation.businessSlugFormat') 
                 });
                 return;
             }
@@ -121,7 +121,7 @@ export class BusinessController {
             const slugExists = await BusinessService.businessExistsBySlug(slug);
             if (slugExists) {
                 res.status(409).json({ 
-                    error: 'Business with this slug already exists' 
+                    error: req.t('errors.validation.businessSlugExists') 
                 });
                 return;
             }
@@ -129,7 +129,7 @@ export class BusinessController {
             // Validate tax rate
             if (taxRate !== undefined && (taxRate < 0 || taxRate > 100)) {
                 res.status(400).json({ 
-                    error: 'Tax rate must be between 0 and 100' 
+                    error: req.t('errors.validation.taxRateRange') 
                 });
                 return;
             }
@@ -155,7 +155,7 @@ export class BusinessController {
             res.status(201).json(newBusiness);
         } catch (error) {
             logger(`Error creating business: ${error}`);
-            res.status(500).json({ error: 'Internal server error' });
+            res.status(500).json({ error: req.t('errors.server.internal') });
         }
     };
 
@@ -165,14 +165,14 @@ export class BusinessController {
             const { id } = req.params;
             
             if (!id) {
-                res.status(400).json({ error: 'Business ID is required' });
+                res.status(400).json({ error: req.t('errors.validation.businessIdRequired') });
                 return;
             }
             
             const businessId = parseInt(id);
             
             if (isNaN(businessId)) {
-                res.status(400).json({ error: 'Invalid business ID' });
+                res.status(400).json({ error: req.t('errors.validation.invalidBusinessId') });
                 return;
             }
 
@@ -211,7 +211,7 @@ export class BusinessController {
             if (isActive !== undefined) updateData.isActive = isActive;
 
             if (Object.keys(updateData).length === 0) {
-                res.status(400).json({ error: 'No fields to update' });
+                res.status(400).json({ error: req.t('errors.validation.noFieldsToUpdate') });
                 return;
             }
 
@@ -220,7 +220,7 @@ export class BusinessController {
                 const slugRegex = /^[a-z0-9-]+$/;
                 if (!slugRegex.test(updateData.slug)) {
                     res.status(400).json({ 
-                        error: 'Slug must contain only lowercase letters, numbers, and hyphens' 
+                        error: req.t('errors.validation.businessSlugFormat') 
                     });
                     return;
                 }
@@ -228,7 +228,7 @@ export class BusinessController {
 
             // Validate tax rate if being updated
             if (updateData.taxRate !== undefined && (updateData.taxRate < 0 || updateData.taxRate > 100)) {
-                res.status(400).json({ error: 'Tax rate must be between 0 and 100' });
+                res.status(400).json({ error: req.t('errors.validation.taxRateRange') });
                 return;
             }
 
@@ -236,14 +236,14 @@ export class BusinessController {
             const updatedBusiness = await BusinessService.updateBusiness(businessId, updateData);
             
             if (!updatedBusiness) {
-                res.status(404).json({ error: 'Business not found' });
+                res.status(404).json({ error: req.t('errors.server.businessNotFound') });
                 return;
             }
 
             res.json(updatedBusiness);
         } catch (error) {
             logger(`Error updating business: ${error}`);
-            res.status(500).json({ error: 'Internal server error' });
+            res.status(500).json({ error: req.t('errors.server.internal') });
         }
     };
 
@@ -253,14 +253,14 @@ export class BusinessController {
             const { id } = req.params;
             
             if (!id) {
-                res.status(400).json({ error: 'Business ID is required' });
+                res.status(400).json({ error: req.t('errors.validation.businessIdRequired') });
                 return;
             }
             
             const businessId = parseInt(id);
             
             if (isNaN(businessId)) {
-                res.status(400).json({ error: 'Invalid business ID' });
+                res.status(400).json({ error: req.t('errors.validation.invalidBusinessId') });
                 return;
             }
 
@@ -268,14 +268,14 @@ export class BusinessController {
             const deleted = await BusinessService.deleteBusiness(businessId);
             
             if (!deleted) {
-                res.status(404).json({ error: 'Business not found' });
+                res.status(404).json({ error: req.t('errors.server.businessNotFound') });
                 return;
             }
 
-            res.json({ message: 'Business deleted successfully' });
+            res.json({ message: req.t('businesses.delete.success') });
         } catch (error) {
             logger(`Error deleting business: ${error}`);
-            res.status(500).json({ error: 'Internal server error' });
+            res.status(500).json({ error: req.t('errors.server.internal') });
         }
     };
 
@@ -285,14 +285,14 @@ export class BusinessController {
             const { id } = req.params;
             
             if (!id) {
-                res.status(400).json({ error: 'Business ID is required' });
+                res.status(400).json({ error: req.t('errors.validation.businessIdRequired') });
                 return;
             }
             
             const businessId = parseInt(id);
             
             if (isNaN(businessId)) {
-                res.status(400).json({ error: 'Invalid business ID' });
+                res.status(400).json({ error: req.t('errors.validation.invalidBusinessId') });
                 return;
             }
 
@@ -300,14 +300,14 @@ export class BusinessController {
             const stats = await BusinessService.getBusinessStats(businessId);
             
             if (!stats) {
-                res.status(404).json({ error: 'Business not found' });
+                res.status(404).json({ error: req.t('errors.server.businessNotFound') });
                 return;
             }
 
             res.json(stats);
         } catch (error) {
             logger(`Error getting business stats: ${error}`);
-            res.status(500).json({ error: 'Internal server error' });
+            res.status(500).json({ error: req.t('errors.server.internal') });
         }
     };
 
@@ -317,7 +317,7 @@ export class BusinessController {
             const { q } = req.query;
             
             if (!q || typeof q !== 'string') {
-                res.status(400).json({ error: 'Search query is required' });
+                res.status(400).json({ error: req.t('errors.validation.searchQueryRequired') });
                 return;
             }
 
@@ -326,7 +326,7 @@ export class BusinessController {
             res.json(businesses);
         } catch (error) {
             logger(`Error searching businesses: ${error}`);
-            res.status(500).json({ error: 'Internal server error' });
+            res.status(500).json({ error: req.t('errors.server.internal') });
         }
     };
 
@@ -336,7 +336,7 @@ export class BusinessController {
             const { timezone } = req.params;
             
             if (!timezone) {
-                res.status(400).json({ error: 'Timezone is required' });
+                res.status(400).json({ error: req.t('errors.validation.timezoneRequired') });
                 return;
             }
 
@@ -345,7 +345,7 @@ export class BusinessController {
             res.json(businesses);
         } catch (error) {
             logger(`Error getting businesses by timezone: ${error}`);
-            res.status(500).json({ error: 'Internal server error' });
+            res.status(500).json({ error: req.t('errors.server.internal') });
         }
     };
 
@@ -355,13 +355,13 @@ export class BusinessController {
             const { currencyId } = req.params;
             
             if (!currencyId) {
-                res.status(400).json({ error: 'Currency ID is required' });
+                res.status(400).json({ error: req.t('errors.validation.currencyIdRequired') });
                 return;
             }
 
             const currencyIdNum = parseInt(currencyId);
             if (isNaN(currencyIdNum)) {
-                res.status(400).json({ error: 'Invalid currency ID' });
+                res.status(400).json({ error: req.t('errors.validation.invalidCurrencyId') });
                 return;
             }
 
@@ -370,7 +370,7 @@ export class BusinessController {
             res.json(businesses);
         } catch (error) {
             logger(`Error getting businesses by currency ID: ${error}`);
-            res.status(500).json({ error: 'Internal server error' });
+            res.status(500).json({ error: req.t('errors.server.internal') });
         }
     };
 
@@ -382,7 +382,7 @@ export class BusinessController {
             if (!slug) {
                 res.status(400).json({
                     success: false,
-                    error: 'Business slug is required'
+                    error: req.t('errors.validation.businessSlugRequired')
                 });
                 return;
             }
@@ -393,7 +393,7 @@ export class BusinessController {
             if (!business) {
                 res.status(404).json({
                     success: false,
-                    error: 'Business not found'
+                    error: req.t('errors.server.businessNotFound')
                 });
                 return;
             }
@@ -407,7 +407,7 @@ export class BusinessController {
             logger(`Error retrieving public business info: ${error}`);
             res.status(500).json({
                 success: false,
-                error: 'Internal server error'
+                error: req.t('errors.server.internal')
             });
         }
     };

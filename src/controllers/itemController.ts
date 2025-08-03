@@ -20,7 +20,7 @@ export class ItemController {
             logger('API endpoint /items was called...');
             
             if (!req.user?.businessId) {
-                res.status(401).json({ error: 'Authentication required' });
+                res.status(401).json({ error: req.t('errors.server.unauthorized') });
                 return;
             }
 
@@ -28,7 +28,7 @@ export class ItemController {
             res.json(items);
         } catch (error) {
             logger(`Error getting items: ${error}`);
-            res.status(500).json({ error: 'Internal server error' });
+            res.status(500).json({ error: req.t('errors.server.internal') });
         }
     };
 
@@ -38,19 +38,19 @@ export class ItemController {
             const { id } = req.params;
             
             if (!id) {
-                res.status(400).json({ error: 'Item ID is required' });
+                res.status(400).json({ error: req.t('errors.validation.itemIdRequired') });
                 return;
             }
             
             if (!req.user?.businessId) {
-                res.status(401).json({ error: 'Authentication required' });
+                res.status(401).json({ error: req.t('errors.server.unauthorized') });
                 return;
             }
             
             const itemId = parseInt(id);
             
             if (isNaN(itemId)) {
-                res.status(400).json({ error: 'Invalid item ID' });
+                res.status(400).json({ error: req.t('errors.validation.invalidItemId') });
                 return;
             }
 
@@ -58,14 +58,14 @@ export class ItemController {
             const item = await ItemService.getItemById(itemId, req.user.businessId);
             
             if (!item) {
-                res.status(404).json({ error: 'Item not found' });
+                res.status(404).json({ error: req.t('errors.server.itemNotFound') });
                 return;
             }
 
             res.json(item);
         } catch (error) {
             logger(`Error getting item by ID: ${error}`);
-            res.status(500).json({ error: 'Internal server error' });
+            res.status(500).json({ error: req.t('errors.server.internal') });
         }
     };
 
@@ -73,7 +73,7 @@ export class ItemController {
     public static createItem: RequestHandler = async (req: AuthRequest, res: Response) => {
         try {
             if (!req.user?.businessId) {
-                res.status(401).json({ error: 'Authentication required' });
+                res.status(401).json({ error: req.t('errors.server.unauthorized') });
                 return;
             }
 
@@ -82,7 +82,7 @@ export class ItemController {
             // Validate required fields
             if (!name || !price) {
                 res.status(400).json({ 
-                    error: 'Name and price are required' 
+                    error: req.t('errors.validation.itemNameAndPriceRequired') 
                 });
                 return;
             }
@@ -90,7 +90,7 @@ export class ItemController {
             // Validate price
             if (price < 0) {
                 res.status(400).json({ 
-                    error: 'Price must be non-negative' 
+                    error: req.t('errors.validation.priceMustBeNonNegative') 
                 });
                 return;
             }
@@ -115,7 +115,7 @@ export class ItemController {
             const skuExists = await ItemService.itemExistsBySku(finalSku, req.user.businessId);
             if (skuExists) {
                 res.status(409).json({ 
-                    error: 'Item with this SKU already exists in this business' 
+                    error: req.t('errors.validation.itemSkuExists') 
                 });
                 return;
             }
@@ -124,7 +124,7 @@ export class ItemController {
             const barcodeExists = await ItemService.itemExistsByBarcode(finalBarcode, req.user.businessId);
             if (barcodeExists) {
                 res.status(409).json({ 
-                    error: 'Item with this barcode already exists in this business' 
+                    error: req.t('errors.validation.itemBarcodeExists') 
                 });
                 return;
             }
@@ -134,7 +134,7 @@ export class ItemController {
             // Get business to determine currency
             const business = await BusinessService.getBusinessById(req.user.businessId);
             if (!business) {
-                res.status(404).json({ error: 'Business not found' });
+                res.status(404).json({ error: req.t('errors.server.businessNotFound') });
                 return;
             }
             
@@ -165,7 +165,7 @@ export class ItemController {
             res.status(201).json(newItem);
         } catch (error) {
             logger(`Error creating item: ${error}`);
-            res.status(500).json({ error: 'Internal server error' });
+            res.status(500).json({ error: req.t('errors.server.internal') });
         }
     };
 
@@ -175,19 +175,19 @@ export class ItemController {
             const { id } = req.params;
             
             if (!id) {
-                res.status(400).json({ error: 'Item ID is required' });
+                res.status(400).json({ error: req.t('errors.validation.itemIdRequired') });
                 return;
             }
             
             if (!req.user?.businessId) {
-                res.status(401).json({ error: 'Authentication required' });
+                res.status(401).json({ error: req.t('errors.server.unauthorized') });
                 return;
             }
             
             const itemId = parseInt(id);
             
             if (isNaN(itemId)) {
-                res.status(400).json({ error: 'Invalid item ID' });
+                res.status(400).json({ error: req.t('errors.validation.invalidItemId') });
                 return;
             }
 
@@ -204,13 +204,13 @@ export class ItemController {
             if (isActive !== undefined) updateData.isActive = isActive;
 
             if (Object.keys(updateData).length === 0) {
-                res.status(400).json({ error: 'No fields to update' });
+                res.status(400).json({ error: req.t('errors.validation.noFieldsToUpdate') });
                 return;
             }
 
             // Validate price if being updated
             if (updateData.price !== undefined && updateData.price < 0) {
-                res.status(400).json({ error: 'Price must be non-negative' });
+                res.status(400).json({ error: req.t('errors.validation.priceMustBeNonNegative') });
                 return;
             }
 
@@ -218,14 +218,14 @@ export class ItemController {
             const updatedItem = await ItemService.updateItem(itemId, req.user.businessId, updateData);
             
             if (!updatedItem) {
-                res.status(404).json({ error: 'Item not found' });
+                res.status(404).json({ error: req.t('errors.server.itemNotFound') });
                 return;
             }
 
             res.json(updatedItem);
         } catch (error) {
             logger(`Error updating item: ${error}`);
-            res.status(500).json({ error: 'Internal server error' });
+            res.status(500).json({ error: req.t('errors.server.internal') });
         }
     };
 
@@ -235,19 +235,19 @@ export class ItemController {
             const { id } = req.params;
             
             if (!id) {
-                res.status(400).json({ error: 'Item ID is required' });
+                res.status(400).json({ error: req.t('errors.validation.itemIdRequired') });
                 return;
             }
             
             if (!req.user?.businessId) {
-                res.status(401).json({ error: 'Authentication required' });
+                res.status(401).json({ error: req.t('errors.server.unauthorized') });
                 return;
             }
             
             const itemId = parseInt(id);
             
             if (isNaN(itemId)) {
-                res.status(400).json({ error: 'Invalid item ID' });
+                res.status(400).json({ error: req.t('errors.validation.invalidItemId') });
                 return;
             }
 
@@ -255,14 +255,14 @@ export class ItemController {
             const deleted = await ItemService.deleteItem(itemId, req.user.businessId);
             
             if (!deleted) {
-                res.status(404).json({ error: 'Item not found' });
+                res.status(404).json({ error: req.t('errors.server.itemNotFound') });
                 return;
             }
 
-            res.json({ message: 'Item deleted successfully' });
+            res.json({ message: req.t('items.delete.success') });
         } catch (error) {
             logger(`Error deleting item: ${error}`);
-            res.status(500).json({ error: 'Internal server error' });
+            res.status(500).json({ error: req.t('errors.server.internal') });
         }
     };
 
@@ -272,12 +272,12 @@ export class ItemController {
             const { category } = req.params;
             
             if (!category) {
-                res.status(400).json({ error: 'Category is required' });
+                res.status(400).json({ error: req.t('errors.validation.categoryRequired') });
                 return;
             }
 
             if (!req.user?.businessId) {
-                res.status(401).json({ error: 'Authentication required' });
+                res.status(401).json({ error: req.t('errors.server.unauthorized') });
                 return;
             }
 
@@ -286,7 +286,7 @@ export class ItemController {
             res.json(items);
         } catch (error) {
             logger(`Error getting items by category: ${error}`);
-            res.status(500).json({ error: 'Internal server error' });
+            res.status(500).json({ error: req.t('errors.server.internal') });
         }
     };
 
@@ -296,12 +296,12 @@ export class ItemController {
             const { q } = req.query;
             
             if (!q || typeof q !== 'string') {
-                res.status(400).json({ error: 'Search query is required' });
+                res.status(400).json({ error: req.t('errors.validation.searchQueryRequired') });
                 return;
             }
 
             if (!req.user?.businessId) {
-                res.status(401).json({ error: 'Authentication required' });
+                res.status(401).json({ error: req.t('errors.server.unauthorized') });
                 return;
             }
 
@@ -310,7 +310,7 @@ export class ItemController {
             res.json(items);
         } catch (error) {
             logger(`Error searching items: ${error}`);
-            res.status(500).json({ error: 'Internal server error' });
+            res.status(500).json({ error: req.t('errors.server.internal') });
         }
     };
 
@@ -321,24 +321,24 @@ export class ItemController {
             const { quantity } = req.body;
             
             if (!id) {
-                res.status(400).json({ error: 'Item ID is required' });
+                res.status(400).json({ error: req.t('errors.validation.itemIdRequired') });
                 return;
             }
             
             if (!req.user?.businessId) {
-                res.status(401).json({ error: 'Authentication required' });
+                res.status(401).json({ error: req.t('errors.server.unauthorized') });
                 return;
             }
             
             const itemId = parseInt(id);
             
             if (isNaN(itemId)) {
-                res.status(400).json({ error: 'Invalid item ID' });
+                res.status(400).json({ error: req.t('errors.validation.invalidItemId') });
                 return;
             }
 
             if (quantity === undefined || typeof quantity !== 'number') {
-                res.status(400).json({ error: 'Quantity is required and must be a number' });
+                res.status(400).json({ error: req.t('errors.validation.quantityRequired') });
                 return;
             }
 
@@ -346,14 +346,14 @@ export class ItemController {
             const updatedItem = await ItemService.updateStock(itemId, req.user.businessId, quantity);
             
             if (!updatedItem) {
-                res.status(404).json({ error: 'Item not found' });
+                res.status(404).json({ error: req.t('errors.server.itemNotFound') });
                 return;
             }
 
             res.json(updatedItem);
         } catch (error) {
             logger(`Error updating stock: ${error}`);
-            res.status(500).json({ error: 'Internal server error' });
+            res.status(500).json({ error: req.t('errors.server.internal') });
         }
     };
 
@@ -363,7 +363,7 @@ export class ItemController {
             const { threshold } = req.query;
             
             if (!req.user?.businessId) {
-                res.status(401).json({ error: 'Authentication required' });
+                res.status(401).json({ error: req.t('errors.server.unauthorized') });
                 return;
             }
 
@@ -374,7 +374,7 @@ export class ItemController {
             res.json(items);
         } catch (error) {
             logger(`Error getting low stock items: ${error}`);
-            res.status(500).json({ error: 'Internal server error' });
+            res.status(500).json({ error: req.t('errors.server.internal') });
         }
     };
 }

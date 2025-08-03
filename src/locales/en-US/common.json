@@ -22,6 +22,383 @@
     "no": "No",
     "confirm": "Confirm",
     "required": "Required",
-    "optional": "Optional"
+    "optional": "Optional",
+    "users": {
+      "delete": {
+        "success": "User deleted successfully"
+      }
+    },
+    "sales": {
+      "create": {
+        "success": "Sale created successfully"
+      },
+      "update": {
+        "success": "Sale updated successfully"
+      },
+      "delete": {
+        "success": "Sale deleted successfully"
+      },
+      "createWithItems": {
+        "success": "Sale with items created successfully"
+      },
+      "createMissingOrders": {
+        "success": "Missing orders creation completed"
+      }
+    },
+    "items": {
+      "delete": {
+        "success": "Item deleted successfully"
+      }
+    },
+    "businesses": {
+      "delete": {
+        "success": "Business deleted successfully"
+      }
+    },
+    "currencies": {
+      "getAll": {
+        "success": "Currencies retrieved successfully",
+        "error": "Failed to retrieve currencies"
+      },
+      "getById": {
+        "success": "Currency retrieved successfully",
+        "error": "Failed to retrieve currency"
+      },
+      "getByCode": {
+        "success": "Currency retrieved successfully",
+        "error": "Failed to retrieve currency"
+      },
+      "getDefault": {
+        "success": "Default currency retrieved successfully",
+        "error": "Failed to retrieve default currency"
+      },
+      "create": {
+        "success": "Currency created successfully",
+        "error": "Failed to create currency"
+      },
+      "update": {
+        "success": "Currency updated successfully",
+        "error": "Failed to update currency"
+      },
+      "delete": {
+        "success": "Currency deleted successfully",
+        "error": "Failed to delete currency"
+      },
+      "convert": {
+        "success": "Currency converted successfully",
+        "error": "Failed to convert currency"
+      },
+      "exchangeRates": {
+        "success": "Exchange rates retrieved successfully",
+        "error": "Failed to retrieve exchange rates"
+      },
+      "exchangeRate": {
+        "success": "Exchange rate retrieved successfully",
+        "error": "Failed to retrieve exchange rate"
+      },
+      "updateExchangeRate": {
+        "success": "Exchange rate updated successfully",
+        "error": "Failed to update exchange rate"
+      }
+    },
+    "menuPdf": {
+      "generate": {
+        "error": "Failed to generate PDF menu"
+      },
+      "templates": {
+        "error": "Failed to retrieve PDF templates"
+      },
+      "preview": {
+        "error": "Failed to preview menu"
+      }
+    },
+    "customMenuTemplate": {
+      "getTemplates": {
+        "error": "Failed to retrieve custom templates"
+      },
+      "create": {
+        "error": "Failed to create custom template"
+      },
+      "update": {
+        "error": "Failed to update custom template"
+      },
+      "delete": {
+        "success": "Template deleted successfully",
+        "error": "Failed to delete custom template"
+      }
+    },
+    "recipes": {
+      "getAll": {
+        "error": "Failed to get recipes"
+      },
+      "getById": {
+        "error": "Failed to get recipe"
+      },
+      "create": {
+        "success": "Recipe created successfully",
+        "error": "Failed to create recipe"
+      },
+      "update": {
+        "success": "Recipe updated successfully",
+        "error": "Failed to update recipe"
+      },
+      "delete": {
+        "success": "Recipe deleted successfully",
+        "error": "Failed to delete recipe"
+      },
+      "search": {
+        "error": "Failed to search recipes"
+      },
+      "getByDifficulty": {
+        "error": "Failed to get recipes by difficulty"
+      },
+      "uploadImage": {
+        "success": "Image uploaded successfully",
+        "error": "Failed to upload image"
+      },
+      "getSuggestions": {
+        "error": "Failed to get recipe suggestions"
+      },
+      "createSuggestion": {
+        "success": "Recipe suggestion created successfully",
+        "error": "Failed to create recipe suggestion"
+      },
+      "getStats": {
+        "error": "Failed to get recipe statistics"
+      },
+      "bulkLink": {
+        "success": "Bulk linking completed successfully",
+        "error": "Failed to bulk link recipes to items"
+      }
+    },
+    "smartRecipeSuggestion": {
+      "updateTracking": {
+        "success": "Inventory tracking data updated successfully",
+        "error": "Failed to update tracking data"
+      },
+      "noExpiringItems": "No items expiring soon found",
+      "wastePreventionGenerated": "Waste prevention suggestions generated successfully",
+      "wastePreventionError": "Failed to generate waste prevention suggestions"
+    },
+    "promotions": {
+      "create": {
+        "success": "Promotion created successfully",
+        "error": "Failed to create promotion"
+      },
+      "getById": {
+        "success": "Promotion retrieved successfully",
+        "error": "Failed to get promotion"
+      },
+      "getAll": {
+        "success": "Promotions retrieved successfully",
+        "error": "Failed to get promotions"
+      },
+      "update": {
+        "success": "Promotion updated successfully",
+        "error": "Failed to update promotion"
+      },
+      "delete": {
+        "success": "Promotion deleted successfully",
+        "error": "Failed to delete promotion"
+      },
+      "search": {
+        "success": "Promotions search completed",
+        "error": "Failed to search promotions"
+      },
+      "getActive": {
+        "success": "Active promotions retrieved successfully",
+        "error": "Failed to get active promotions"
+      },
+      "getStats": {
+        "success": "Promotion statistics retrieved successfully",
+        "error": "Failed to get promotion statistics"
+      },
+      "addItems": {
+        "success": "Items added to promotion successfully",
+        "error": "Failed to add items to promotion"
+      },
+      "getItems": {
+        "success": "Promotion items retrieved successfully",
+        "error": "Failed to get promotion items"
+      },
+      "removeItems": {
+        "success": "Items removed from promotion successfully",
+        "error": "Failed to remove items from promotion"
+      }
+    },
+    "recipeCooking": {
+      "cook": {
+        "error": "Failed to cook recipe"
+      },
+      "getHistory": {
+        "error": "Failed to retrieve cooking history"
+      },
+      "getAnalytics": {
+        "error": "Failed to retrieve cooking analytics"
+      }
+    },
+    "mobileNotification": {
+      "getAll": {
+        "error": "Failed to get mobile notifications"
+      },
+      "getById": {
+        "error": "Failed to get mobile notification by ID"
+      },
+      "create": {
+        "error": "Failed to create mobile notification"
+      },
+      "update": {
+        "error": "Failed to update mobile notification"
+      },
+      "delete": {
+        "success": "Mobile notification deleted successfully",
+        "error": "Failed to delete mobile notification"
+      },
+      "search": {
+        "error": "Failed to search mobile notifications"
+      },
+      "getStats": {
+        "error": "Failed to get mobile notification stats"
+      }
+    },
+    "table": {
+      "getTablesWithOrders": {
+        "success": "Found {{count}} tables",
+        "error": "Failed to get tables with orders"
+      },
+      "getTableWithOrders": {
+        "success": "Table {{tableNumber}} retrieved successfully",
+        "error": "Failed to get table with orders"
+      },
+      "updateTableStatus": {
+        "success": "Table status updated to {{status}}",
+        "error": "Failed to update table status"
+      },
+      "assignTable": {
+        "success": "Table assigned to server {{serverId}}",
+        "error": "Failed to assign table"
+      },
+      "getTableStats": {
+        "success": "Table statistics retrieved successfully",
+        "error": "Failed to get table statistics"
+      },
+      "getTablesNeedingAttention": {
+        "success": "Found {{count}} tables needing attention",
+        "error": "Failed to get tables needing attention"
+      },
+      "seatTable": {
+        "success": "Table {{tableNumber}} seated successfully with {{partySize}} customers",
+        "error": "Failed to seat customers at table"
+      }
+    },
+    "floorPlan": {
+      "getFloorPlans": {
+        "error": "Failed to get floor plans"
+      },
+      "getFloorPlanById": {
+        "error": "Failed to get floor plan"
+      },
+      "getFloorPlanWithTables": {
+        "error": "Failed to get floor plan with tables"
+      },
+      "createFloorPlan": {
+        "error": "Failed to create floor plan"
+      },
+      "updateFloorPlan": {
+        "error": "Failed to update floor plan"
+      },
+      "deleteFloorPlan": {
+        "success": "Floor plan deleted successfully",
+        "error": "Failed to delete floor plan"
+      },
+      "updateTablePosition": {
+        "error": "Failed to update table position"
+      },
+      "removeTableFromFloorPlan": {
+        "success": "Table removed from floor plan successfully",
+        "error": "Failed to remove table from floor plan"
+      },
+      "getAvailableTables": {
+        "error": "Failed to get available tables"
+      }
+    },
+    "order": {
+      "completeOrder": {
+        "success": "Order completed successfully",
+        "error": "Failed to complete order"
+      },
+      "clearTable": {
+        "success": "Table cleared successfully. Completed {{ordersCompleted}} orders, created {{salesCreated}} sales",
+        "error": "Failed to clear table"
+      },
+      "getOrdersByTable": {
+        "success": "Found {{count}} orders for table {{tableId}}",
+        "error": "Failed to get orders by table"
+      },
+      "getPendingOrders": {
+        "success": "Found {{count}} pending orders",
+        "error": "Failed to get pending orders"
+      },
+      "getCompletedOrders": {
+        "success": "Found {{count}} completed orders",
+        "error": "Failed to get completed orders"
+      },
+      "getOrderStats": {
+        "success": "Order statistics retrieved successfully",
+        "error": "Failed to get order statistics"
+      }
+    },
+    "kitchenOrder": {
+      "getKitchenOrders": {
+        "error": "Failed to get kitchen orders"
+      },
+      "getKitchenOrderById": {
+        "error": "Failed to get kitchen order"
+      },
+      "updateKitchenOrder": {
+        "success": "Kitchen order updated successfully",
+        "error": "Failed to update kitchen order"
+      },
+      "startPreparing": {
+        "success": "Kitchen order started preparing",
+        "error": "Failed to start preparation"
+      },
+      "markReady": {
+        "success": "Kitchen order marked as ready",
+        "error": "Failed to mark order as ready"
+      },
+      "markServed": {
+        "success": "Kitchen order marked as served",
+        "error": "Failed to mark order as served"
+      },
+      "updateItemStatus": {
+        "success": "Item status updated successfully",
+        "error": "Failed to update item status"
+      },
+      "assignOrder": {
+        "success": "Kitchen order assigned successfully",
+        "error": "Failed to assign order"
+      },
+      "getKitchenStats": {
+        "error": "Failed to get kitchen statistics"
+      }
+    },
+    "splitBilling": {
+      "createSplitSale": {
+        "error": "Failed to create split sale"
+      },
+      "addPayment": {
+        "error": "Failed to add payment"
+      },
+      "getSaleWithPayments": {
+        "error": "Failed to get sale with payments"
+      },
+      "refundPayment": {
+        "error": "Failed to refund payment"
+      },
+      "getSplitBillingStats": {
+        "error": "Failed to get split billing statistics"
+      }
+    }
   }
 } 

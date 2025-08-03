@@ -12,7 +12,7 @@ export class TableController {
     try {
       const businessId = req.user?.businessId;
       if (!businessId) {
-        res.status(401).json({ success: false, message: 'Authentication required' });
+        res.status(401).json({ success: false, message: req.t('errors.server.unauthorized') });
         return;
       }
 
@@ -23,13 +23,13 @@ export class TableController {
       res.json({
         success: true,
         data: tables,
-        message: `Found ${tables.length} tables`
+        message: req.t('table.getTablesWithOrders.success', { count: tables.length })
       });
     } catch (error) {
       logger(`Error getting tables with orders: ${error}`);
       res.status(500).json({ 
         success: false, 
-        message: error instanceof Error ? error.message : 'Internal server error' 
+        message: req.t('table.getTablesWithOrders.error') 
       });
     }
   };
@@ -41,19 +41,19 @@ export class TableController {
     try {
       const businessId = req.user?.businessId;
       if (!businessId) {
-        res.status(401).json({ success: false, message: 'Authentication required' });
+        res.status(401).json({ success: false, message: req.t('errors.server.unauthorized') });
         return;
       }
 
       const { tableId } = req.params;
       if (!tableId) {
-        res.status(400).json({ success: false, message: 'Table ID is required' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.tableIdRequired') });
         return;
       }
 
       const tableIdNum = parseInt(tableId);
       if (isNaN(tableIdNum)) {
-        res.status(400).json({ success: false, message: 'Invalid table ID' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.invalidTableId') });
         return;
       }
 
@@ -62,20 +62,20 @@ export class TableController {
       const table = await TableService.getTableWithOrders(tableIdNum, businessId);
       
       if (!table) {
-        res.status(404).json({ success: false, message: 'Table not found' });
+        res.status(404).json({ success: false, message: req.t('errors.server.tableNotFound') });
         return;
       }
 
       res.json({
         success: true,
         data: table,
-        message: `Table ${table.tableNumber} retrieved successfully`
+        message: req.t('table.getTableWithOrders.success', { tableNumber: table.tableNumber })
       });
     } catch (error) {
       logger(`Error getting table with orders: ${error}`);
       res.status(500).json({ 
         success: false, 
-        message: error instanceof Error ? error.message : 'Internal server error' 
+        message: req.t('table.getTableWithOrders.error') 
       });
     }
   };
@@ -87,25 +87,25 @@ export class TableController {
     try {
       const businessId = req.user?.businessId;
       if (!businessId) {
-        res.status(401).json({ success: false, message: 'Authentication required' });
+        res.status(401).json({ success: false, message: req.t('errors.server.unauthorized') });
         return;
       }
 
       const { tableId } = req.params;
       if (!tableId) {
-        res.status(400).json({ success: false, message: 'Table ID is required' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.tableIdRequired') });
         return;
       }
 
       const tableIdNum = parseInt(tableId);
       if (isNaN(tableIdNum)) {
-        res.status(400).json({ success: false, message: 'Invalid table ID' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.invalidTableId') });
         return;
       }
 
       const { status, serverId } = req.body;
       if (!status || !Object.values(TableStatus).includes(status)) {
-        res.status(400).json({ success: false, message: 'Valid status is required' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.validStatusRequired') });
         return;
       }
 
@@ -116,13 +116,13 @@ export class TableController {
       res.json({
         success: true,
         data: table,
-        message: `Table status updated to ${status}`
+        message: req.t('table.updateTableStatus.success', { status })
       });
     } catch (error) {
       logger(`Error updating table status: ${error}`);
       res.status(500).json({ 
         success: false, 
-        message: error instanceof Error ? error.message : 'Internal server error' 
+        message: req.t('table.updateTableStatus.error') 
       });
     }
   };
@@ -134,31 +134,31 @@ export class TableController {
     try {
       const businessId = req.user?.businessId;
       if (!businessId) {
-        res.status(401).json({ success: false, message: 'Authentication required' });
+        res.status(401).json({ success: false, message: req.t('errors.server.unauthorized') });
         return;
       }
 
       const { tableId } = req.params;
       if (!tableId) {
-        res.status(400).json({ success: false, message: 'Table ID is required' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.tableIdRequired') });
         return;
       }
 
       const tableIdNum = parseInt(tableId);
       if (isNaN(tableIdNum)) {
-        res.status(400).json({ success: false, message: 'Invalid table ID' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.invalidTableId') });
         return;
       }
 
       const { serverId } = req.body;
       if (!serverId) {
-        res.status(400).json({ success: false, message: 'Server ID is required' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.serverIdRequired') });
         return;
       }
 
       const serverIdNum = parseInt(serverId);
       if (isNaN(serverIdNum)) {
-        res.status(400).json({ success: false, message: 'Invalid server ID' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.invalidServerId') });
         return;
       }
 
@@ -169,13 +169,13 @@ export class TableController {
       res.json({
         success: true,
         data: table,
-        message: `Table assigned to server ${serverId}`
+        message: req.t('table.assignTable.success', { serverId })
       });
     } catch (error) {
       logger(`Error assigning table: ${error}`);
       res.status(500).json({ 
         success: false, 
-        message: error instanceof Error ? error.message : 'Internal server error' 
+        message: req.t('table.assignTable.error') 
       });
     }
   };
@@ -187,7 +187,7 @@ export class TableController {
     try {
       const businessId = req.user?.businessId;
       if (!businessId) {
-        res.status(401).json({ success: false, message: 'Authentication required' });
+        res.status(401).json({ success: false, message: req.t('errors.server.unauthorized') });
         return;
       }
 
@@ -198,13 +198,13 @@ export class TableController {
       res.json({
         success: true,
         data: stats,
-        message: 'Table statistics retrieved successfully'
+        message: req.t('table.getTableStats.success')
       });
     } catch (error) {
       logger(`Error getting table stats: ${error}`);
       res.status(500).json({ 
         success: false, 
-        message: error instanceof Error ? error.message : 'Internal server error' 
+        message: req.t('table.getTableStats.error') 
       });
     }
   };
@@ -216,7 +216,7 @@ export class TableController {
     try {
       const businessId = req.user?.businessId;
       if (!businessId) {
-        res.status(401).json({ success: false, message: 'Authentication required' });
+        res.status(401).json({ success: false, message: req.t('errors.server.unauthorized') });
         return;
       }
 
@@ -227,13 +227,13 @@ export class TableController {
       res.json({
         success: true,
         data: tables,
-        message: `Found ${tables.length} tables needing attention`
+        message: req.t('table.getTablesNeedingAttention.success', { count: tables.length })
       });
     } catch (error) {
       logger(`Error getting tables needing attention: ${error}`);
       res.status(500).json({ 
         success: false, 
-        message: error instanceof Error ? error.message : 'Internal server error' 
+        message: req.t('table.getTablesNeedingAttention.error') 
       });
     }
   };
@@ -245,26 +245,26 @@ export class TableController {
     try {
       const businessId = req.user?.businessId;
       if (!businessId) {
-        res.status(401).json({ success: false, message: 'Authentication required' });
+        res.status(401).json({ success: false, message: req.t('errors.server.unauthorized') });
         return;
       }
 
       const { tableId } = req.params;
       if (!tableId) {
-        res.status(400).json({ success: false, message: 'Table ID is required' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.tableIdRequired') });
         return;
       }
 
       const tableIdNum = parseInt(tableId);
       if (isNaN(tableIdNum)) {
-        res.status(400).json({ success: false, message: 'Invalid table ID' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.invalidTableId') });
         return;
       }
 
       const { customerName, customerPhone, customerEmail, partySize, serverId, notes } = req.body;
       
       if (!partySize || partySize < 1) {
-        res.status(400).json({ success: false, message: 'Party size is required and must be at least 1' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.partySizeRequired') });
         return;
       }
 
@@ -284,7 +284,7 @@ export class TableController {
       res.json({
         success: true,
         data: result,
-        message: `Table ${result.table.tableNumber} seated successfully with ${partySize} customers`
+        message: req.t('table.seatTable.success', { tableNumber: result.table.tableNumber, partySize })
       });
     } catch (error) {
       logger(`Error seating customers at table: ${error}`);
@@ -294,7 +294,7 @@ export class TableController {
       }
       res.status(500).json({ 
         success: false, 
-        message: error instanceof Error ? error.message : 'Internal server error' 
+        message: req.t('table.seatTable.error') 
       });
     }
   };

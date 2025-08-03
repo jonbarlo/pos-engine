@@ -126,7 +126,7 @@ export const cookRecipe: RequestHandler = async (req: Request, res: Response): P
     if (!recipeId || typeof recipeId !== 'number' || recipeId <= 0) {
       res.status(400).json({
         success: false,
-        error: 'Invalid recipe ID. Must be a positive number.'
+        error: req.t('errors.validation.invalidRecipeId')
       });
       return;
     }
@@ -134,7 +134,7 @@ export const cookRecipe: RequestHandler = async (req: Request, res: Response): P
     if (!quantity || typeof quantity !== 'number' || quantity < 1) {
       res.status(400).json({
         success: false,
-        error: 'Invalid quantity. Must be at least 1.'
+        error: req.t('errors.validation.invalidQuantity')
       });
       return;
     }
@@ -194,7 +194,7 @@ export const cookRecipe: RequestHandler = async (req: Request, res: Response): P
     if (error.message.includes('Recipe not found')) {
       res.status(404).json({
         success: false,
-        error: error.message
+        error: req.t('errors.server.recipeNotFound')
       });
       return;
     }
@@ -202,7 +202,7 @@ export const cookRecipe: RequestHandler = async (req: Request, res: Response): P
     if (error.message.includes('Insufficient stock')) {
       res.status(400).json({
         success: false,
-        error: error.message,
+        error: req.t('errors.server.insufficientStock'),
         details: {
           type: 'insufficient_stock'
         }
@@ -213,7 +213,7 @@ export const cookRecipe: RequestHandler = async (req: Request, res: Response): P
     if (error.message.includes('No smart suggestion found')) {
       res.status(400).json({
         success: false,
-        error: error.message,
+        error: req.t('errors.server.noSmartSuggestion'),
         details: {
           type: 'no_suggestion'
         }
@@ -223,7 +223,7 @@ export const cookRecipe: RequestHandler = async (req: Request, res: Response): P
 
     res.status(500).json({
       success: false,
-      error: 'Internal server error while cooking recipe'
+      error: req.t('recipeCooking.cook.error')
     });
   }
 };
@@ -293,7 +293,7 @@ export const getCookingHistory: RequestHandler = async (req: Request, res: Respo
     if (!businessId) {
       res.status(401).json({
         success: false,
-        error: 'Business ID not found in user context'
+        error: req.t('errors.server.unauthorized')
       });
       return;
     }
@@ -305,7 +305,7 @@ export const getCookingHistory: RequestHandler = async (req: Request, res: Respo
     if (limit < 1 || limit > 100) {
       res.status(400).json({
         success: false,
-        error: 'Limit must be between 1 and 100'
+        error: req.t('errors.validation.limitRange')
       });
       return;
     }
@@ -313,7 +313,7 @@ export const getCookingHistory: RequestHandler = async (req: Request, res: Respo
     if (offset < 0) {
       res.status(400).json({
         success: false,
-        error: 'Offset must be non-negative'
+        error: req.t('errors.validation.offsetNonNegative')
       });
       return;
     }
@@ -335,7 +335,7 @@ export const getCookingHistory: RequestHandler = async (req: Request, res: Respo
     console.error('Error in getCookingHistory controller:', error);
     res.status(500).json({
       success: false,
-      error: 'Internal server error while retrieving cooking history'
+      error: req.t('recipeCooking.getHistory.error')
     });
   }
 };
@@ -397,7 +397,7 @@ export const getCookingAnalytics: RequestHandler = async (req: Request, res: Res
     console.error('Error in getCookingAnalytics controller:', error);
     res.status(500).json({
       success: false,
-      error: 'Internal server error while retrieving cooking analytics'
+      error: req.t('recipeCooking.getAnalytics.error')
     });
   }
 }; 

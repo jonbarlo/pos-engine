@@ -11,25 +11,25 @@ export class OrderController {
     try {
       const businessId = req.user?.businessId;
       if (!businessId) {
-        res.status(401).json({ success: false, message: 'Authentication required' });
+        res.status(401).json({ success: false, message: req.t('errors.server.unauthorized') });
         return;
       }
 
       const { id } = req.params;
       if (!id) {
-        res.status(400).json({ success: false, message: 'Order ID is required' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.orderIdRequired') });
         return;
       }
 
       const orderId = parseInt(id);
       if (isNaN(orderId)) {
-        res.status(400).json({ success: false, message: 'Invalid order ID' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.invalidOrderId') });
         return;
       }
 
       const completionData: OrderCompletionData = req.body;
       if (!completionData.paymentMethod) {
-        res.status(400).json({ success: false, message: 'Payment method is required' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.paymentMethodRequired') });
         return;
       }
 
@@ -40,13 +40,13 @@ export class OrderController {
       res.json({
         success: true,
         data: result,
-        message: 'Order completed successfully'
+        message: req.t('order.completeOrder.success')
       });
     } catch (error) {
       logger(`Error completing order: ${error}`);
       res.status(500).json({ 
         success: false, 
-        message: error instanceof Error ? error.message : 'Internal server error' 
+        message: req.t('order.completeOrder.error') 
       });
     }
   };
@@ -58,19 +58,19 @@ export class OrderController {
     try {
       const businessId = req.user?.businessId;
       if (!businessId) {
-        res.status(401).json({ success: false, message: 'Authentication required' });
+        res.status(401).json({ success: false, message: req.t('errors.server.unauthorized') });
         return;
       }
 
       const { tableId } = req.params;
       if (!tableId) {
-        res.status(400).json({ success: false, message: 'Table ID is required' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.tableIdRequired') });
         return;
       }
 
       const tableIdNum = parseInt(tableId);
       if (isNaN(tableIdNum)) {
-        res.status(400).json({ success: false, message: 'Invalid table ID' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.invalidTableId') });
         return;
       }
 
@@ -81,13 +81,13 @@ export class OrderController {
       res.json({
         success: true,
         data: result,
-        message: `Table cleared successfully. Completed ${result.ordersCompleted} orders, created ${result.salesCreated} sales`
+        message: req.t('order.clearTable.success', { ordersCompleted: result.ordersCompleted, salesCreated: result.salesCreated })
       });
     } catch (error) {
       logger(`Error clearing table: ${error}`);
       res.status(500).json({ 
         success: false, 
-        message: error instanceof Error ? error.message : 'Internal server error' 
+        message: req.t('order.clearTable.error') 
       });
     }
   };
@@ -99,19 +99,19 @@ export class OrderController {
     try {
       const businessId = req.user?.businessId;
       if (!businessId) {
-        res.status(401).json({ success: false, message: 'Authentication required' });
+        res.status(401).json({ success: false, message: req.t('errors.server.unauthorized') });
         return;
       }
 
       const { tableId } = req.params;
       if (!tableId) {
-        res.status(400).json({ success: false, message: 'Table ID is required' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.tableIdRequired') });
         return;
       }
 
       const tableIdNum = parseInt(tableId);
       if (isNaN(tableIdNum)) {
-        res.status(400).json({ success: false, message: 'Invalid table ID' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.invalidTableId') });
         return;
       }
 
@@ -122,13 +122,13 @@ export class OrderController {
       res.json({
         success: true,
         data: orders,
-        message: `Found ${orders.length} orders for table ${tableId}`
+        message: req.t('order.getOrdersByTable.success', { count: orders.length, tableId })
       });
     } catch (error) {
       logger(`Error getting orders by table: ${error}`);
       res.status(500).json({ 
         success: false, 
-        message: error instanceof Error ? error.message : 'Internal server error' 
+        message: req.t('order.getOrdersByTable.error') 
       });
     }
   };
@@ -140,7 +140,7 @@ export class OrderController {
     try {
       const businessId = req.user?.businessId;
       if (!businessId) {
-        res.status(401).json({ success: false, message: 'Authentication required' });
+        res.status(401).json({ success: false, message: req.t('errors.server.unauthorized') });
         return;
       }
 
@@ -151,13 +151,13 @@ export class OrderController {
       res.json({
         success: true,
         data: orders,
-        message: `Found ${orders.length} pending orders`
+        message: req.t('order.getPendingOrders.success', { count: orders.length })
       });
     } catch (error) {
       logger(`Error getting pending orders: ${error}`);
       res.status(500).json({ 
         success: false, 
-        message: error instanceof Error ? error.message : 'Internal server error' 
+        message: req.t('order.getPendingOrders.error') 
       });
     }
   };
@@ -169,7 +169,7 @@ export class OrderController {
     try {
       const businessId = req.user?.businessId;
       if (!businessId) {
-        res.status(401).json({ success: false, message: 'Authentication required' });
+        res.status(401).json({ success: false, message: req.t('errors.server.unauthorized') });
         return;
       }
 
@@ -180,7 +180,7 @@ export class OrderController {
       if (startDate) {
         start = new Date(startDate as string);
         if (isNaN(start.getTime())) {
-          res.status(400).json({ success: false, message: 'Invalid start date format' });
+          res.status(400).json({ success: false, message: req.t('errors.validation.invalidStartDateFormat') });
           return;
         }
       }
@@ -188,7 +188,7 @@ export class OrderController {
       if (endDate) {
         end = new Date(endDate as string);
         if (isNaN(end.getTime())) {
-          res.status(400).json({ success: false, message: 'Invalid end date format' });
+          res.status(400).json({ success: false, message: req.t('errors.validation.invalidEndDateFormat') });
           return;
         }
       }
@@ -200,13 +200,13 @@ export class OrderController {
       res.json({
         success: true,
         data: orders,
-        message: `Found ${orders.length} completed orders`
+        message: req.t('order.getCompletedOrders.success', { count: orders.length })
       });
     } catch (error) {
       logger(`Error getting completed orders: ${error}`);
       res.status(500).json({ 
         success: false, 
-        message: error instanceof Error ? error.message : 'Internal server error' 
+        message: req.t('order.getCompletedOrders.error') 
       });
     }
   };
@@ -218,7 +218,7 @@ export class OrderController {
     try {
       const businessId = req.user?.businessId;
       if (!businessId) {
-        res.status(401).json({ success: false, message: 'Authentication required' });
+        res.status(401).json({ success: false, message: req.t('errors.server.unauthorized') });
         return;
       }
 
@@ -229,7 +229,7 @@ export class OrderController {
       if (startDate) {
         start = new Date(startDate as string);
         if (isNaN(start.getTime())) {
-          res.status(400).json({ success: false, message: 'Invalid start date format' });
+          res.status(400).json({ success: false, message: req.t('errors.validation.invalidStartDateFormat') });
           return;
         }
       }
@@ -237,7 +237,7 @@ export class OrderController {
       if (endDate) {
         end = new Date(endDate as string);
         if (isNaN(end.getTime())) {
-          res.status(400).json({ success: false, message: 'Invalid end date format' });
+          res.status(400).json({ success: false, message: req.t('errors.validation.invalidEndDateFormat') });
           return;
         }
       }
@@ -270,13 +270,13 @@ export class OrderController {
       res.json({
         success: true,
         data: stats,
-        message: 'Order statistics retrieved successfully'
+        message: req.t('order.getOrderStats.success')
       });
     } catch (error) {
       logger(`Error getting order stats: ${error}`);
       res.status(500).json({ 
         success: false, 
-        message: error instanceof Error ? error.message : 'Internal server error' 
+        message: req.t('order.getOrderStats.error') 
       });
     }
   };

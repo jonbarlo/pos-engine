@@ -14,13 +14,13 @@ export class PromotionController {
       
       // Validate required fields
       if (!promotionData.name || !promotionData.type || !promotionData.discountType || !promotionData.discountValue) {
-        res.status(400).json({ error: 'Name, type, discount type, and discount value are required' });
+        res.status(400).json({ error: req.t('errors.validation.promotionFieldsRequired') });
         return;
       }
 
       // Validate discount value
       if (promotionData.discountValue <= 0) {
-        res.status(400).json({ error: 'Discount value must be greater than 0' });
+        res.status(400).json({ error: req.t('errors.validation.discountValueMustBePositive') });
         return;
       }
 
@@ -30,7 +30,7 @@ export class PromotionController {
         const endDate = new Date(promotionData.endDate);
         
         if (endDate <= startDate) {
-          res.status(400).json({ error: 'End date must be after start date' });
+          res.status(400).json({ error: req.t('errors.validation.endDateAfterStartDate') });
           return;
         }
       }
@@ -42,12 +42,12 @@ export class PromotionController {
       });
       
       res.status(201).json({
-        message: 'Promotion created successfully',
+        message: req.t('promotions.create.success'),
         data: promotion
       });
     } catch (error) {
       logger(`Error creating promotion: ${error}`);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: req.t('promotions.create.error') });
     }
   };
 
@@ -60,14 +60,14 @@ export class PromotionController {
       const businessId = req.user!.businessId;
       
       if (!id) {
-        res.status(400).json({ error: 'Promotion ID is required' });
+        res.status(400).json({ error: req.t('errors.validation.promotionIdRequired') });
         return;
       }
       
       const promotionId = parseInt(id);
       
       if (isNaN(promotionId)) {
-        res.status(400).json({ error: 'Invalid promotion ID' });
+        res.status(400).json({ error: req.t('errors.validation.invalidPromotionId') });
         return;
       }
 
@@ -75,17 +75,17 @@ export class PromotionController {
       const promotion = await PromotionService.getPromotionById(promotionId, businessId);
       
       if (!promotion) {
-        res.status(404).json({ error: 'Promotion not found' });
+        res.status(404).json({ error: req.t('errors.server.promotionNotFound') });
         return;
       }
 
       res.json({
-        message: 'Promotion retrieved successfully',
+        message: req.t('promotions.getById.success'),
         data: promotion
       });
     } catch (error) {
       logger(`Error getting promotion: ${error}`);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: req.t('promotions.getById.error') });
     }
   };
 
@@ -108,13 +108,13 @@ export class PromotionController {
       const result = await PromotionService.getAllPromotions(filters);
       
       res.json({
-        message: 'Promotions retrieved successfully',
+        message: req.t('promotions.getAll.success'),
         data: result.promotions,
         pagination: result.pagination
       });
     } catch (error) {
       logger(`Error getting promotions: ${error}`);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: req.t('promotions.getAll.error') });
     }
   };
 
@@ -145,7 +145,7 @@ export class PromotionController {
         const endDate = new Date(updateData.endDate);
         
         if (endDate <= startDate) {
-          res.status(400).json({ error: 'End date must be after start date' });
+          res.status(400).json({ error: req.t('errors.validation.endDateAfterStartDate') });
           return;
         }
       }
@@ -154,17 +154,17 @@ export class PromotionController {
       const promotion = await PromotionService.updatePromotion(promotionId, businessId, updateData);
       
       if (!promotion) {
-        res.status(404).json({ error: 'Promotion not found' });
+        res.status(404).json({ error: req.t('errors.server.promotionNotFound') });
         return;
       }
 
       res.json({
-        message: 'Promotion updated successfully',
+        message: req.t('promotions.update.success'),
         data: promotion
       });
     } catch (error) {
       logger(`Error updating promotion: ${error}`);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: req.t('promotions.update.error') });
     }
   };
 
@@ -192,16 +192,16 @@ export class PromotionController {
       const success = await PromotionService.deletePromotion(promotionId, businessId);
       
       if (!success) {
-        res.status(404).json({ error: 'Promotion not found' });
+        res.status(404).json({ error: req.t('errors.server.promotionNotFound') });
         return;
       }
 
       res.json({
-        message: 'Promotion deleted successfully'
+        message: req.t('promotions.delete.success')
       });
     } catch (error) {
       logger(`Error deleting promotion: ${error}`);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: req.t('promotions.delete.error') });
     }
   };
 
@@ -214,7 +214,7 @@ export class PromotionController {
       const businessId = req.user!.businessId;
       
       if (!q || typeof q !== 'string') {
-        res.status(400).json({ error: 'Search query is required' });
+        res.status(400).json({ error: req.t('errors.validation.searchQueryRequired') });
         return;
       }
 
@@ -222,12 +222,12 @@ export class PromotionController {
       const promotions = await PromotionService.searchPromotions(q, businessId);
       
       res.json({
-        message: 'Promotions search completed',
+        message: req.t('promotions.search.success'),
         data: promotions
       });
     } catch (error) {
       logger(`Error searching promotions: ${error}`);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: req.t('promotions.search.error') });
     }
   };
 
@@ -242,12 +242,12 @@ export class PromotionController {
       const promotions = await PromotionService.getActivePromotions(businessId);
       
       res.json({
-        message: 'Active promotions retrieved successfully',
+        message: req.t('promotions.getActive.success'),
         data: promotions
       });
     } catch (error) {
       logger(`Error getting active promotions: ${error}`);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: req.t('promotions.getActive.error') });
     }
   };
 
@@ -262,12 +262,12 @@ export class PromotionController {
       const stats = await PromotionService.getPromotionStats(businessId);
       
       res.json({
-        message: 'Promotion statistics retrieved successfully',
+        message: req.t('promotions.getStats.success'),
         data: stats
       });
     } catch (error) {
       logger(`Error getting promotion statistics: ${error}`);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: req.t('promotions.getStats.error') });
     }
   };
 
@@ -293,14 +293,14 @@ export class PromotionController {
       }
 
       if (!items || !Array.isArray(items) || items.length === 0) {
-        res.status(400).json({ error: 'Items array is required and must not be empty' });
+        res.status(400).json({ error: req.t('errors.validation.promotionItemsArrayRequired') });
         return;
       }
 
       // Validate items structure
       for (const item of items) {
         if (!item.itemId && !item.recipeId) {
-          res.status(400).json({ error: 'Each item must have either itemId or recipeId' });
+          res.status(400).json({ error: req.t('errors.validation.promotionItemStructureRequired') });
           return;
         }
       }
@@ -309,12 +309,12 @@ export class PromotionController {
       const promotionItems = await PromotionService.addPromotionItems(promotionId, businessId, items);
       
       res.status(201).json({
-        message: 'Items added to promotion successfully',
+        message: req.t('promotions.addItems.success'),
         data: promotionItems
       });
     } catch (error) {
       logger(`Error adding promotion items: ${error}`);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: req.t('promotions.addItems.error') });
     }
   };
 
@@ -342,12 +342,12 @@ export class PromotionController {
       const items = await PromotionService.getPromotionItems(promotionId, businessId);
       
       res.json({
-        message: 'Promotion items retrieved successfully',
+        message: req.t('promotions.getItems.success'),
         data: items
       });
     } catch (error) {
       logger(`Error getting promotion items: ${error}`);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: req.t('promotions.getItems.error') });
     }
   };
 
@@ -373,7 +373,7 @@ export class PromotionController {
       }
 
       if (!itemIds || !Array.isArray(itemIds) || itemIds.length === 0) {
-        res.status(400).json({ error: 'Item IDs array is required and must not be empty' });
+        res.status(400).json({ error: req.t('errors.validation.promotionItemIdsArrayRequired') });
         return;
       }
 
@@ -381,16 +381,16 @@ export class PromotionController {
       const success = await PromotionService.removePromotionItems(promotionId, businessId, itemIds);
       
       if (!success) {
-        res.status(404).json({ error: 'No items found to remove' });
+        res.status(404).json({ error: req.t('errors.server.noItemsToRemove') });
         return;
       }
 
       res.json({
-        message: 'Items removed from promotion successfully'
+        message: req.t('promotions.removeItems.success')
       });
     } catch (error) {
       logger(`Error removing promotion items: ${error}`);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: req.t('promotions.removeItems.error') });
     }
   };
 } 

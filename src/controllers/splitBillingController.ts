@@ -19,7 +19,7 @@ export class SplitBillingController {
       if (!splitSaleData.userId || !splitSaleData.totalAmount || 
           !splitSaleData.payments || splitSaleData.payments.length === 0) {
         res.status(400).json({ 
-          error: 'User ID, total amount, and payments are required' 
+          error: req.t('errors.validation.splitSaleFieldsRequired') 
         });
         return;
       }
@@ -30,7 +30,7 @@ export class SplitBillingController {
       res.status(201).json(result);
     } catch (error) {
       logger(`Error creating split sale: ${error}`);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: req.t('splitBilling.createSplitSale.error') });
     }
   };
 
@@ -44,19 +44,19 @@ export class SplitBillingController {
       const payment = req.body;
       
       if (!saleId) {
-        res.status(400).json({ error: 'Sale ID is required' });
+        res.status(400).json({ error: req.t('errors.validation.saleIdRequired') });
         return;
       }
       
       const saleIdNum = parseInt(saleId);
       
       if (isNaN(saleIdNum)) {
-        res.status(400).json({ error: 'Invalid sale ID' });
+        res.status(400).json({ error: req.t('errors.validation.invalidSaleId') });
         return;
       }
 
       if (!payment.amount || !payment.method) {
-        res.status(400).json({ error: 'Payment amount and method are required' });
+        res.status(400).json({ error: req.t('errors.validation.paymentAmountAndMethodRequired') });
         return;
       }
 
@@ -72,7 +72,7 @@ export class SplitBillingController {
       res.json(result);
     } catch (error) {
       logger(`Error adding payment: ${error}`);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: req.t('splitBilling.addPayment.error') });
     }
   };
 
@@ -85,14 +85,14 @@ export class SplitBillingController {
       const businessId = req.user!.businessId;
       
       if (!id) {
-        res.status(400).json({ error: 'Sale ID is required' });
+        res.status(400).json({ error: req.t('errors.validation.saleIdRequired') });
         return;
       }
       
       const saleId = parseInt(id);
       
       if (isNaN(saleId)) {
-        res.status(400).json({ error: 'Invalid sale ID' });
+        res.status(400).json({ error: req.t('errors.validation.invalidSaleId') });
         return;
       }
 
@@ -100,14 +100,14 @@ export class SplitBillingController {
       const sale = await SplitBillingService.getSaleWithPayments(saleId, businessId);
       
       if (!sale) {
-        res.status(404).json({ error: 'Sale not found' });
+        res.status(404).json({ error: req.t('errors.server.saleNotFound') });
         return;
       }
 
       res.json(sale);
     } catch (error) {
       logger(`Error getting sale with payments: ${error}`);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: req.t('splitBilling.getSaleWithPayments.error') });
     }
   };
 
@@ -121,19 +121,19 @@ export class SplitBillingController {
       const { paymentIndex, refundAmount, reason } = req.body;
       
       if (!saleId) {
-        res.status(400).json({ error: 'Sale ID is required' });
+        res.status(400).json({ error: req.t('errors.validation.saleIdRequired') });
         return;
       }
       
       const saleIdNum = parseInt(saleId);
       
       if (isNaN(saleIdNum)) {
-        res.status(400).json({ error: 'Invalid sale ID' });
+        res.status(400).json({ error: req.t('errors.validation.invalidSaleId') });
         return;
       }
 
       if (paymentIndex === undefined || !refundAmount) {
-        res.status(400).json({ error: 'Payment index and refund amount are required' });
+        res.status(400).json({ error: req.t('errors.validation.paymentIndexAndRefundAmountRequired') });
         return;
       }
 
@@ -151,7 +151,7 @@ export class SplitBillingController {
       res.json(result);
     } catch (error) {
       logger(`Error refunding payment: ${error}`);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: req.t('splitBilling.refundPayment.error') });
     }
   };
 
@@ -168,7 +168,7 @@ export class SplitBillingController {
       res.json(stats);
     } catch (error) {
       logger(`Error getting split billing stats: ${error}`);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: req.t('splitBilling.getSplitBillingStats.error') });
     }
   };
 } 

@@ -106,7 +106,7 @@ export const getSmartSuggestions: RequestHandler = async (req: Request, res: Res
   if (!businessId) {
     res.status(401).json({
       success: false,
-      error: 'Business ID not found in token'
+      error: req.t('errors.server.unauthorized')
     });
     return;
   }
@@ -185,7 +185,7 @@ export const getInventorySummary: RequestHandler = async (req: Request, res: Res
     if (!businessId) {
       res.status(401).json({
         success: false,
-        error: 'Business ID not found in token'
+        error: req.t('errors.server.unauthorized')
       });
       return;
     }
@@ -244,7 +244,7 @@ export const updateTracking: RequestHandler = async (req: Request, res: Response
     if (!businessId) {
       res.status(401).json({
         success: false,
-        error: 'Business ID not found in token'
+        error: req.t('errors.server.unauthorized')
       });
       return;
     }
@@ -253,13 +253,13 @@ export const updateTracking: RequestHandler = async (req: Request, res: Response
 
     res.json({
       success: true,
-      message: 'Inventory tracking data updated successfully'
+      message: req.t('smartRecipeSuggestion.updateTracking.success')
     });
   } catch (error) {
     console.error('Error updating tracking data:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to update tracking data'
+      error: req.t('smartRecipeSuggestion.updateTracking.error')
     });
   }
 };
@@ -299,7 +299,7 @@ export const getExpiringItems: RequestHandler = async (req: Request, res: Respon
     if (!businessId) {
       res.status(401).json({
         success: false,
-        error: 'Business ID not found in token'
+        error: req.t('errors.server.unauthorized')
       });
       return;
     }
@@ -378,7 +378,7 @@ export const getUnderperformingItems: RequestHandler = async (req: Request, res:
     if (!businessId) {
       res.status(401).json({
         success: false,
-        error: 'Business ID not found in token'
+        error: req.t('errors.server.unauthorized')
       });
       return;
     }
@@ -501,7 +501,7 @@ export const generateWastePreventionSuggestions: RequestHandler = async (req: Re
   try {
     const businessId = (req as any).user?.businessId;
     if (!businessId) {
-      res.status(401).json({ success: false, message: 'Business ID not found in token' });
+      res.status(401).json({ success: false, message: req.t('errors.server.unauthorized') });
       return;
     }
 
@@ -520,7 +520,7 @@ export const generateWastePreventionSuggestions: RequestHandler = async (req: Re
     if (expiringItems.length === 0) {
       res.status(200).json({
         success: true,
-        message: 'No items expiring soon found',
+        message: req.t('smartRecipeSuggestion.noExpiringItems'),
         suggestions: [],
         summary: {
           totalExpiringItems: 0,
@@ -550,7 +550,7 @@ export const generateWastePreventionSuggestions: RequestHandler = async (req: Re
 
     res.status(200).json({
       success: true,
-      message: 'Waste prevention suggestions generated successfully',
+      message: req.t('smartRecipeSuggestion.wastePreventionGenerated'),
       suggestions,
       summary: {
         totalExpiringItems,
@@ -563,8 +563,8 @@ export const generateWastePreventionSuggestions: RequestHandler = async (req: Re
     console.error('❌ Error generating waste prevention suggestions:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to generate waste prevention suggestions',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      message: req.t('smartRecipeSuggestion.wastePreventionError'),
+      error: req.t('errors.server.internal')
     });
   }
 }; 

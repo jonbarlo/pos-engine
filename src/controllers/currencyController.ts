@@ -15,14 +15,14 @@ export class CurrencyController {
       res.status(200).json({
         success: true,
         data: currencies,
-        message: 'Currencies retrieved successfully'
+        message: req.t('currencies.getAll.success')
       });
     } catch (error) {
       logger(`Error getting currencies: ${error}`);
       res.status(500).json({
         success: false,
-        message: 'Failed to retrieve currencies',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        message: req.t('currencies.getAll.error'),
+        error: req.t('errors.server.internal')
       });
     }
   }
@@ -38,7 +38,7 @@ export class CurrencyController {
       if (isNaN(id)) {
         res.status(400).json({
           success: false,
-          message: 'Invalid currency ID'
+          message: req.t('errors.validation.invalidCurrencyId')
         });
         return;
       }
@@ -49,7 +49,7 @@ export class CurrencyController {
       if (!currency) {
         res.status(404).json({
           success: false,
-          message: 'Currency not found'
+          message: req.t('errors.server.currencyNotFound')
         });
         return;
       }
@@ -57,14 +57,14 @@ export class CurrencyController {
       res.status(200).json({
         success: true,
         data: currency,
-        message: 'Currency retrieved successfully'
+        message: req.t('currencies.getById.success')
       });
     } catch (error) {
       logger(`Error getting currency by ID: ${error}`);
       res.status(500).json({
         success: false,
-        message: 'Failed to retrieve currency',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        message: req.t('currencies.getById.error'),
+        error: req.t('errors.server.internal')
       });
     }
   }
@@ -80,7 +80,7 @@ export class CurrencyController {
       if (!code || code.length !== 3) {
         res.status(400).json({
           success: false,
-          message: 'Invalid currency code'
+          message: req.t('errors.validation.invalidCurrencyCode')
         });
         return;
       }
@@ -91,7 +91,7 @@ export class CurrencyController {
       if (!currency) {
         res.status(404).json({
           success: false,
-          message: 'Currency not found'
+          message: req.t('errors.server.currencyNotFound')
         });
         return;
       }
@@ -99,14 +99,14 @@ export class CurrencyController {
       res.status(200).json({
         success: true,
         data: currency,
-        message: 'Currency retrieved successfully'
+        message: req.t('currencies.getByCode.success')
       });
     } catch (error) {
       logger(`Error getting currency by code: ${error}`);
       res.status(500).json({
         success: false,
-        message: 'Failed to retrieve currency',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        message: req.t('currencies.getByCode.error'),
+        error: req.t('errors.server.internal')
       });
     }
   }
@@ -123,7 +123,7 @@ export class CurrencyController {
       if (!currency) {
         res.status(404).json({
           success: false,
-          message: 'No default currency found'
+          message: req.t('errors.server.currencyNotFound')
         });
         return;
       }
@@ -131,14 +131,14 @@ export class CurrencyController {
       res.status(200).json({
         success: true,
         data: currency,
-        message: 'Default currency retrieved successfully'
+        message: req.t('currencies.getDefault.success')
       });
     } catch (error) {
       logger(`Error getting default currency: ${error}`);
       res.status(500).json({
         success: false,
-        message: 'Failed to retrieve default currency',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        message: req.t('currencies.getDefault.error'),
+        error: req.t('errors.server.internal')
       });
     }
   }
@@ -155,7 +155,7 @@ export class CurrencyController {
       if (!code || !name || !symbol) {
         res.status(400).json({
           success: false,
-          message: 'Code, name, and symbol are required'
+          message: req.t('errors.validation.currencyFieldsRequired')
         });
         return;
       }
@@ -164,7 +164,7 @@ export class CurrencyController {
       if (!CurrencyService.validateCurrencyCode(code)) {
         res.status(400).json({
           success: false,
-          message: 'Currency code must be 3 uppercase letters (ISO 4217 format)'
+          message: req.t('errors.validation.currencyCodeFormat')
         });
         return;
       }
@@ -182,14 +182,14 @@ export class CurrencyController {
       res.status(201).json({
         success: true,
         data: currency,
-        message: 'Currency created successfully'
+        message: req.t('currencies.create.success')
       });
     } catch (error) {
       logger(`Error creating currency: ${error}`);
       res.status(500).json({
         success: false,
-        message: 'Failed to create currency',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        message: req.t('currencies.create.error'),
+        error: req.t('errors.server.internal')
       });
     }
   }
@@ -205,7 +205,7 @@ export class CurrencyController {
       if (isNaN(id)) {
         res.status(400).json({
           success: false,
-          message: 'Invalid currency ID'
+          message: req.t('errors.validation.invalidCurrencyId')
         });
         return;
       }
@@ -216,7 +216,7 @@ export class CurrencyController {
       if (code && !CurrencyService.validateCurrencyCode(code)) {
         res.status(400).json({
           success: false,
-          message: 'Currency code must be 3 uppercase letters (ISO 4217 format)'
+          message: req.t('errors.validation.currencyCodeFormat')
         });
         return;
       }
@@ -234,7 +234,7 @@ export class CurrencyController {
       if (!currency) {
         res.status(404).json({
           success: false,
-          message: 'Currency not found'
+          message: req.t('errors.server.currencyNotFound')
         });
         return;
       }
@@ -242,14 +242,14 @@ export class CurrencyController {
       res.status(200).json({
         success: true,
         data: currency,
-        message: 'Currency updated successfully'
+        message: req.t('currencies.update.success')
       });
     } catch (error) {
       logger(`Error updating currency: ${error}`);
       res.status(500).json({
         success: false,
-        message: 'Failed to update currency',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        message: req.t('currencies.update.error'),
+        error: req.t('errors.server.internal')
       });
     }
   }
@@ -265,7 +265,7 @@ export class CurrencyController {
       if (isNaN(id)) {
         res.status(400).json({
           success: false,
-          message: 'Invalid currency ID'
+          message: req.t('errors.validation.invalidCurrencyId')
         });
         return;
       }
@@ -276,21 +276,21 @@ export class CurrencyController {
       if (!deleted) {
         res.status(404).json({
           success: false,
-          message: 'Currency not found'
+          message: req.t('errors.server.currencyNotFound')
         });
         return;
       }
 
       res.status(200).json({
         success: true,
-        message: 'Currency deleted successfully'
+        message: req.t('currencies.delete.success')
       });
     } catch (error) {
       logger(`Error deleting currency: ${error}`);
       res.status(500).json({
         success: false,
-        message: 'Failed to delete currency',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        message: req.t('currencies.delete.error'),
+        error: req.t('errors.server.internal')
       });
     }
   }
@@ -307,7 +307,7 @@ export class CurrencyController {
       if (!fromCurrencyId || !toCurrencyId || amount === undefined) {
         res.status(400).json({
           success: false,
-          message: 'fromCurrencyId, toCurrencyId, and amount are required'
+          message: req.t('errors.validation.currencyConversionFieldsRequired')
         });
         return;
       }
@@ -316,7 +316,7 @@ export class CurrencyController {
       if (amount < 0) {
         res.status(400).json({
           success: false,
-          message: 'Amount must be positive'
+          message: req.t('errors.validation.amountMustBePositive')
         });
         return;
       }
@@ -333,14 +333,14 @@ export class CurrencyController {
       res.status(200).json({
         success: true,
         data: result,
-        message: 'Currency converted successfully'
+        message: req.t('currencies.convert.success')
       });
     } catch (error) {
       logger(`Error converting currency: ${error}`);
       res.status(500).json({
         success: false,
-        message: 'Failed to convert currency',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        message: req.t('currencies.convert.error'),
+        error: req.t('errors.server.internal')
       });
     }
   }
@@ -356,7 +356,7 @@ export class CurrencyController {
       if (isNaN(id)) {
         res.status(400).json({
           success: false,
-          message: 'Invalid currency ID'
+          message: req.t('errors.validation.invalidCurrencyId')
         });
         return;
       }
@@ -367,14 +367,14 @@ export class CurrencyController {
       res.status(200).json({
         success: true,
         data: exchangeRates,
-        message: 'Exchange rates retrieved successfully'
+        message: req.t('currencies.exchangeRates.success')
       });
     } catch (error) {
       logger(`Error getting exchange rates for currency: ${error}`);
       res.status(500).json({
         success: false,
-        message: 'Failed to retrieve exchange rates',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        message: req.t('currencies.exchangeRates.error'),
+        error: req.t('errors.server.internal')
       });
     }
   }
@@ -391,7 +391,7 @@ export class CurrencyController {
       if (isNaN(fromCurrencyId) || isNaN(toCurrencyId)) {
         res.status(400).json({
           success: false,
-          message: 'Invalid currency IDs'
+          message: req.t('errors.validation.invalidCurrencyIds')
         });
         return;
       }
@@ -402,7 +402,7 @@ export class CurrencyController {
       if (!exchangeRate) {
         res.status(404).json({
           success: false,
-          message: 'Exchange rate not found'
+          message: req.t('errors.server.exchangeRateNotFound')
         });
         return;
       }
@@ -410,14 +410,14 @@ export class CurrencyController {
       res.status(200).json({
         success: true,
         data: exchangeRate,
-        message: 'Exchange rate retrieved successfully'
+        message: req.t('currencies.exchangeRate.success')
       });
     } catch (error) {
       logger(`Error getting exchange rate: ${error}`);
       res.status(500).json({
         success: false,
-        message: 'Failed to retrieve exchange rate',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        message: req.t('currencies.exchangeRate.error'),
+        error: req.t('errors.server.internal')
       });
     }
   }
@@ -434,7 +434,7 @@ export class CurrencyController {
       if (!fromCurrencyId || !toCurrencyId || rate === undefined) {
         res.status(400).json({
           success: false,
-          message: 'fromCurrencyId, toCurrencyId, and rate are required'
+          message: req.t('errors.validation.exchangeRateFieldsRequired')
         });
         return;
       }
@@ -443,7 +443,7 @@ export class CurrencyController {
       if (rate <= 0) {
         res.status(400).json({
           success: false,
-          message: 'Exchange rate must be positive'
+          message: req.t('errors.validation.exchangeRateMustBePositive')
         });
         return;
       }
@@ -459,14 +459,14 @@ export class CurrencyController {
       res.status(200).json({
         success: true,
         data: exchangeRate,
-        message: 'Exchange rate updated successfully'
+        message: req.t('currencies.updateExchangeRate.success')
       });
     } catch (error) {
       logger(`Error updating exchange rate: ${error}`);
       res.status(500).json({
         success: false,
-        message: 'Failed to update exchange rate',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        message: req.t('currencies.updateExchangeRate.error'),
+        error: req.t('errors.server.internal')
       });
     }
   }

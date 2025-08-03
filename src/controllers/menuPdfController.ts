@@ -12,13 +12,13 @@ export class MenuPdfController {
       const businessId = parseInt(req.params.businessId || '0');
       
       if (!businessId) {
-        res.status(400).json({ success: false, message: 'Business ID is required' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.businessIdRequired') });
         return;
       }
 
       // Validate user has access to this business
       if (req.user?.businessId && req.user.businessId !== businessId) {
-        res.status(403).json({ success: false, message: 'Access denied to this business' });
+        res.status(403).json({ success: false, message: req.t('errors.server.forbidden') });
         return;
       }
 
@@ -62,7 +62,7 @@ export class MenuPdfController {
       logger(`Error generating PDF menu: ${error}`);
       res.status(500).json({ 
         success: false, 
-        message: error instanceof Error ? error.message : 'Internal server error' 
+        message: req.t('menuPdf.generate.error')
       });
     }
   };
@@ -85,7 +85,7 @@ export class MenuPdfController {
       logger(`Error getting PDF templates: ${error}`);
       res.status(500).json({ 
         success: false, 
-        message: 'Internal server error' 
+        message: req.t('menuPdf.templates.error')
       });
     }
   };
@@ -98,13 +98,13 @@ export class MenuPdfController {
       const businessId = parseInt(req.params.businessId || '0');
       
       if (!businessId) {
-        res.status(400).json({ success: false, message: 'Business ID is required' });
+        res.status(400).json({ success: false, message: req.t('errors.validation.businessIdRequired') });
         return;
       }
 
       // Validate user has access to this business
       if (req.user?.businessId && req.user.businessId !== businessId) {
-        res.status(403).json({ success: false, message: 'Access denied to this business' });
+        res.status(403).json({ success: false, message: req.t('errors.server.forbidden') });
         return;
       }
 
@@ -115,7 +115,7 @@ export class MenuPdfController {
       
       const business = await BusinessModel.findByPk(businessId);
       if (!business) {
-        res.status(404).json({ success: false, message: 'Business not found' });
+        res.status(404).json({ success: false, message: req.t('errors.server.businessNotFound') });
         return;
       }
 
@@ -167,7 +167,7 @@ export class MenuPdfController {
       logger(`Error previewing menu: ${error}`);
       res.status(500).json({ 
         success: false, 
-        message: error instanceof Error ? error.message : 'Internal server error' 
+        message: req.t('menuPdf.preview.error')
       });
     }
   };
