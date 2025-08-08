@@ -2,6 +2,7 @@ import express from 'express';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import dotenv from 'dotenv';
+import path from 'path';
 import { logger } from './utils/logger';
 import DatabaseService from './services/databaseService';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
@@ -16,30 +17,15 @@ import { initializeI18n } from './config/i18n';
 import { i18nMiddleware, detectLanguage } from './middleware/i18n';
 import cors from 'cors';
 
-// Load environment variables FIRST - only if we're not in Railway production
-// Railway injects environment variables directly, no need for dotenv
-const isRailway = process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_ID;
-const isProduction = process.env.NODE_ENV === 'production';
-
-logger(`Starting app... Railway: ${isRailway ? 'Yes' : 'No'}, Production: ${isProduction ? 'Yes' : 'No'}, NODE_ENV: ${process.env.NODE_ENV || 'not set'}`);
-
-if (!isRailway && !isProduction) {
-  logger('Loading .env file for local development...');
-  dotenv.config();
-} else {
-  logger('Using Railway environment variables (no .env file)');
-}
+// Simple environment loading - proven to work on Mochahost
+const envPath = path.resolve(process.cwd(), '..', '.env');
+dotenv.config({ path: envPath });
 
 logger(`Environment loaded: ${process.env.NODE_ENV || 'development'}`);
-
-// Debug: Log all database environment variables (without sensitive data)
-logger(`DB Config Debug:
-  - DB_HOST: ${process.env.DB_HOST || 'NOT SET'}
-  - DB_PORT: ${process.env.DB_PORT || 'NOT SET'}  
-  - DB_NAME: ${process.env.DB_NAME || 'NOT SET'}
-  - DB_USERNAME: ${process.env.DB_USERNAME || 'NOT SET'}
-  - DB_PASSWORD: ${process.env.DB_PASSWORD ? 'SET' : 'NOT SET'}
-  - DATABASE_URL: ${process.env.DATABASE_URL ? 'SET' : 'NOT SET'}`);
+logger(`DB_HOST: ${process.env.DB_HOST || 'NOT SET'}`);
+logger(`DB_NAME: ${process.env.DB_NAME || 'NOT SET'}`);
+logger(`DB_USERNAME: ${process.env.DB_USERNAME || 'NOT SET'}`);
+logger(`DB_PASSWORD: ${process.env.DB_PASSWORD ? 'SET' : 'NOT SET'}`);
 
 // Import models AFTER environment is loaded
 import { initializeAllModels, setupAssociations } from './models';
@@ -1059,6 +1045,17 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
  *                   type: string
  *                   example: development
  */
+// Simple test endpoint
+app.get('/test', (req, res) => {
+  res.json({ 
+    message: 'Simple test endpoint working',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    cwd: process.cwd(),
+    nodeVersion: process.version
+  });
+});
+
 // Health check endpoints
 app.get('/health', (req, res) => {
   res.json({ 
@@ -1073,6 +1070,29 @@ app.get('/api/health', (req, res) => {
     status: 'OK', 
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development' 
+  });
+});
+
+// Test endpoints for deployment validation
+app.get('/test', (req, res) => {
+  res.json({ 
+    message: 'Test endpoint working',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+app.get('/env-test', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Environment test',
+    environment: {
+      NODE_ENV: process.env.NODE_ENV,
+      DB_HOST: process.env.DB_HOST,
+      DB_NAME: process.env.DB_NAME,
+      DB_USERNAME: process.env.DB_USERNAME,
+      DB_PASSWORD: process.env.DB_PASSWORD ? 'SET' : 'NOT SET'
+    }
   });
 });
 
@@ -1287,20 +1307,24 @@ async function startServer() {
     app.use(notFoundHandler);
     app.use(errorHandler);
 
-    // Start server
-    const server = app.listen(PORT, () => {
-      logger(`✅ MyNodeAPI is running on port ${PORT} - Version: 1.0.0 - Environment: ${process.env.NODE_ENV || 'development'}`);
-      logger(`✅ Health check available at: http://localhost:${PORT}/health`);
-    });
-    
-    // Graceful shutdown
-    process.on('SIGTERM', async () => {
-      logger('SIGTERM received, shutting down gracefully');
-      server.close(async () => {
-        await dbService.disconnect();
-        process.exit(0);
+    // Start server (only if not running under IIS)
+    if (process.env.NODE_ENV !== 'production' || !process.env.IIS_NODE_VERSION) {
+      const server = app.listen(PORT, () => {
+        logger(`✅ MyNodeAPI is running on port ${PORT} - Version: 1.0.0 - Environment: ${process.env.NODE_ENV || 'development'}`);
+        logger(`✅ Health check available at: http://localhost:${PORT}/health`);
       });
-    });
+      
+      // Graceful shutdown
+      process.on('SIGTERM', async () => {
+        logger('SIGTERM received, shutting down gracefully');
+        server.close(async () => {
+          await dbService.disconnect();
+          process.exit(0);
+        });
+      });
+    } else {
+      logger('✅ Server configured for IIS production environment - no port binding needed');
+    }
     
   } catch (error) {
     logger(`❌ Failed to start server: ${error}`);

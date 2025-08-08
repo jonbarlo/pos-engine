@@ -21,7 +21,7 @@
     "db:seed:dev": "cross-env NODE_ENV=development ts-node src/scripts/run-seeder.ts",
     "db:seed:dev:all": "cross-env NODE_ENV=development ts-node src/scripts/run-seeder-all.ts",
     "db:seed:test": "cross-env NODE_ENV=test ts-node src/scripts/run-seeder.ts",
-    "deploy:mochahost": "ts-node src/scripts/deploy-mochahost.ts",
+    "deploy:mochahost": "ts-node scripts/deploy-mochahost.ts",
     "test": "cross-env NODE_ENV=test jest",
     "db:drop:tables": "ts-node src/scripts/drop-tables.ts",
     "db:drop:records": "ts-node src/scripts/drop-records.ts",
